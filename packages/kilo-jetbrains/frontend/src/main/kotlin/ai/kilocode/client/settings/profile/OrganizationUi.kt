@@ -72,12 +72,9 @@ internal class OrganizationUi(
     private val nameLabel = JBLabel().apply { font = UiStyle.Fonts.header() }
     private val userLabel = weak()
     private val policyLabel = weak()
-    private val gatewayLabel = weak().apply { setAllowAutoWrapping(true) }
-    private val blockedLabel = JBLabel().apply {
-        foreground = UiStyle.Colors.errorLabelForeground()
-        setAllowAutoWrapping(true)
-    }
-    private val refreshLabel = weak().apply { setAllowAutoWrapping(true) }
+    private val gatewayLabel = weak()
+    private val blockedLabel = JBLabel().apply { foreground = UiStyle.Colors.errorLabelForeground() }
+    private val refreshLabel = weak()
     val signoutBtn = JButton(KiloBundle.message("profile.enterprise.action.signout"))
         .also { it.addActionListener { signout() } }
     private val signoutRow = signoutBtn.align(HAlign.RIGHT, VAlign.CENTER)
@@ -87,8 +84,8 @@ internal class OrganizationUi(
     )
 
     // -- enrolled, not signed in --
-    private val managedLabel = JBLabel().apply { setAllowAutoWrapping(true) }
-    private val enrolledError = weak().apply { setAllowAutoWrapping(true) }
+    private val managedLabel = JBLabel()
+    private val enrolledError = weak()
     val signinBtn = JButton(KiloBundle.message("profile.enterprise.action.signin"))
         .also { it.addActionListener { signin() } }
     private val enrolled = card(
@@ -137,10 +134,7 @@ internal class OrganizationUi(
     private val pending = BorderLayoutPanel()
     private var auth: DeviceOAuthPanel? = null
 
-    private val failedLabel = JBLabel().apply {
-        foreground = UiStyle.Colors.errorLabelForeground()
-        setAllowAutoWrapping(true)
-    }
+    private val failedLabel = JBLabel().apply { foreground = UiStyle.Colors.errorLabelForeground() }
     private val retryBtn = JButton(KiloBundle.message("profile.login.tryAgain"))
         .also { it.addActionListener { signin() } }
     private val failedCancelBtn = JButton(KiloBundle.message("profile.login.cancel"))
@@ -378,7 +372,7 @@ internal class OrganizationUi(
             KiloBundle.message(
                 "profile.enterprise.policy",
                 it.version.toString(),
-                DateFormatUtil.formatPrettyDateTime(it.fetched),
+                DateFormatUtil.formatDateTime(it.fetched),
             )
         })
         text(gatewayLabel, current.gateway.takeIf { it.isNotEmpty() }?.let {
@@ -397,10 +391,11 @@ internal class OrganizationUi(
     private fun name(): String =
         status?.org?.let { it.name ?: it.slug } ?: orgField.text.trim()
 
-    // Escaped HTML, which the wrapping labels need to break long messages over lines.
+    // Escaped HTML capped to the body width, so a long message (a budget, a server error) breaks
+    // over lines instead of running past the card.
     private fun text(label: JBLabel, value: String?) {
         label.isVisible = value != null
-        if (value != null) label.text = UiStyle.Text.wrapLines(listOf(value))
+        if (value != null) label.text = UiStyle.Text.wrap(value, UiStyle.Text.bodyWidth())
     }
 
     // ---- builders ----
