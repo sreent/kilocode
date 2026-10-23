@@ -146,7 +146,7 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 2. **IDE surfaces.** Show the org, sign-in state and blocked reasons in the VS Code and JetBrains UIs, with a sign-in button. Today they appear as session errors and through `kilo enterprise status`.
 3. **Rebranding and distribution** (see above).
 4. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.
-5. **Operations.** Postgres storage and high availability, container image and Helm chart, rate limiting, backups.
+5. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
 6. **SIEM streaming.** Push audit events to webhooks, OTLP or syslog. Opt-in audit of client-side events such as tool runs.
 7. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
 8. **Live policy reload** of the model list in running clients, without a restart.

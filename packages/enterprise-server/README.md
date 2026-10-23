@@ -47,6 +47,21 @@ bun run build   # dist/enterprise-server
 ./dist/enterprise-server serve
 ```
 
+### Docker
+
+The image ([`Dockerfile`](Dockerfile)) packages that binary on a distroless base. It runs as an unprivileged user (uid 65532) and keeps its database in the `/data` volume.
+
+```sh
+bun run build
+docker build -t enterprise-server .
+docker run --rm -v enterprise-data:/data enterprise-server bootstrap --org Acme --slug acme --email you@acme.com
+export ENTERPRISE_SECRET=$(openssl rand -hex 32)   # keep it: stored keys can't be decrypted without it
+docker run -d -p 8787:8787 -v enterprise-data:/data \
+  -e ENTERPRISE_BASE_URL=https://ai.acme.com -e ENTERPRISE_SECRET enterprise-server
+```
+
+Point liveness and readiness probes at `GET /healthz`. A bind-mounted data directory must be writable by uid 65532.
+
 Always run it behind HTTPS. Tokens and the admin session cookie must not travel in clear text, and the server warns at startup if `ENTERPRISE_BASE_URL` is not `https://` (localhost excepted).
 
 ## Configuration

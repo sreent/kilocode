@@ -1,0 +1,3 @@
+# Only the release binary goes into the image.
+*
+!dist/enterprise-server
