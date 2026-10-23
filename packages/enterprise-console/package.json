@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@enterprise/console",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Admin console for the enterprise control plane, built like Kilo's web console on @kilocode/kilo-web-ui",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 3027",
+    "build": "vite build",
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@enterprise/protocol": "workspace:*",
+    "@kilocode/kilo-web-ui": "workspace:*",
+    "@solidjs/router": "catalog:",
+    "effect": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "catalog:",
+    "@types/bun": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  }
+}
