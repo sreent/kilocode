@@ -120,6 +120,19 @@ jobs:
           }
           Write-Host "Defender path exclusions applied: $applied"
       # kilocode_change end
+      # kilocode_change start - enterprise: GitHub-hosted Windows runners keep TEMP on C:, the slow
+      # OS disk, and the checkout on D:. Tests that build temp paths and compare them with
+      # normalized ones assume a single drive, so keep temp files on the checkout drive.
+      # RUNNER_TEMP is already excluded from Defender scanning above.
+      - name: Keep temp files on the checkout drive
+        if: matrix.settings.run && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "tmp"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          "TEMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "TMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      # kilocode_change end
       - name: Checkout repository
         if: matrix.settings.run # kilocode_change
         uses: actions/checkout@v6 # kilocode_change
@@ -153,6 +166,16 @@ jobs:
         if: matrix.settings.run && runner.os == 'Linux'
         timeout-minutes: 5
         uses: ./.github/actions/setup-linux-sandbox
+      # kilocode_change end
+      # kilocode_change start - enterprise: GitHub-hosted Ubuntu 24.04 blocks unprivileged user
+      # namespaces (kernel.apparmor_restrict_unprivileged_userns=1), which bwrap needs for the
+      # sandbox tests. Kilo's Blacksmith runners allow them.
+      - name: Allow unprivileged user namespaces
+        if: matrix.settings.run && runner.os == 'Linux'
+        run: |
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
       # kilocode_change end
       - name: Configure git identity
         if: matrix.settings.run # kilocode_change
