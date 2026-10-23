@@ -127,6 +127,9 @@ export const GovernanceHandler = HttpApiBuilder.group(Api, "enterprise.governanc
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
           const rows = ctx.payload.budgets.map((row) => ({ ...row, target: row.scope === "user" ? row.target : "" }))
+          // Two limits for the same people and period would be ambiguous (and collide in storage).
+          if (new Set(rows.map((row) => `${row.scope}/${row.target}/${row.period}`)).size !== rows.length)
+            return yield* new InvalidRequestError({ message: "budgets must differ in scope, target or period" })
           for (const row of rows)
             if (row.scope === "user" && !(yield* store.member.get(scope.org.id, row.target)))
               return yield* new InvalidRequestError({ message: `not a member: ${row.target}` })

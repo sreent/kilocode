@@ -413,6 +413,19 @@ describe("usage and budgets", () => {
     expect((await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: admin.token, body })).status).toBe(403)
     expect((await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: billing.token, body })).status).toBe(200)
   })
+
+  test("rejects two budgets for the same people and period", async () => {
+    const env = await setup()
+    const body = {
+      budgets: [
+        { scope: "member", period: "day", amount: 10 },
+        { scope: "member", target: "ignored", period: "day", amount: 20 },
+      ],
+    }
+    const response = await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: env.owner.token, body })
+    expect(response.status).toBe(400)
+    expect(response.data.message).toContain("must differ")
+  })
 })
 
 describe("audit log", () => {
