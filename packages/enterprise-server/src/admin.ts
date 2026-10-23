@@ -49,7 +49,7 @@ const html = `<!doctype html>
   .secret { font-family: ui-monospace, monospace; word-break: break-all; background: var(--bg); border: 1px dashed var(--line); padding: 8px; border-radius: 6px; }
   .badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
   code { font-family: ui-monospace, monospace; font-size: 12px; }
-  td code { white-space: pre-wrap; word-break: break-word; }
+  code.wrap { white-space: pre-wrap; word-break: break-word; }
   .center { max-width: 420px; margin: 10vh auto; }
 </style>
 </head>
@@ -248,7 +248,7 @@ const views = {
     const filters = { action: params.action, actor: params.actor, from: day(params.from), to: day(params.to, true) }
     const data = await api("GET", org("/audit" + query({ ...filters, limit: "200" })))
     const body = h("tbody")
-    const add = (events) => body.append(...events.map((e) => h("tr", {}, h("td", {}, when(e.at)), h("td", {}, h("code", {}, e.action)), h("td", {}, e.email || ""), h("td", {}, e.target || ""), h("td", {}, h("code", {}, JSON.stringify(e.details))), h("td", {}, e.ip || ""))))
+    const add = (events) => body.append(...events.map((e) => h("tr", {}, h("td", {}, when(e.at)), h("td", {}, h("code", {}, e.action)), h("td", {}, e.email || ""), h("td", {}, e.target || ""), h("td", {}, h("code", { class: "wrap" }, JSON.stringify(e.details))), h("td", {}, e.ip || ""))))
     add(data.events)
     const more = h("button", { onclick: async () => {
       const next = await api("GET", org("/audit" + query({ ...filters, limit: "200", before: String(state.cursor) })))
