@@ -53,8 +53,8 @@ import * as ModelsRefresh from "@/kilocode/provider/models-refresh"
 import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions } from "@/kilocode/provider/cloud-auth"
 // kilocode_change end
 import { ProviderError } from "./error"
-import { Enterprise } from "@/enterprise" // enterprise_change
-import { allows } from "@enterprise/protocol/match" // enterprise_change
+import { Enterprise } from "@/enterprise" // kilocode_change - enterprise
+import { allows } from "@enterprise/protocol/match" // kilocode_change - enterprise
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -1464,13 +1464,13 @@ const layer = Layer.effect(
     const plugin = yield* Plugin.Service
     const modelsDevSvc = yield* ModelsDev.Service
     const runtimeFlags = yield* RuntimeFlags.Service
-    const enterprise = yield* Enterprise.Service // enterprise_change
+    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
 
     const state = yield* InstanceState.make<State>(() =>
       Effect.gen(function* () {
         const bridge = yield* EffectBridge.make()
         const cfg = yield* config.get()
-        const policy = yield* enterprise.current() // enterprise_change - org model access, read once per load
+        const policy = yield* enterprise.current() // kilocode_change - enterprise: org model access, read once per load
         const modelsDev = yield* modelsDevSvc.get()
         const catalog = mapValues(modelsDev, fromModelsDevProvider)
         const database = mapValues(catalog, toPublicInfo)
@@ -1804,7 +1804,7 @@ const layer = Layer.effect(
               (configProvider?.whitelist && !configProvider.whitelist.includes(modelID))
             )
               delete provider.models[modelID]
-            if (policy && !allows(policy, providerID, modelID)) delete provider.models[modelID] // enterprise_change
+            if (policy && !allows(policy, providerID, modelID)) delete provider.models[modelID] // kilocode_change - enterprise
 
             if (model.variants === undefined) {
               model.variants = mapValues(ProviderTransform.variants(model), (v) => v)
@@ -2225,6 +2225,7 @@ export function parseModel(model: string) {
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
+  // kilocode_change start - enterprise
   deps: [
     FSUtil.node,
     Config.node,
@@ -2234,7 +2235,8 @@ export const node = LayerNode.make({
     ModelsDev.node,
     RuntimeFlags.node,
     Enterprise.node,
-  ], // enterprise_change
+  ],
+  // kilocode_change end
 })
 
 export * as Provider from "./provider"

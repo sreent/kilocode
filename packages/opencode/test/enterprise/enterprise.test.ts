@@ -1,3 +1,4 @@
+// kilocode_change - new file (enterprise)
 import { afterAll, afterEach, describe, expect, test } from "bun:test"
 import { mkdir, rm, writeFile } from "fs/promises"
 import path from "path"

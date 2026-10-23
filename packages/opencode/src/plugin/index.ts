@@ -31,7 +31,7 @@ import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } fro
 import { KiloAuthPlugin } from "@kilocode/kilo-gateway" // kilocode_change
 import { AtomicChatPlugin } from "@kilocode/plugin-atomic-chat" // kilocode_change
 import { AnacondaDesktopPlugin } from "@/kilocode/anaconda-desktop/provider" // kilocode_change
-import { Enterprise, EnterprisePlugin } from "@/enterprise" // enterprise_change
+import { Enterprise, EnterprisePlugin } from "@/enterprise" // kilocode_change - enterprise
 import { registerAdapter } from "@/control-plane/adapters"
 import type { WorkspaceAdapter } from "@/control-plane/types"
 import { RuntimeFlags } from "@/effect/runtime-flags"
@@ -141,7 +141,7 @@ const layer = Layer.effect(
     const events = yield* EventV2Bridge.Service
     const config = yield* Config.Service
     const flags = yield* RuntimeFlags.Service
-    const enterprise = yield* Enterprise.Service // enterprise_change
+    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
 
     const state = yield* InstanceState.make<State>(
       Effect.fn("Plugin.state")(function* (ctx) {
@@ -179,11 +179,12 @@ const layer = Layer.effect(
           $: typeof Bun === "undefined" ? undefined : Bun.$,
         }
 
-        // enterprise_change - the enterprise plugin enforces org policy, so disabling defaults must not drop it
+        // kilocode_change start - enterprise: the enterprise plugin enforces org policy, so disabling defaults must not drop it
         for (const plugin of [
           ...(flags.disableDefaultPlugins ? [] : internalPlugins(flags)),
           EnterprisePlugin(enterprise),
         ]) {
+          // kilocode_change end
           const init = yield* Effect.tryPromise({
             try: () => plugin(input),
             catch: errorMessage,
@@ -328,7 +329,7 @@ const layer = Layer.effect(
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [EventV2Bridge.node, Config.node, RuntimeFlags.node, Enterprise.node], // enterprise_change
+  deps: [EventV2Bridge.node, Config.node, RuntimeFlags.node, Enterprise.node], // kilocode_change - enterprise
 })
 
 export * as Plugin from "."

@@ -1,3 +1,4 @@
+// kilocode_change - new file (enterprise)
 import { expect } from "bun:test"
 import { Cause, Effect, Exit, Layer } from "effect"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"

@@ -19,11 +19,14 @@ It is part of this fork, not of upstream Kilo Code. Upstream's enterprise featur
 | Audit log | Every administrative and sign-in event, filterable by action, actor and date, cursor-paged, CSV export, configurable retention |
 | Usage | Per-LLM-call usage from clients (idempotent), breakdowns by user, model, provider, day and project, CSV export |
 | Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached |
-| Admin console | Built-in web UI at `/admin` |
+| Admin console | Built-in web UI at `/admin` ([`packages/enterprise-console`](../enterprise-console)), built like Kilo's own web console |
 
 ## Quick start
 
 ```sh
+# From source the server serves the console's build output, so build it once.
+(cd packages/enterprise-console && bun run build)
+
 cd packages/enterprise-server
 
 # 1. Create the first organization and owner. Prints an owner token once.
@@ -35,7 +38,7 @@ ENTERPRISE_BASE_URL=https://ai.acme.com ENTERPRISE_SECRET=$(openssl rand -hex 32
 
 Open `https://ai.acme.com/admin` and paste the owner token, or configure SSO and sign in with it.
 
-For production, build a self-contained binary (Bun runtime, SQLite and all dependencies included) and run it anywhere with glibc:
+For production, build a self-contained binary (Bun runtime, SQLite, the admin console and all dependencies included) and run it anywhere with glibc:
 
 ```sh
 bun run build   # dist/enterprise-server
@@ -56,6 +59,8 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ENTERPRISE_SECRET` | unset | Key material for encrypting SSO client secrets at rest (AES-256-GCM). Required before SSO can be configured; keep it stable |
 | `ENTERPRISE_TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so audit entries record `X-Forwarded-For` |
 | `ENTERPRISE_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
+| `ENTERPRISE_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`; logs are logfmt on stdout |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Also send logs and traces over OTLP (HTTP, JSON); `OTEL_EXPORTER_OTLP_HEADERS` adds headers |
 
 The server also reads a `.env` file from its working directory, a convenient place for these settings; keep it readable only by the service account. Back up the database file. It holds the audit log and usage history.
 
@@ -83,14 +88,14 @@ See [FORK.md](../../FORK.md) for exactly where the client enforces each policy.
 
 1. Set `ENTERPRISE_SECRET` on the server.
 2. Register an OIDC web application with your identity provider (Okta, Entra ID, Google Workspace, Auth0, Keycloak, …). Redirect URI: `https://<server>/sso/callback`. Grant type: authorization code. Scopes: `openid email profile`.
-3. In the admin console under Security, enter the issuer URL, client ID and client secret. The server checks the issuer's discovery document before saving.
-4. Optionally add and verify your email domain (a DNS TXT record) so people from that domain join automatically as members on first sign-in, and tick "require SSO" to disable invite links and admin-issued tokens for that org.
+3. In the admin console under Identity → Single sign-on and SCIM, enter the issuer URL, client ID and client secret. The server checks the issuer's discovery document before saving.
+4. Optionally add and verify your email domain (a DNS TXT record) so people from that domain join automatically as members on first sign-in, and turn on "Require single sign-on" to disable invite links and admin-issued tokens for that org.
 
 Sign-in URL for people: `https://<server>/sso/<org-slug>/start`.
 
 ## SCIM provisioning
 
-Create a SCIM token under Security, then point your IdP's SCIM 2.0 connector at `https://<server>/scim/v2` with that bearer token. The token decides which organization is provisioned.
+Create a SCIM token under Identity → Single sign-on and SCIM, then point your IdP's SCIM 2.0 connector at `https://<server>/scim/v2` with that bearer token. The token decides which organization is provisioned.
 
 | IdP action | Effect |
 |---|---|
@@ -103,7 +108,7 @@ SCIM never rewrites the email or name of an account that another organization al
 
 ## Policy reference
 
-Edit the policy as JSON in the admin console (Policy tab) or with `PUT /api/v1/orgs/{org}/policy`. Every field is optional.
+Edit the policy as JSON in the admin console (Governance → Policy; it is checked against the policy schema before it is sent) or with `PUT /api/v1/orgs/{org}/policy`. Every field is optional.
 
 ```json
 {
@@ -131,7 +136,7 @@ Edit the policy as JSON in the admin console (Policy tab) or with `PUT /api/v1/o
 - **`permission`** uses the same format as the CLI's `permission` config. Deny rules become hard rules; allow and ask rules override user config but not a user's session approvals.
 - **`share`** controls session sharing and syncing sessions to the upstream vendor's cloud. **`telemetry.product`** controls the upstream product analytics. Both default to off.
 
-Budgets are managed separately (Budgets tab or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
+Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
 
 ## Audit events
 
@@ -141,7 +146,7 @@ Each entry records time, action, actor (user and email snapshot), target, detail
 
 ## API
 
-All endpoints take `Authorization: Bearer <token>` and return JSON.
+All endpoints take `Authorization: Bearer <token>` and return JSON. The contract is defined once in [`packages/enterprise-protocol`](../enterprise-protocol) and served as OpenAPI at `GET /api/v1/openapi.json`; the CLI and the admin console use clients derived from it. Errors are `{ "_tag": "...", "message": "..." }` with the matching HTTP status.
 
 | Endpoint | Purpose |
 |---|---|
@@ -154,12 +159,13 @@ All endpoints take `Authorization: Bearer <token>` and return JSON.
 | `/api/v1/orgs/{org}/members`, `/invites`, `/groups` | People |
 | `/api/v1/orgs/{org}/policy`, `/policy/effective` | Policy and what a client enforces for the caller (supports `If-None-Match`) |
 | `/api/v1/orgs/{org}/modes` | Org-managed agents |
-| `/api/v1/orgs/{org}/audit` | Audit log (`action`, `actor`, `from`, `to`, `before`, `limit`, `format=csv`) |
+| `/api/v1/orgs/{org}/audit`, `/audit/export` | Audit log (`action`, `actor`, `from`, `to`, `before`, `limit`) and its CSV export |
 | `/api/v1/orgs/{org}/usage`, `/usage/export` | Usage ingestion and analytics |
 | `/api/v1/orgs/{org}/budgets` | Budgets |
 | `/api/v1/orgs/{org}/sso`, `/domains`, `/scim/tokens` | Identity configuration |
 | `/api/v1/orgs/{org}/suborgs` | Sub-organizations |
 | `/scim/v2/...` | SCIM 2.0 |
+| `GET /healthz` | Liveness |
 
 ## Security model
 
@@ -178,8 +184,18 @@ The CLI enforces policy on the developer's machine. That stops honest mistakes a
 ## Development
 
 ```sh
-bun test            # unit and integration tests, including a real local OIDC provider
+bun test                    # unit and integration tests, including a real local OIDC provider
 bun run typecheck
+bun run migration           # after changing src/db/schema.sql.ts; --check fails when one is missing
+bun run build               # dist/enterprise-server with the console embedded
 ```
 
-Storage is SQLite through `bun:sqlite`. Migrations are an append-only list in `src/db.ts`.
+The server is built on the same stack as the Kilo CLI's own server:
+
+| Concern | Where |
+|---|---|
+| HTTP API | `effect/unstable/httpapi`: the shared contract in `packages/enterprise-protocol`, handlers in `src/handlers/`, auth and org scoping as middleware in `src/middleware/` |
+| Browser flows | Device approval and SSO pages in `src/routes/`, the console's static files in `src/routes/console.ts` |
+| Storage | Drizzle on SQLite (`@opencode-ai/core`'s SQLite layer), schema in `src/db/schema.sql.ts`, generated TypeScript migrations in `src/db/migration/` |
+| Services | Effect services wired as a `LayerNode` graph (`src/app.ts`); configuration through Effect `Config` (`src/config.ts`) |
+| Observability | Effect logging (logfmt) and OTLP export (`src/observability.ts`) |

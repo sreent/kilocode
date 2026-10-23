@@ -51,7 +51,7 @@ import { McpEvent } from "@opencode-ai/schema/mcp-event"
 import { McpBrowser } from "./browser"
 import { authFailure } from "@/kilocode/mcp/auth-failure" // kilocode_change
 import * as KiloAuthTelemetry from "@/kilocode/mcp/auth-telemetry" // kilocode_change
-import { Enterprise } from "@/enterprise" // enterprise_change
+import { Enterprise } from "@/enterprise" // kilocode_change - enterprise
 
 const DEFAULT_TIMEOUT = 30_000
 const CLIENT_OPTIONS = {
@@ -289,7 +289,7 @@ const layer = Layer.effect(
     const auth = yield* McpAuth.Service
     const events = yield* EventV2Bridge.Service
     const browser = yield* McpBrowser.Service
-    const enterprise = yield* Enterprise.Service // enterprise_change
+    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
 
     type Transport = StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport
 
@@ -491,10 +491,10 @@ const layer = Layer.effect(
           return DISABLED_RESULT
         }
 
-        // enterprise_change start - every connection path (startup, add, connect) passes through here
+        // kilocode_change start - enterprise: every connection path (startup, add, connect) passes through here
         const refused = yield* enterprise.refusal(mcp)
         if (refused) return { status: { status: "failed" as const, error: refused } }
-        // enterprise_change end
+        // kilocode_change end
 
         const { client: mcpClient, status } =
           mcp.type === "remote"
@@ -1248,7 +1248,7 @@ export type AuthStatus = "authenticated" | "expired" | "not_authenticated"
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [CrossSpawnSpawner.node, McpAuth.node, EventV2Bridge.node, Config.node, McpBrowser.node, Enterprise.node], // enterprise_change
+  deps: [CrossSpawnSpawner.node, McpAuth.node, EventV2Bridge.node, Config.node, McpBrowser.node, Enterprise.node], // kilocode_change - enterprise
 })
 
 export * as MCP from "."

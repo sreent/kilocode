@@ -30,9 +30,10 @@ const result = await Bun.build({
   minify: true,
   compile: {
     outfile,
-    // A bunfig.toml in the directory the binary is started from must not change its behaviour.
+    // A bunfig.toml in the directory the binary is started from must not change its behaviour; a
+    // .env there is the documented place for the server's settings.
     autoloadBunfig: false,
-    autoloadDotenv: false,
+    autoloadDotenv: true,
   },
   files: { [path.join(root, "src/console.gen.ts")]: embedded },
 })

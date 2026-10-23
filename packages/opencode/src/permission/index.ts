@@ -10,7 +10,7 @@ import z from "zod" // kilocode_change
 import { zod } from "@opencode-ai/core/effect-zod" // kilocode_change
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 import { Database } from "@opencode-ai/core/database/database" // kilocode_change
-import { Enterprise } from "@/enterprise/enterprise" // enterprise_change
+import { Enterprise } from "@/enterprise/enterprise" // kilocode_change - enterprise
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { SessionID } from "@/session/schema" // kilocode_change - used by AllowEverythingInput
 // kilocode_change start
@@ -163,7 +163,7 @@ const layer = Layer.effect(
     const events = yield* EventV2Bridge.Service
     const config = yield* Config.Service // kilocode_change
     const database = yield* Database.Service // kilocode_change
-    const enterprise = yield* Enterprise.Service // enterprise_change
+    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
     const state = yield* InstanceState.make<State>(
       Effect.fn("Permission.state")(function* (ctx) {
         void ctx
@@ -190,11 +190,11 @@ const layer = Layer.effect(
       const { approved, pending } = yield* InstanceState.get(state)
       // kilocode_change start
       const { ruleset, hardRuleset: asked, ...request } = input
-      // enterprise_change start - org deny rules are hard rules: no saved approval or session rule overrides them
+      // kilocode_change start - enterprise: org deny rules are hard rules: no saved approval or session rule overrides them
       const org = yield* enterprise.permission()
       const denied = org ? fromConfig(org).filter((rule) => rule.action === "deny") : []
       const hardRuleset = denied.length ? [...(asked ?? []), ...denied] : asked
-      // enterprise_change end
+      // kilocode_change end
       const s = yield* InstanceState.get(state)
       const local = s.session[request.sessionID] ?? []
       // kilocode_change end
@@ -558,7 +558,7 @@ export function visibleTools<T>(tools: Record<string, T>, ruleset: PermissionV1.
 export const node = LayerNode.make({
   service: Service,
   layer,
-  deps: [EventV2Bridge.node, Config.node, Database.node, Enterprise.node], // kilocode_change, enterprise_change
+  deps: [EventV2Bridge.node, Config.node, Database.node, Enterprise.node], // kilocode_change, enterprise
 })
 
 export * as Permission from "."

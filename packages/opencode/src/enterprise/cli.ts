@@ -1,3 +1,4 @@
+// kilocode_change - new file (enterprise)
 import type { Argv } from "yargs"
 import { Clock, Effect, Exit, Predicate } from "effect"
 import { effectCmd, fail } from "@/cli/effect-cmd"

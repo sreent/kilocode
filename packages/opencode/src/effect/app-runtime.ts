@@ -5,7 +5,7 @@ import * as Observability from "@opencode-ai/core/observability"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Database } from "@opencode-ai/core/database/database"
 import { Credential } from "@opencode-ai/core/credential" // kilocode_change
-import { Enterprise } from "@/enterprise/enterprise" // enterprise_change
+import { Enterprise } from "@/enterprise/enterprise" // kilocode_change - enterprise
 import { Auth } from "@/auth"
 import { Account } from "@/account/account"
 import { Config } from "@/config/config"
@@ -74,7 +74,7 @@ import { Pty } from "@opencode-ai/core/pty" // kilocode_change
 // kilocode_change start - retain Kilo runtime services in the upstream node graph
 const memory = LayerNode.make({ service: MemoryService.Service, layer: MemoryService.layer, deps: [] })
 const kilo = LayerNode.group([
-  Enterprise.node, // enterprise_change
+  Enterprise.node, // kilocode_change - enterprise
   Credential.node,
   ModelCache.node,
   AgentManager.node,

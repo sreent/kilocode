@@ -4,7 +4,9 @@ This repository is a fork of [Kilo Code](https://github.com/Kilo-Org/kilocode), 
 
 Upstream Kilo's enterprise features run on Kilo's hosted backend, which is not open source. The open-source repository contains only the clients (CLI, VS Code extension, JetBrains plugin), so this fork implements both sides itself:
 
-- **Control plane**: [`packages/enterprise-server`](packages/enterprise-server/README.md), a server you run (Hono + SQLite, ships as a single binary) with an admin console.
+- **Control plane**: [`packages/enterprise-server`](packages/enterprise-server/README.md), a server you run (SQLite, ships as a single binary with the admin console inside).
+- **Admin console**: [`packages/enterprise-console`](packages/enterprise-console), the web UI the server hosts at `/admin`.
+- **Contract**: [`packages/enterprise-protocol`](packages/enterprise-protocol), the API definition, schemas and role model shared by the server, the CLI and the console.
 - **Client integration**: [`packages/opencode/src/enterprise`](packages/opencode/src/enterprise), which makes the CLI, and therefore the IDE extensions that run it, fetch and enforce the org policy.
 
 ## Provenance and license
@@ -31,24 +33,44 @@ Enterprise features only work in builds made from this repository. The marketpla
 
 | Path | Contents |
 |---|---|
-| `packages/enterprise-server/` | Control plane: API, SSO, SCIM, policy, audit, usage, budgets, admin console, tests |
+| `packages/enterprise-protocol/` | Shared contract: HTTP API groups, schemas, errors, middleware tags, role capabilities, typed client |
+| `packages/enterprise-server/` | Control plane: API, SSO, SCIM, policy, audit, usage, budgets, tests |
+| `packages/enterprise-console/` | Admin console |
 | `packages/opencode/src/enterprise/` | Client: deployment settings, policy fetch and cache, enforcement, usage reporting, `kilo enterprise` command |
 | `packages/opencode/test/enterprise/` | Contract tests that run the client against the real control plane |
 | `FORK.md` | This file |
 
-Changes to upstream files are kept to one-line calls into the enterprise module, marked `enterprise_change` (the same convention upstream uses with `kilocode_change`). `git grep -n enterprise_change` lists every one:
+Changes to upstream files are kept to one-line calls into the enterprise module. They use upstream's own `kilocode_change` markers, which upstream's annotation check (`script/check-opencode-annotations.ts`) requires, tagged `enterprise` to tell them apart from Kilo's changes: `// kilocode_change - enterprise`, `// kilocode_change start - enterprise: <why>` / `// kilocode_change end`, and `// kilocode_change - new file (enterprise)` atop fork-owned files in shared directories. `git grep -n "kilocode_change.*enterprise"` lists every one:
 
 | Upstream file | Hook |
 |---|---|
 | `packages/opencode/src/config/config.ts` | Apply the org policy as the last config layer, above user, project, managed and env config |
 | `packages/opencode/src/provider/provider.ts` | Drop models outside the user's effective model access |
 | `packages/opencode/src/mcp/index.ts` | Refuse MCP servers outside the allowlist or on the blocklist; every connection path passes here |
-| `packages/opencode/src/kilocode/session/prompt.ts` | Add org deny rules to the hard ruleset of every permission ask |
+| `packages/opencode/src/permission/index.ts` | Add org deny rules to the hard ruleset of every permission ask |
 | `packages/opencode/src/plugin/index.ts` | Always load the enterprise plugin, even with `KILO_DISABLE_DEFAULT_PLUGINS` |
+| `packages/opencode/src/effect/app-runtime.ts`, `packages/opencode/src/server/routes/instance/httpapi/server.ts` | Register the `Enterprise` service in the CLI's and the local server's layer graphs |
 | `packages/opencode/src/kilocode/cli/setup.ts` | Startup switches (product analytics, sharing, vendor session sync); register `kilo enterprise` |
+| `packages/opencode/src/kilocode/cli/bootstrap-runtime.ts` | Load the org policy before the first instance starts |
 | `packages/opencode/src/kilocode/cli/lazy-kilo-commands.ts` | Lazy loader for `kilo enterprise` |
 | `packages/opencode/src/kilocode/server/httpapi/handlers/telemetry.ts` | Stop the runtime telemetry toggle from re-enabling analytics the org turned off |
 | `packages/opencode/src/kilo-sessions/kilo-sessions.ts` | Keep sessions from syncing to the upstream vendor's cloud unless the org allows sharing |
+
+`packages/opencode/package.json` also depends on `@enterprise/protocol`.
+
+## How it's built
+
+The enterprise layer uses the same stack and conventions as the rest of Kilo, so it reads like upstream code and moves with it:
+
+| Concern | Core Kilo | Enterprise layer |
+|---|---|---|
+| HTTP API | `effect/unstable/httpapi` contract, handlers and middleware (`packages/opencode/src/server`) | One contract in `packages/enterprise-protocol`, served by `HttpApiBuilder` in the control plane and called through `HttpApiClient` by the CLI and the console |
+| Schemas | Effect Schema | Effect Schema, shared by all three; the console validates edits with the same schemas the server enforces |
+| Storage | Drizzle on SQLite, generated TypeScript migrations (`packages/core`) | The same, through core's SQLite layer and migration journal |
+| Services | Effect services in a `LayerNode` graph | The control plane is a `LayerNode` graph; the CLI's `Enterprise` service is one more node in the CLI's graph |
+| Configuration and logs | Effect `Config`, Effect logging, OTLP | The same |
+| Web UI | SolidJS + Vite on `@kilocode/kilo-web-ui` (`packages/kilo-console`) | The admin console reuses the web console's shell, page anatomy, components and themes |
+| Tests | `bun test`, Effect test harness | The same; the CLI's contract tests run against a real control plane |
 
 ## How the client enforces policy
 
@@ -88,14 +110,16 @@ Fresh clones need the remote once: `git remote add upstream https://github.com/K
 ```sh
 git fetch upstream --tags
 git merge v7.9.0                      # or upstream/main
-git grep -n enterprise_change         # check each hook still sits where it should
+git grep -n "kilocode_change.*enterprise"   # check each hook still sits where it should
 bun install                           # regenerates bun.lock; on a bun.lock conflict take upstream's, then re-run
-(cd packages/enterprise-server && bun test)
+(cd packages/enterprise-protocol && bun test)
+(cd packages/enterprise-server && bun test && bun run typecheck)
+(cd packages/enterprise-console && bun run typecheck && bun run build)
 (cd packages/opencode && bun run typecheck && bun test ./test/enterprise)
 (cd packages/opencode && bun run --conditions=browser src/index.ts generate > /dev/null)  # catches import cycles typecheck can't
 ```
 
-Because all new code lives in fork-owned directories, merges normally touch only the marked hooks above.
+Because all new code lives in fork-owned directories, merges normally touch only the marked hooks above. The enterprise packages depend on upstream's `effect`, `@opencode-ai/core` and `@kilocode/kilo-web-ui`, so an upstream change to those can surface as a typecheck error in them; the commands above catch it.
 
 ## CI: a decision for you
 

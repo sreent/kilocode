@@ -1,3 +1,4 @@
+// kilocode_change - new file (enterprise)
 import path from "path"
 import { Effect } from "effect"
 import type { Hooks, PluginInput } from "@kilocode/plugin"
