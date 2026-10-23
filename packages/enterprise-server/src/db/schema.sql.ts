@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core"
-import type { GatewayKind, ModelAccess, Policy, Role, StreamTarget } from "@enterprise/protocol/schema"
+import type { GatewayKind, ModelAccess, Policy, Role, SsoProtocol, StreamTarget } from "@enterprise/protocol/schema"
 
 const roles = sql`('owner', 'admin', 'member', 'billing_manager')`
 
@@ -152,21 +152,47 @@ export const DeviceTable = sqliteTable(
   (table) => [check("devices_status", sql`${table.status} in ('pending', 'approved', 'denied', 'consumed')`)],
 )
 
-export const SsoTable = sqliteTable("sso", {
-  org: text()
-    .primaryKey()
-    .references(() => OrgTable.id, { onDelete: "cascade" }),
-  issuer: text().notNull(),
-  client: text().notNull(),
-  // Sealed with ENTERPRISE_SECRET (AES-256-GCM); never stored in clear text.
-  secret: text().notNull(),
-  scopes: text().notNull(),
-  enforce: integer({ mode: "boolean" }).notNull().default(false),
-  provision: integer({ mode: "boolean" }).notNull().default(true),
-  updated: integer().notNull(),
-})
+// One single sign-on connection per org, OpenID Connect or SAML 2.0.
+export const SsoTable = sqliteTable(
+  "sso",
+  {
+    org: text()
+      .primaryKey()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    protocol: text().$type<SsoProtocol>().notNull().default("oidc"),
+    // OpenID Connect: the issuer URL. SAML: the identity provider's entity ID.
+    issuer: text().notNull(),
+    // OpenID Connect client. The secret is sealed with ENTERPRISE_SECRET (AES-256-GCM); never stored in clear text.
+    client: text(),
+    secret: text(),
+    scopes: text(),
+    // SAML: the identity provider's sign-in URL, its signing certificates (PEM), and whether it may
+    // start sign-ins itself (unsolicited responses).
+    entry: text(),
+    certificates: text({ mode: "json" }).$type<string[]>(),
+    unsolicited: integer({ mode: "boolean" }).notNull().default(false),
+    enforce: integer({ mode: "boolean" }).notNull().default(false),
+    provision: integer({ mode: "boolean" }).notNull().default(true),
+    updated: integer().notNull(),
+  },
+  (table) => [check("sso_protocol", sql`${table.protocol} in ('oidc', 'saml')`)],
+)
 
-// Pending OIDC sign-ins; single use.
+// SAML assertions already used to sign in, kept until they expire so a captured response can't be
+// replayed.
+export const AssertionTable = sqliteTable(
+  "saml_assertions",
+  {
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    id: text().notNull(),
+    expires: integer().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.org, table.id] }), index("saml_assertions_expires").on(table.expires)],
+)
+
+// Pending sign-ins; single use. For SAML, the nonce is the AuthnRequest ID the response must answer.
 export const LoginTable = sqliteTable("logins", {
   state: text().primaryKey(),
   org: text()

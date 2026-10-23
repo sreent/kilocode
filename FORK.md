@@ -150,10 +150,9 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 
 1. **LLM gateway, next steps.** The gateway relays Anthropic, OpenAI and OpenAI-compatible APIs today. Next: Bedrock, Vertex and Azure OpenAI upstreams, per-org price overrides for negotiated rates, rate limits, and request logging for audits.
 2. **Rebranding and distribution** (see above).
-3. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.
-4. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
-5. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
-6. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
-7. **Live policy reload** of the model list in running clients, without a restart.
-8. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
-9. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.
+3. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
+4. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
+5. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
+6. **Live policy reload** of the model list in running clients, without a restart.
+7. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
+8. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.

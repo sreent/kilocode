@@ -18,6 +18,7 @@ import {
 import * as Crypto from "./crypto"
 import { Database } from "./db/database"
 import {
+  AssertionTable,
   AuditTable,
   BudgetTable,
   DeviceTable,
@@ -43,7 +44,25 @@ export type User = typeof UserTable.$inferSelect
 export type Token = typeof TokenTable.$inferSelect
 export type Group = typeof GroupTable.$inferSelect
 export type Audit = typeof AuditTable.$inferSelect
-export type Sso = typeof SsoTable.$inferSelect
+// An org's single sign-on connection; the protocol decides which settings it carries.
+type Connection = { readonly enforce: boolean; readonly provision: boolean }
+export type OidcConnection = Connection & {
+  readonly protocol: "oidc"
+  readonly issuer: string
+  readonly client: string
+  // Sealed with ENTERPRISE_SECRET.
+  readonly secret: string
+  readonly scopes: string
+}
+export type SamlConnection = Connection & {
+  readonly protocol: "saml"
+  // The identity provider's entity ID, sign-in URL and signing certificates (PEM).
+  readonly issuer: string
+  readonly entry: string
+  readonly certificates: ReadonlyArray<string>
+  readonly unsolicited: boolean
+}
+export type Sso = (OidcConnection | SamlConnection) & { readonly org: string; readonly updated: number }
 export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
 export type Stream = typeof StreamTable.$inferSelect
 
@@ -266,13 +285,50 @@ const make = Effect.gen(function* () {
 
   const sso = {
     get: Effect.fn("Store.sso.get")(function* (orgID: string) {
-      return yield* db.select().from(SsoTable).where(eq(SsoTable.org, orgID)).get()
+      const row = yield* db.select().from(SsoTable).where(eq(SsoTable.org, orgID)).get()
+      if (!row) return undefined
+      const common = {
+        org: row.org,
+        issuer: row.issuer,
+        enforce: row.enforce,
+        provision: row.provision,
+        updated: row.updated,
+      }
+      const sso: Sso =
+        row.protocol === "saml"
+          ? {
+              ...common,
+              protocol: "saml",
+              entry: row.entry ?? "",
+              certificates: row.certificates ?? [],
+              unsolicited: row.unsolicited,
+            }
+          : {
+              ...common,
+              protocol: "oidc",
+              client: row.client ?? "",
+              secret: row.secret ?? "",
+              scopes: row.scopes ?? "openid email profile",
+            }
+      return sso
     }, Effect.orDie),
-    set: Effect.fn("Store.sso.set")(function* (
-      orgID: string,
-      input: { issuer: string; client: string; secret: string; scopes: string; enforce: boolean; provision: boolean },
-    ) {
-      const row = { ...input, updated: yield* now }
+    // One connection per org: saving one protocol's settings clears the other's.
+    set: Effect.fn("Store.sso.set")(function* (orgID: string, input: OidcConnection | SamlConnection) {
+      const oidc = input.protocol === "oidc" ? input : undefined
+      const saml = input.protocol === "saml" ? input : undefined
+      const row = {
+        protocol: input.protocol,
+        issuer: input.issuer,
+        client: oidc?.client ?? null,
+        secret: oidc?.secret ?? null,
+        scopes: oidc?.scopes ?? null,
+        entry: saml?.entry ?? null,
+        certificates: saml ? [...saml.certificates] : null,
+        unsolicited: saml?.unsolicited ?? false,
+        enforce: input.enforce,
+        provision: input.provision,
+        updated: yield* now,
+      }
       yield* db
         .insert(SsoTable)
         .values({ org: orgID, ...row })
@@ -280,6 +336,19 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     remove: Effect.fn("Store.sso.remove")(function* (orgID: string) {
       yield* db.delete(SsoTable).where(eq(SsoTable.org, orgID))
+    }, Effect.orDie),
+  }
+
+  // SAML assertions a sign-in used up. False when this one was already used.
+  const assertion = {
+    consume: Effect.fn("Store.assertion.consume")(function* (orgID: string, id: string, expires: number) {
+      const row = yield* db
+        .insert(AssertionTable)
+        .values({ org: orgID, id, expires })
+        .onConflictDoNothing()
+        .returning({ id: AssertionTable.id })
+        .get()
+      return row !== undefined
     }, Effect.orDie),
   }
 
@@ -740,12 +809,14 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
   }
 
-  // Housekeeping for short-lived rows: device codes, abandoned SSO logins, and audit history past
-  // retention. Without a retention the audit log is kept forever.
+  // Housekeeping for short-lived rows: device codes, abandoned SSO logins, used SAML assertions
+  // past their lifetime, and audit history past retention. Without a retention the audit log is
+  // kept forever.
   const sweep = Effect.fn("Store.sweep")(function* (retention: number | undefined) {
     const time = yield* now
     yield* db.delete(DeviceTable).where(lt(DeviceTable.expires, time - day))
     yield* db.delete(LoginTable).where(lt(LoginTable.created, time - day))
+    yield* db.delete(AssertionTable).where(lt(AssertionTable.expires, time))
     if (retention == null) return 0
     return yield* audit.prune(time - retention)
   }, Effect.orDie)
@@ -1093,6 +1164,7 @@ const make = Effect.gen(function* () {
     user,
     member,
     sso,
+    assertion,
     device,
     login,
     invite,

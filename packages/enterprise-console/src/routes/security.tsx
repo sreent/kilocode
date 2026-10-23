@@ -1,16 +1,19 @@
-import { Show, createResource, createSignal } from "solid-js"
+import { For, Show, createResource, createSignal } from "solid-js"
 import { Button } from "@kilocode/kilo-web-ui/button"
 import { Tag } from "@kilocode/kilo-web-ui/tag"
+import type { SsoProtocol } from "@enterprise/protocol/schema"
 import { call } from "../api"
 import { useOrg } from "../context"
-import { when } from "../format"
+import { date, when } from "../format"
 import { attempt, confirm } from "../components/feedback"
-import { TextInput, Toggle } from "../components/form"
+import { Choice, TextArea, TextInput, Toggle } from "../components/form"
 import { Failure, Loading, Page, Panel } from "../components/page"
 import { Copyable, Secret } from "../components/secret"
 import { DataTable } from "../components/table"
 
 type Sso = Awaited<ReturnType<typeof getSso>>
+
+const day = 24 * 60 * 60 * 1000
 
 const getSso = (org: string) => call((api) => api["enterprise.identity"]["sso.get"]({ params: { org } }))
 
@@ -20,7 +23,7 @@ export function Security() {
   return (
     <Page
       title="Single sign-on and SCIM"
-      description="Connect your identity provider: people sign in with OpenID Connect, and SCIM keeps members and groups in sync."
+      description="Connect your identity provider: people sign in with OpenID Connect or SAML 2.0, and SCIM keeps members and groups in sync."
     >
       <Show when={!sso.error} fallback={<Failure error={sso.error} />}>
         <Show when={sso()} keyed fallback={<Loading />}>
@@ -37,38 +40,74 @@ export function Security() {
   )
 }
 
+const protocols = [
+  { value: "oidc", label: "OpenID Connect" },
+  { value: "saml", label: "SAML 2.0" },
+] satisfies ReadonlyArray<{ value: SsoProtocol; label: string }>
+
+const named = (protocol: SsoProtocol) => (protocol === "saml" ? "SAML 2.0" : "OpenID Connect")
+
 function SingleSignOn(props: { current: Sso; saved: () => void }) {
   const scope = useOrg()
+  const [protocol, setProtocol] = createSignal<SsoProtocol>(props.current.protocol ?? "oidc")
+  // OpenID Connect
   const [issuer, setIssuer] = createSignal(props.current.issuer ?? "")
   const [client, setClient] = createSignal(props.current.client_id ?? "")
   const [secret, setSecret] = createSignal("")
   const [scopes, setScopes] = createSignal(props.current.scopes ?? "openid email profile")
+  // SAML 2.0
+  const [metadata, setMetadata] = createSignal("")
+  const [entity, setEntity] = createSignal(props.current.saml?.entity_id ?? "")
+  const [entry, setEntry] = createSignal(props.current.saml?.sso_url ?? "")
+  const [certificate, setCertificate] = createSignal("")
+  const [initiated, setInitiated] = createSignal(props.current.saml?.idp_initiated ?? false)
   const [enforce, setEnforce] = createSignal(props.current.enforce)
   const [provision, setProvision] = createSignal(props.current.provision ?? true)
   const [busy, setBusy] = createSignal(false)
+  // Whether the protocol shown is the one saved; the other one's secrets and certificates are not kept.
+  const saved = () => props.current.configured && props.current.protocol === protocol()
+
+  const saml = () =>
+    call((api) =>
+      api["enterprise.identity"]["sso.saml"]({
+        params: { org: scope.slug() },
+        payload: {
+          ...(metadata().trim() ? { metadata: metadata().trim() } : {}),
+          ...(entity().trim() ? { entity_id: entity().trim() } : {}),
+          ...(entry().trim() ? { sso_url: entry().trim() } : {}),
+          ...(certificate().trim() ? { certificate: certificate().trim() } : {}),
+          idp_initiated: initiated(),
+          enforce: enforce(),
+          provision: provision(),
+        },
+      }),
+    )
+
+  const oidc = () =>
+    call((api) =>
+      api["enterprise.identity"]["sso.update"]({
+        params: { org: scope.slug() },
+        payload: {
+          issuer: issuer().trim(),
+          client_id: client().trim(),
+          ...(secret() ? { client_secret: secret() } : {}),
+          scopes: scopes().trim(),
+          enforce: enforce(),
+          provision: provision(),
+        },
+      }),
+    )
 
   const save = async (event: SubmitEvent) => {
     event.preventDefault()
     setBusy(true)
-    const ok = await attempt(
-      () =>
-        call((api) =>
-          api["enterprise.identity"]["sso.update"]({
-            params: { org: scope.slug() },
-            payload: {
-              issuer: issuer().trim(),
-              client_id: client().trim(),
-              ...(secret() ? { client_secret: secret() } : {}),
-              scopes: scopes().trim(),
-              enforce: enforce(),
-              provision: provision(),
-            },
-          }),
-        ),
-      "Single sign-on saved",
-    ).finally(() => setBusy(false))
+    const ok = await attempt(() => (protocol() === "saml" ? saml() : oidc()), "Single sign-on saved").finally(() =>
+      setBusy(false),
+    )
     if (!ok) return
     setSecret("")
+    setMetadata("")
+    setCertificate("")
     props.saved()
   }
 
@@ -76,41 +115,146 @@ function SingleSignOn(props: { current: Sso; saved: () => void }) {
     <Panel
       title={
         <span class="title-with-tag">
-          OpenID Connect
-          <Show when={props.current.configured} fallback={<Tag>Not configured</Tag>}>
-            <Tag tone="success">Configured</Tag>
+          Single sign-on
+          <Show when={props.current.protocol} fallback={<Tag>Not configured</Tag>}>
+            {(current) => <Tag tone="success">{named(current())}</Tag>}
           </Show>
         </span>
       }
-      description="Register the redirect URI with your identity provider, then enter the issuer and client it gives you."
+      description="People sign in to the console, the CLI and the IDEs through your identity provider."
     >
       <form class="ui-form" onSubmit={save}>
-        <div class="grid-2">
-          <Copyable label="Redirect URI" value={props.current.redirect_uri} />
-          <Copyable label="Sign-in URL" value={props.current.login_url} />
-        </div>
-        <TextInput
-          label="Issuer"
-          type="url"
-          placeholder="https://login.example.com"
-          value={issuer()}
-          onValue={setIssuer}
-          required
+        <Choice
+          label="Protocol"
+          value={protocol()}
+          options={protocols}
+          onValue={setProtocol}
+          hint={
+            props.current.protocol && !saved()
+              ? `Saving replaces the ${named(props.current.protocol)} connection.`
+              : undefined
+          }
         />
-        <div class="grid-2">
-          <TextInput label="Client ID" value={client()} onValue={setClient} required autocomplete="off" />
-          <TextInput
-            label="Client secret"
-            type="password"
-            autocomplete="new-password"
-            placeholder={props.current.configured ? "Unchanged" : ""}
-            hint={props.current.configured ? "Leave empty to keep the current secret." : undefined}
-            value={secret()}
-            onValue={setSecret}
-            required={!props.current.configured}
+        <Show
+          when={protocol() === "saml"}
+          fallback={
+            <>
+              <div class="grid-2">
+                <Copyable label="Redirect URI" value={props.current.redirect_uri} />
+                <Copyable label="Sign-in URL" value={props.current.login_url} />
+              </div>
+              <TextInput
+                label="Issuer"
+                type="url"
+                placeholder="https://login.example.com"
+                value={issuer()}
+                onValue={setIssuer}
+                required
+              />
+              <div class="grid-2">
+                <TextInput label="Client ID" value={client()} onValue={setClient} required autocomplete="off" />
+                <TextInput
+                  label="Client secret"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder={saved() ? "Unchanged" : ""}
+                  hint={saved() ? "Leave empty to keep the current secret." : undefined}
+                  value={secret()}
+                  onValue={setSecret}
+                  required={!saved()}
+                />
+              </div>
+              <TextInput label="Scopes" hint="Must include openid." value={scopes()} onValue={setScopes} required />
+            </>
+          }
+        >
+          <div class="grid-2">
+            <Copyable
+              label="Entity ID (audience)"
+              value={props.current.service_provider.entity_id}
+              hint="Okta: Audience URI. Entra ID: Identifier."
+            />
+            <Copyable
+              label="ACS URL"
+              value={props.current.service_provider.acs_url}
+              hint="Okta: Single sign-on URL. Entra ID: Reply URL."
+            />
+            <Copyable
+              label="Metadata URL"
+              value={props.current.service_provider.metadata_url}
+              hint="For identity providers that import both from here."
+            />
+            <Copyable
+              label="Sign-in URL"
+              value={props.current.login_url}
+              hint="Where people start; the console's sign-in page uses it."
+            />
+          </div>
+          <TextArea
+            label="Identity provider metadata"
+            rows={4}
+            class="mono-field"
+            placeholder={'<md:EntityDescriptor entityID="…">'}
+            hint="Paste the metadata XML from your identity provider. It fills in the settings below; what you type there wins."
+            value={metadata()}
+            onValue={setMetadata}
           />
-        </div>
-        <TextInput label="Scopes" hint="Must include openid." value={scopes()} onValue={setScopes} required />
+          <div class="grid-2">
+            <TextInput
+              label="Identity provider entity ID"
+              placeholder="https://idp.example.com/saml"
+              hint="Also called the issuer."
+              value={entity()}
+              onValue={setEntity}
+              autocomplete="off"
+            />
+            <TextInput
+              label="Identity provider sign-in URL"
+              type="url"
+              placeholder="https://idp.example.com/sso/saml"
+              hint="Where sign-in requests go (HTTP-Redirect binding)."
+              value={entry()}
+              onValue={setEntry}
+            />
+          </div>
+          <TextArea
+            label="Signing certificate"
+            rows={3}
+            class="mono-field"
+            placeholder="-----BEGIN CERTIFICATE-----"
+            hint={
+              saved()
+                ? "Leave empty to keep the certificates below. While your identity provider rotates its key, paste both."
+                : "PEM. While your identity provider rotates its key, paste both certificates."
+            }
+            value={certificate()}
+            onValue={setCertificate}
+          />
+          <Show when={saved() && props.current.saml}>
+            {(current) => (
+              <div class="ui-field stack">
+                <span>Certificates in use</span>
+                <For each={current().certificates}>
+                  {(cert) => (
+                    <span class="title-with-tag">
+                      <span class="mono truncate" title={cert.fingerprint}>
+                        {cert.subject}
+                      </span>
+                      <Show
+                        when={cert.expires > Date.now()}
+                        fallback={<Tag tone="critical">Expired {date(cert.expires)}</Tag>}
+                      >
+                        <Tag tone={cert.expires - Date.now() < 30 * day ? "warning" : "neutral"}>
+                          Expires {date(cert.expires)}
+                        </Tag>
+                      </Show>
+                    </span>
+                  )}
+                </For>
+              </div>
+            )}
+          </Show>
+        </Show>
         <div class="grid-2">
           <Toggle
             label="Require single sign-on"
@@ -124,6 +268,14 @@ function SingleSignOn(props: { current: Sso; saved: () => void }) {
             checked={provision()}
             onChange={setProvision}
           />
+          <Show when={protocol() === "saml"}>
+            <Toggle
+              label="Allow sign-in from the identity provider"
+              description="People can also start from your identity provider's app list. Such sign-ins can't be tied to a request from this server, so leave it off unless you need it."
+              checked={initiated()}
+              onChange={setInitiated}
+            />
+          </Show>
         </div>
         <div class="form-actions">
           <Show when={props.current.configured}>

@@ -343,15 +343,38 @@ export function instant(value: string | undefined, fallback: number) {
 
 // ---- identity: SSO, domains, SCIM tokens --------------------------------------------------
 
+export const SsoProtocol = Schema.Literals(["oidc", "saml"])
+export type SsoProtocol = typeof SsoProtocol.Type
+
+export const SamlCertificate = Schema.Struct({
+  subject: Schema.String,
+  // SHA-256 of the DER certificate, as colon-separated hex.
+  fingerprint: Schema.String,
+  expires: Time,
+})
+
 export const Sso = Schema.Struct({
   configured: Schema.Boolean,
+  protocol: Schema.NullOr(SsoProtocol),
+  // OpenID Connect.
   issuer: Schema.NullOr(Schema.String),
   client_id: Schema.NullOr(Schema.String),
   scopes: Schema.NullOr(Schema.String),
+  // SAML 2.0: the identity provider's entity ID, sign-in URL and signing certificates.
+  saml: Schema.NullOr(
+    Schema.Struct({
+      entity_id: Schema.String,
+      sso_url: Schema.String,
+      certificates: Schema.Array(SamlCertificate),
+      idp_initiated: Schema.Boolean,
+    }),
+  ),
   enforce: Schema.Boolean,
   provision: Schema.NullOr(Schema.Boolean),
   redirect_uri: Schema.String,
   login_url: Schema.String,
+  // What a SAML identity provider needs to know about this server.
+  service_provider: Schema.Struct({ entity_id: Schema.String, acs_url: Schema.String, metadata_url: Schema.String }),
 })
 
 export const SsoInput = Schema.Struct({
@@ -359,6 +382,19 @@ export const SsoInput = Schema.Struct({
   client_id: Text,
   client_secret: Schema.optional(Text),
   scopes: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed("openid email profile"))),
+  enforce: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  provision: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+})
+
+// Either the identity provider's metadata XML, or its entity ID, sign-in URL and certificate.
+export const SamlInput = Schema.Struct({
+  metadata: Schema.optional(Text),
+  entity_id: Schema.optional(Text),
+  sso_url: Schema.optional(Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/))),
+  // One or more PEM certificates; more than one while the identity provider rotates its key.
+  certificate: Schema.optional(Text),
+  // Accept sign-ins the identity provider starts (an app tile), not only ones started here.
+  idp_initiated: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   enforce: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   provision: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
 })

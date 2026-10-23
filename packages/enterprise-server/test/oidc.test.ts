@@ -105,10 +105,18 @@ describe("sso configuration", () => {
     expect(bad.status).toBe(400)
     const ok = await configured()
     const row = (await ok.store.sso.get(ok.owner.org.id))!
-    expect(row.secret.startsWith("v1.")).toBe(true)
-    expect(row.secret).not.toContain(idp.client.secret)
+    const secret = row.protocol === "oidc" ? row.secret : ""
+    expect(secret.startsWith("v1.")).toBe(true)
+    expect(secret).not.toContain(idp.client.secret)
     const view = await ok.call("GET", "/api/v1/orgs/acme/sso", { token: ok.owner.token })
-    expect(view.data).toMatchObject({ configured: true, issuer: idp.issuer, client_id: idp.client.id, enforce: false })
+    expect(view.data).toMatchObject({
+      configured: true,
+      protocol: "oidc",
+      issuer: idp.issuer,
+      client_id: idp.client.id,
+      saml: null,
+      enforce: false,
+    })
     expect(JSON.stringify(view.data)).not.toContain(idp.client.secret)
   })
 
@@ -135,7 +143,7 @@ describe("browser sign-in", () => {
     const me = await env.call("GET", "/api/v1/me", { headers: { cookie: `ent_session=${session}` } })
     expect(me.data.user.email).toBe("owner@acme.com")
     const logins = await env.store.audit.query({ org: env.owner.org.id, actions: ["user.login"], limit: 5 })
-    expect(logins[0].details).toEqual({ method: "sso", device: false })
+    expect(logins[0].details).toEqual({ method: "sso", protocol: "oidc", device: false })
   })
 
   test("strangers are refused; verified-domain users are provisioned just in time", async () => {

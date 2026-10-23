@@ -34,6 +34,7 @@ import {
   Slug,
   Sso,
   SsoInput,
+  SamlInput,
   StoredMode,
   StreamTest,
   Suborg,
@@ -393,6 +394,14 @@ export const IdentityGroup = HttpApiGroup.make("enterprise.identity")
     HttpApiEndpoint.put("sso.update", "/api/v1/orgs/:org/sso", {
       params: org,
       payload: SsoInput,
+      success: Schema.Struct({ ok: Schema.Literal(true) }),
+      error: failures,
+    }).annotate(Requires, "sso.write"),
+  )
+  .add(
+    HttpApiEndpoint.put("sso.saml", "/api/v1/orgs/:org/sso/saml", {
+      params: org,
+      payload: SamlInput,
       success: Schema.Struct({ ok: Schema.Literal(true) }),
       error: failures,
     }).annotate(Requires, "sso.write"),

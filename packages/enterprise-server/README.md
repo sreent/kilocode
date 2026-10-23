@@ -9,7 +9,7 @@ It is part of this fork, not of upstream Kilo Code. Upstream's enterprise featur
 | Area | Details |
 |---|---|
 | Organizations | Owner, admin, member and billing manager roles; one level of sub-organizations whose parent owners, admins and billing managers get access without a seat |
-| Sign-in | OIDC single sign-on (discovery, PKCE, nonce, JWKS-verified ID tokens); RFC 8628 device flow for the CLI and IDEs; invite links; admin-issued tokens for orgs without SSO |
+| Sign-in | Single sign-on with OpenID Connect (discovery, PKCE, nonce, JWKS-verified ID tokens) or SAML 2.0 (signed responses, metadata import, optional IdP-initiated sign-in); RFC 8628 device flow for the CLI and IDEs; invite links; admin-issued tokens for orgs without SSO |
 | Provisioning | Verified-domain just-in-time provisioning; SCIM 2.0 `Users` and `Groups`, handling the request quirks Okta and Entra ID are known for (string booleans, PATCH with and without paths). Not yet validated against live IdP tenants |
 | Model access | Org-wide denylist ceiling, default policy and group grants (`all`, `selected`, `none`); effective access = ceiling ∩ (default ∪ group grants) |
 | MCP controls | Open or allowlist mode, blocklist, matched on the server URL or command line; org-provided servers pushed to every client |
@@ -104,10 +104,25 @@ See [FORK.md](../../FORK.md) for exactly where the client enforces each policy.
 
 ## Single sign-on
 
+Each org connects one identity provider, with OpenID Connect or SAML 2.0. People sign in to the console with it, and approve CLI and IDE device logins with it.
+
+### OpenID Connect
+
 1. Set `ENTERPRISE_SECRET` on the server.
 2. Register an OIDC web application with your identity provider (Okta, Entra ID, Google Workspace, Auth0, Keycloak, …). Redirect URI: `https://<server>/sso/callback`. Grant type: authorization code. Scopes: `openid email profile`.
-3. In the admin console under Identity → Single sign-on and SCIM, enter the issuer URL, client ID and client secret. The server checks the issuer's discovery document before saving.
-4. Optionally add and verify your email domain (a DNS TXT record) so people from that domain join automatically as members on first sign-in, and turn on "Require single sign-on" to disable invite links and admin-issued tokens for that org.
+3. In the admin console under Identity → Single sign-on and SCIM, choose OpenID Connect and enter the issuer URL, client ID and client secret. The server checks the issuer's discovery document before saving.
+
+### SAML 2.0
+
+1. In the admin console under Identity → Single sign-on and SCIM, choose SAML 2.0. The page shows what to register at your identity provider: the entity ID (`https://<server>/sso/saml/<org-slug>`, Okta's "Audience URI", Entra ID's "Identifier") and the ACS URL (`…/acs`, Okta's "Single sign-on URL", Entra ID's "Reply URL"). Identity providers that import service provider metadata can take `…/metadata` instead.
+2. Have the identity provider send the person's email address, either as the NameID (email format) or as an `email`, `mail` or `…/claims/emailaddress` attribute. A display name (`displayName`, or `givenName` and `sn`) is optional.
+3. Paste the identity provider's metadata XML into the console, or enter its entity ID, sign-in URL (HTTP-Redirect binding) and signing certificate. While the identity provider rotates its key, give both certificates.
+
+The server accepts a response only if the identity provider signed it (the whole response or the assertion), it names the configured entity ID as its issuer, its audience is this org's entity ID, it is at most 10 minutes old, and it answers a sign-in this server started; each assertion works once. Sign-ins started from the identity provider's app list (IdP-initiated) are refused unless the org turns on "Allow sign-in from the identity provider": such a response answers no request from this server, so only its signature, lifetime and the one-use rule protect it. Encrypted assertions and single logout are not supported.
+
+### Both
+
+Optionally add and verify your email domain (a DNS TXT record) so people from that domain join automatically as members on first sign-in, and turn on "Require single sign-on" to disable invite links and admin-issued tokens for that org.
 
 Sign-in URL for people: `https://<server>/sso/<org-slug>/start`.
 
@@ -210,7 +225,8 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 | `/api/v1/orgs/{org}/budgets` | Budgets |
 | `/api/v1/orgs/{org}/gateway`, `/gateway/providers/{id}` | LLM gateway providers (keys are write-only) |
 | `/gateway/{provider}/...` | The gateway itself; speaks each provider's own API, with an enterprise token as the API key |
-| `/api/v1/orgs/{org}/sso`, `/domains`, `/scim/tokens` | Identity configuration |
+| `/api/v1/orgs/{org}/sso`, `/sso/saml`, `/domains`, `/scim/tokens` | Identity configuration: `PUT /sso` saves OpenID Connect, `PUT /sso/saml` saves SAML 2.0 |
+| `/sso/saml/{org}/metadata`, `/sso/saml/{org}/acs` | SAML service provider metadata, and where the identity provider posts responses |
 | `/api/v1/orgs/{org}/suborgs` | Sub-organizations |
 | `/scim/v2/...` | SCIM 2.0 |
 | `GET /healthz` | Liveness |
@@ -222,6 +238,7 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 - Deactivating a user revokes all of their tokens at once. Suspended memberships grant nothing.
 - SSO client secrets, gateway API keys, and audit streams' signing secrets and headers are encrypted at rest. The API never returns them; for a gateway key it shows only the last four characters. The gateway relays only its providers' chat endpoints and never follows upstream redirects, so an org key cannot be used for anything else or sent to another host.
 - Invite and device codes are single-use, and device codes expire after 10 minutes.
+- SAML responses must be signed by the org's identity provider and name it as their issuer: the server checks the issuer itself, so an identity provider that signs for several tenants with one key can't sign in for another org. Assertions are remembered until they expire, so a captured response can't be replayed.
 - The browser session cookie is `HttpOnly`, `Secure` on HTTPS, and `SameSite=Lax`. Every cookie-authenticated write must carry a same-origin `Origin` header.
 - The admin console is served with a strict Content Security Policy and renders all data as text.
 - CSV exports neutralise spreadsheet formulas.
@@ -233,7 +250,7 @@ The CLI enforces policy on the developer's machine. That stops honest mistakes a
 ## Development
 
 ```sh
-bun test                    # unit and integration tests, including a real local OIDC provider
+bun test                    # unit and integration tests, including a local OIDC provider and SAML-signed responses
 bun run typecheck
 bun run migration           # after changing src/db/schema.sql.ts; --check fails when one is missing
 bun run build               # dist/enterprise-server with the console embedded

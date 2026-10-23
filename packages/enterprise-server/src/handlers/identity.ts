@@ -6,6 +6,7 @@ import { Membership } from "@enterprise/protocol/middleware"
 import * as Crypto from "../crypto"
 import { ServerConfig } from "../config"
 import { Oidc } from "../oidc"
+import * as Saml from "../saml"
 import { RequestContext } from "../request"
 import { Store } from "../store"
 
@@ -24,15 +25,27 @@ export const IdentityHandler = HttpApiBuilder.group(Api, "enterprise.identity", 
         Effect.fn(function* () {
           const scope = yield* Membership
           const row = yield* store.sso.get(scope.org.id)
+          const oidc = row?.protocol === "oidc" ? row : undefined
+          const saml = row?.protocol === "saml" ? row : undefined
           return {
             configured: row != null,
-            issuer: row?.issuer ?? null,
-            client_id: row?.client ?? null,
-            scopes: row?.scopes ?? null,
+            protocol: row?.protocol ?? null,
+            issuer: oidc?.issuer ?? null,
+            client_id: oidc?.client ?? null,
+            scopes: oidc?.scopes ?? null,
+            saml: saml
+              ? {
+                  entity_id: saml.issuer,
+                  sso_url: saml.entry,
+                  certificates: saml.certificates.map(Saml.describe),
+                  idp_initiated: saml.unsolicited,
+                }
+              : null,
             enforce: row?.enforce ?? false,
             provision: row ? row.provision : null,
             redirect_uri: `${config.base}/sso/callback`,
             login_url: `${config.base}/sso/${scope.org.slug}/start`,
+            service_provider: Saml.provider(config.base, scope.org.slug),
           }
         }),
       )
@@ -48,7 +61,8 @@ export const IdentityHandler = HttpApiBuilder.group(Api, "enterprise.identity", 
           if (!input.scopes.split(/\s+/).includes("openid"))
             return yield* new InvalidRequestError({ message: "scopes must include openid" })
           const current = yield* store.sso.get(scope.org.id)
-          if (!current && !input.client_secret)
+          const existing = current?.protocol === "oidc" ? current : undefined
+          if (!existing && !input.client_secret)
             return yield* new InvalidRequestError({ message: "client_secret is required" })
           // Fail fast on a typo'd issuer instead of at the first user's login.
           yield* oidc
@@ -57,19 +71,51 @@ export const IdentityHandler = HttpApiBuilder.group(Api, "enterprise.identity", 
               Effect.mapError((error) => new InvalidRequestError({ message: `cannot reach issuer: ${error.message}` })),
             )
           yield* store.sso.set(scope.org.id, {
+            protocol: "oidc",
             issuer: input.issuer,
             client: input.client_id,
-            secret: input.client_secret ? yield* Crypto.seal(config.secret, input.client_secret) : current!.secret,
+            secret: input.client_secret ? yield* Crypto.seal(config.secret, input.client_secret) : existing!.secret,
             scopes: input.scopes,
             enforce: input.enforce,
             provision: input.provision,
           })
           yield* audit("sso.update", scope.org.id, {
+            protocol: "oidc",
             issuer: input.issuer,
             client_id: input.client_id,
             enforce: input.enforce,
             provision: input.provision,
             secret_rotated: input.client_secret != null,
+          })
+          return { ok: true as const }
+        }),
+      )
+      .handle(
+        "sso.saml",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const input = ctx.payload
+          const current = yield* store.sso.get(scope.org.id)
+          const parsed = yield* Saml.settings(input, current?.protocol === "saml" ? current : undefined).pipe(
+            Effect.mapError((error) => new InvalidRequestError({ message: error.message })),
+          )
+          yield* store.sso.set(scope.org.id, {
+            protocol: "saml",
+            issuer: parsed.entity,
+            entry: parsed.entry,
+            certificates: parsed.certificates,
+            unsolicited: input.idp_initiated,
+            enforce: input.enforce,
+            provision: input.provision,
+          })
+          yield* audit("sso.update", scope.org.id, {
+            protocol: "saml",
+            entity_id: parsed.entity,
+            sso_url: parsed.entry,
+            certificates: parsed.certificates.map((pem) => Saml.describe(pem).fingerprint),
+            idp_initiated: input.idp_initiated,
+            enforce: input.enforce,
+            provision: input.provision,
           })
           return { ok: true as const }
         }),

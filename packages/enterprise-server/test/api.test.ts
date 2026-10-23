@@ -192,6 +192,7 @@ describe("invites", () => {
   test("orgs that enforce SSO refuse invite links and admin-issued tokens", async () => {
     const env = await setup()
     await env.store.sso.set(env.owner.org.id, {
+      protocol: "oidc",
       issuer: "https://idp.example.com",
       client: "c",
       secret: "s",

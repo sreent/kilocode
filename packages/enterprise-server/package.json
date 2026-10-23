@@ -25,8 +25,10 @@
   },
   "dependencies": {
     "@enterprise/protocol": "workspace:*",
+    "@node-saml/node-saml": "5.1.0",
     "@opencode-ai/core": "workspace:*",
     "@opencode-ai/effect-drizzle-sqlite": "workspace:*",
+    "@xmldom/xmldom": "0.8.15",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "jose": "6.2.8"
@@ -36,6 +38,7 @@
     "@types/bun": "catalog:",
     "@typescript/native-preview": "catalog:",
     "drizzle-kit": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "xml-crypto": "6.4.0"
   }
 }

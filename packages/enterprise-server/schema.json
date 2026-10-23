@@ -1,11 +1,15 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "40f747bf-7c09-447f-b50b-ab79dd3c8ef1",
+  "id": "5c08744a-4b55-4de8-bfb6-a82bb30c5b4b",
   "prevIds": [
-    "00b34581-c536-4eab-8032-cfc0e9a2f711"
+    "40f747bf-7c09-447f-b50b-ab79dd3c8ef1"
   ],
   "ddl": [
+    {
+      "name": "saml_assertions",
+      "entityType": "tables"
+    },
     {
       "name": "audit",
       "entityType": "tables"
@@ -77,6 +81,36 @@
     {
       "name": "users",
       "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "org",
+      "entityType": "columns",
+      "table": "saml_assertions"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "saml_assertions"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires",
+      "entityType": "columns",
+      "table": "saml_assertions"
     },
     {
       "type": "integer",
@@ -912,6 +946,16 @@
       "type": "text",
       "notNull": true,
       "autoincrement": false,
+      "default": "'oidc'",
+      "generated": null,
+      "name": "protocol",
+      "entityType": "columns",
+      "table": "sso"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
       "default": null,
       "generated": null,
       "name": "issuer",
@@ -920,7 +964,7 @@
     },
     {
       "type": "text",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -930,7 +974,7 @@
     },
     {
       "type": "text",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -940,11 +984,41 @@
     },
     {
       "type": "text",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
       "name": "scopes",
+      "entityType": "columns",
+      "table": "sso"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "entry",
+      "entityType": "columns",
+      "table": "sso"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "certificates",
+      "entityType": "columns",
+      "table": "sso"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "name": "unsolicited",
       "entityType": "columns",
       "table": "sso"
     },
@@ -1469,6 +1543,21 @@
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
+      "name": "fk_saml_assertions_org_orgs_id_fk",
+      "entityType": "fks",
+      "table": "saml_assertions"
+    },
+    {
+      "columns": [
+        "org"
+      ],
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
       "name": "fk_budgets_org_orgs_id_fk",
       "entityType": "fks",
       "table": "budgets"
@@ -1791,6 +1880,16 @@
     {
       "columns": [
         "org",
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "saml_assertions_pk",
+      "entityType": "pks",
+      "table": "saml_assertions"
+    },
+    {
+      "columns": [
+        "org",
         "scope",
         "target",
         "period"
@@ -1956,6 +2055,20 @@
       "name": "users_pk",
       "table": "users",
       "entityType": "pks"
+    },
+    {
+      "columns": [
+        {
+          "value": "expires",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "saml_assertions_expires",
+      "entityType": "indexes",
+      "table": "saml_assertions"
     },
     {
       "columns": [
@@ -2187,6 +2300,12 @@
       "name": "members_role",
       "entityType": "checks",
       "table": "members"
+    },
+    {
+      "value": "\"protocol\" in ('oidc', 'saml')",
+      "name": "sso_protocol",
+      "entityType": "checks",
+      "table": "sso"
     },
     {
       "value": "\"kind\" in ('user', 'scim')",
