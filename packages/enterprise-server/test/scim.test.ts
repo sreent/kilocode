@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { setup } from "./fixture"
 
 async function scim() {
-  const env = setup()
+  const env = await setup()
   const created = await env.call("POST", "/api/v1/orgs/acme/scim/tokens", {
     token: env.owner.token,
     body: { name: "okta" },
@@ -64,18 +64,20 @@ describe("scim users", () => {
     const dup = await env.scim("POST", "/Users", alice)
     expect(dup.status).toBe(409)
     expect(dup.data.scimType).toBe("uniqueness")
-    expect(env.store.member.role(env.owner.org.id, created.data.id)?.role).toBe("member")
+    expect((await env.store.member.role(env.owner.org.id, created.data.id))?.role).toBe("member")
   })
 
   test("Entra-style string booleans suspend and restore access in this org", async () => {
     const env = await scim()
     const created = await env.scim("POST", "/Users", alice)
-    const token = env.store.token.issue({
-      kind: "user",
-      user: created.data.id,
-      org: env.owner.org.id,
-      name: "cli",
-    }).value
+    const token = (
+      await env.store.token.issue({
+        kind: "user",
+        user: created.data.id,
+        org: env.owner.org.id,
+        name: "cli",
+      })
+    ).value
     expect((await env.call("GET", "/api/v1/orgs/acme", { token })).status).toBe(200)
     const off = await env.scim("PATCH", `/Users/${created.data.id}`, {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -92,8 +94,7 @@ describe("scim users", () => {
     })
     expect(on.data.active).toBe(true)
     expect((await env.call("GET", "/api/v1/orgs/acme", { token })).status).toBe(200)
-    const actions = env.store.audit
-      .query({ org: env.owner.org.id, limit: 20 })
+    const actions = (await env.store.audit.query({ org: env.owner.org.id, limit: 20 }))
       .map((event) => event.action)
       .filter((action) => action.startsWith("scim.user"))
     expect(actions).toEqual([
@@ -126,37 +127,39 @@ describe("scim users", () => {
 
   test("never rewrites the identity of someone another org depends on", async () => {
     const env = await scim()
-    const other = env.store.org.create({ name: "Globex", slug: "globex" })
-    const shared = env.store.user.ensure({ email: "shared@acme.com", name: "Shared" })
-    env.store.member.add(other.id, shared.id, "owner")
+    const other = await env.store.org.create({ name: "Globex", slug: "globex" })
+    const shared = await env.store.user.ensure({ email: "shared@acme.com", name: "Shared" })
+    await env.store.member.add(other.id, shared.id, "owner")
     const created = await env.scim("POST", "/Users", { userName: "shared@acme.com", displayName: "Renamed by Acme" })
     expect(created.status).toBe(201)
     await env.scim("PATCH", `/Users/${created.data.id}`, {
       Operations: [{ op: "replace", path: "userName", value: "hijack@evil.com" }],
     })
-    expect(env.store.user.get(shared.id)).toMatchObject({ email: "shared@acme.com", name: "Shared" })
+    expect(await env.store.user.get(shared.id)).toMatchObject({ email: "shared@acme.com", name: "Shared" })
   })
 
   test("DELETE removes the membership and deactivates people left with none", async () => {
     const env = await scim()
     const created = await env.scim("POST", "/Users", alice)
-    const token = env.store.token.issue({
-      kind: "user",
-      user: created.data.id,
-      org: env.owner.org.id,
-      name: "cli",
-    }).value
+    const token = (
+      await env.store.token.issue({
+        kind: "user",
+        user: created.data.id,
+        org: env.owner.org.id,
+        name: "cli",
+      })
+    ).value
     expect((await env.scim("DELETE", `/Users/${created.data.id}`)).status).toBe(204)
     expect((await env.scim("GET", `/Users/${created.data.id}`)).status).toBe(404)
-    expect(env.store.user.get(created.data.id)?.active).toBe(0)
-    expect(env.store.token.verify(token)).toBeUndefined()
+    expect((await env.store.user.get(created.data.id))?.active).toBe(false)
+    expect(await env.store.token.verify(token)).toBeUndefined()
   })
 
   test("only sees users provisioned into its own org", async () => {
     const env = await scim()
-    const other = env.store.org.create({ name: "Globex", slug: "globex" })
-    const outsider = env.store.user.ensure({ email: "outsider@globex.com" })
-    env.store.member.add(other.id, outsider.id, "member")
+    const other = await env.store.org.create({ name: "Globex", slug: "globex" })
+    const outsider = await env.store.user.ensure({ email: "outsider@globex.com" })
+    await env.store.member.add(other.id, outsider.id, "member")
     expect((await env.scim("GET", `/Users/${outsider.id}`)).status).toBe(404)
     expect((await env.scim("DELETE", `/Users/${outsider.id}`)).status).toBe(404)
   })
@@ -212,5 +215,27 @@ describe("scim groups", () => {
     const res = await env.scim("GET", `/Users?filter=${encodeURIComponent('name.familyName co "x"')}`)
     expect(res.status).toBe(400)
     expect(res.data.scimType).toBe("invalidFilter")
+  })
+})
+
+describe("scim errors", () => {
+  test("malformed and invalid bodies answer in SCIM's error format", async () => {
+    const env = await scim()
+    const raw = await env.server.request("/scim/v2/Users", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.token}`, "content-type": "application/scim+json" },
+      body: "{",
+    })
+    expect(raw.status).toBe(400)
+    expect(raw.headers.get("content-type")).toContain("application/scim+json")
+    expect((await raw.json()).scimType).toBe("invalidSyntax")
+    const invalid = await env.scim("POST", "/Users", { userName: "" })
+    expect(invalid.status).toBe(400)
+    expect(invalid.data).toMatchObject({
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+      status: "400",
+      scimType: "invalidValue",
+    })
+    expect(invalid.data._tag).toBeUndefined()
   })
 })

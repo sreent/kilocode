@@ -54,6 +54,7 @@ import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions 
 // kilocode_change end
 import { ProviderError } from "./error"
 import { Enterprise } from "@/enterprise" // enterprise_change
+import { allows } from "@enterprise/protocol/match" // enterprise_change
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -1463,11 +1464,13 @@ const layer = Layer.effect(
     const plugin = yield* Plugin.Service
     const modelsDevSvc = yield* ModelsDev.Service
     const runtimeFlags = yield* RuntimeFlags.Service
+    const enterprise = yield* Enterprise.Service // enterprise_change
 
     const state = yield* InstanceState.make<State>(() =>
       Effect.gen(function* () {
         const bridge = yield* EffectBridge.make()
         const cfg = yield* config.get()
+        const policy = yield* enterprise.current() // enterprise_change - org model access, read once per load
         const modelsDev = yield* modelsDevSvc.get()
         const catalog = mapValues(modelsDev, fromModelsDevProvider)
         const database = mapValues(catalog, toPublicInfo)
@@ -1801,7 +1804,7 @@ const layer = Layer.effect(
               (configProvider?.whitelist && !configProvider.whitelist.includes(modelID))
             )
               delete provider.models[modelID]
-            if (!Enterprise.model(providerID, modelID)) delete provider.models[modelID] // enterprise_change - org model access
+            if (policy && !allows(policy, providerID, modelID)) delete provider.models[modelID] // enterprise_change
 
             if (model.variants === undefined) {
               model.variants = mapValues(ProviderTransform.variants(model), (v) => v)
@@ -2222,7 +2225,16 @@ export function parseModel(model: string) {
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [FSUtil.node, Config.node, Auth.node, Env.node, Plugin.node, ModelsDev.node, RuntimeFlags.node],
+  deps: [
+    FSUtil.node,
+    Config.node,
+    Auth.node,
+    Env.node,
+    Plugin.node,
+    ModelsDev.node,
+    RuntimeFlags.node,
+    Enterprise.node,
+  ], // enterprise_change
 })
 
 export * as Provider from "./provider"

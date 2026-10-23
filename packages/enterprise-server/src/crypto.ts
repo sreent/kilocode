@@ -1,3 +1,5 @@
+import { Effect } from "effect"
+
 const encoder = new TextEncoder()
 
 export function id(prefix: string) {
@@ -25,10 +27,11 @@ export function code() {
   return `${chars.slice(0, 4).join("")}-${chars.slice(4).join("")}`
 }
 
-export async function challenge(verifier: string) {
-  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(verifier))
-  return Buffer.from(digest).toString("base64url")
-}
+// PKCE S256 code challenge (RFC 7636).
+export const challenge = (verifier: string) =>
+  Effect.promise(async () =>
+    Buffer.from(await crypto.subtle.digest("SHA-256", encoder.encode(verifier))).toString("base64url"),
+  )
 
 async function key(material: string) {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(material))
@@ -36,19 +39,22 @@ async function key(material: string) {
 }
 
 // Encrypts secrets at rest (e.g. OIDC client secrets) with AES-256-GCM keyed from ENTERPRISE_SECRET.
-export async function seal(material: string, value: string) {
-  const iv = crypto.getRandomValues(new Uint8Array(12))
-  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await key(material), encoder.encode(value))
-  return `v1.${Buffer.from(iv).toString("base64url")}.${Buffer.from(data).toString("base64url")}`
-}
+export const seal = (material: string, value: string) =>
+  Effect.promise(async () => {
+    const iv = crypto.getRandomValues(new Uint8Array(12))
+    const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await key(material), encoder.encode(value))
+    return `v1.${Buffer.from(iv).toString("base64url")}.${Buffer.from(data).toString("base64url")}`
+  })
 
-export async function unseal(material: string, value: string) {
-  const [version, iv, data] = value.split(".")
-  if (version !== "v1" || !iv || !data) throw new Error("unsupported sealed value")
-  const plain = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: Buffer.from(iv, "base64url") },
-    await key(material),
-    Buffer.from(data, "base64url"),
-  )
-  return new TextDecoder().decode(plain)
-}
+// A value sealed under another ENTERPRISE_SECRET cannot be opened; that is a deployment defect.
+export const unseal = (material: string, value: string) =>
+  Effect.promise(async () => {
+    const [version, iv, data] = value.split(".")
+    if (version !== "v1" || !iv || !data) throw new Error("unsupported sealed value")
+    const plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: Buffer.from(iv, "base64url") },
+      await key(material),
+      Buffer.from(data, "base64url"),
+    )
+    return new TextDecoder().decode(plain)
+  })

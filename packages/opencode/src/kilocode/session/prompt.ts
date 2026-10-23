@@ -30,7 +30,6 @@ import { MemoryMarker } from "@/kilocode/memory/marker"
 import { KilocodeSystemPrompt } from "@/kilocode/system-prompt"
 import { KiloToolRegistry } from "@/kilocode/tool/registry"
 import { consumeAutoTitle, markAutoTitle } from "@/kilo-sessions/rename-adoptions"
-import * as EnterpriseRules from "@/enterprise/rules" // enterprise_change
 
 export namespace KiloSessionPrompt {
   const modes = ["ask", "plan", "architect"]
@@ -348,9 +347,7 @@ export namespace KiloSessionPrompt {
         }),
       ),
     )
-    const hardRuleset = EnterpriseRules.harden(
-      hardPermissions({ agent: { name: input.agent.name, permission: input.agent.permission } }),
-    ) // enterprise_change - org deny rules are hard rules
+    const hardRuleset = hardPermissions({ agent: { name: input.agent.name, permission: input.agent.permission } })
     return { ruleset, hardRuleset: hardRuleset ? dedupeRuleset(hardRuleset) : undefined }
   }
 

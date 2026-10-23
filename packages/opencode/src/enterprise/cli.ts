@@ -1,143 +1,139 @@
 import type { Argv } from "yargs"
+import { Clock, Effect, Exit, Predicate } from "effect"
+import { effectCmd, fail } from "@/cli/effect-cmd"
 import { cmd } from "@/cli/cmd/cmd"
 import { UI } from "@/cli/ui"
+import { DeviceError } from "@enterprise/protocol/errors"
+import { Enterprise } from "./enterprise"
 
-// Registered eagerly at CLI startup: keep this module light and import the implementation
-// inside handlers.
-const load = () => import("./enterprise")
+// Loaded lazily (see lazy-kilo-commands): only `kilo enterprise ...` pays for this module.
 
-function fail(message: string) {
-  UI.error(message)
-  process.exitCode = 1
-}
-
-async function json(res: Response) {
-  return res.json().catch(() => ({}) as Record<string, unknown>)
-}
+const unreachable = (url: string) => (error: unknown) =>
+  fail(`Cannot reach ${url}: ${error instanceof Error ? error.message : String(error)}`)
 
 // RFC 8628 device authorization: the browser does SSO, the terminal polls for the token.
-async function device(url: string, org: string) {
-  const res = await fetch(`${url}/api/v1/auth/device`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ org }),
-  }).catch((err: Error) => err)
-  if (res instanceof Error) return fail(`Cannot reach ${url}: ${res.message}`)
-  const start = await json(res)
-  if (!res.ok) return fail(String(start.error ?? `HTTP ${res.status}`))
+const device = Effect.fn("Cli.enterprise.device")(function* (url: string, org: string) {
+  const enterprise = yield* Enterprise.Service
+  const signin = (yield* enterprise.client({ url }))["enterprise.signin"]
+  const start = yield* signin["device.start"]({ payload: { org } }).pipe(
+    Effect.catch((error) =>
+      Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "InvalidRequestError")
+        ? fail(error.message)
+        : unreachable(url)(error),
+    ),
+  )
   UI.println(`Open ${UI.Style.TEXT_HIGHLIGHT}${start.verification_uri}${UI.Style.TEXT_NORMAL} and confirm this code:`)
   UI.println(`\n    ${UI.Style.TEXT_HIGHLIGHT_BOLD}${start.user_code}${UI.Style.TEXT_NORMAL}\n`)
-  const { default: open } = await import("open")
-  await open(String(start.verification_uri_complete)).catch(() =>
-    UI.println("Could not open a browser; open the URL above manually."),
+  yield* Effect.tryPromise(async () => (await import("open")).default(start.verification_uri_complete)).pipe(
+    Effect.catch(() => Effect.sync(() => UI.println("Could not open a browser; open the URL above manually."))),
   )
-  const poll = { interval: Number(start.interval ?? 5), deadline: Date.now() + Number(start.expires_in ?? 600) * 1000 }
-  while (Date.now() < poll.deadline) {
-    await Bun.sleep(poll.interval * 1000)
-    const next = await fetch(`${url}/api/v1/auth/device/token`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ device_code: start.device_code }),
-    }).catch((err: Error) => err)
-    if (next instanceof Error) continue
-    const result = await json(next)
-    if (next.ok) return String(result.access_token)
-    if (result.error === "authorization_pending") continue
-    if (result.error === "slow_down") {
-      poll.interval += 5
+  let interval = start.interval
+  const deadline = (yield* Clock.currentTimeMillis) + start.expires_in * 1000
+  while ((yield* Clock.currentTimeMillis) < deadline) {
+    yield* Effect.sleep(`${interval} seconds`)
+    const exit = yield* signin["device.token"]({ payload: { device_code: start.device_code } }).pipe(Effect.exit)
+    if (Exit.isSuccess(exit)) return exit.value.access_token
+    const error = exit.cause.reasons.find((reason) => reason._tag === "Fail")?.error
+    // Transient network errors are retried until the code expires.
+    if (!(error instanceof DeviceError)) continue
+    if (error.error === "authorization_pending") continue
+    if (error.error === "slow_down") {
+      interval += 5
       continue
     }
-    if (result.error === "access_denied") return fail("Sign-in was denied.")
-    return fail(`Sign-in failed: ${String(result.error ?? `HTTP ${next.status}`)}`)
+    if (error.error === "access_denied") return yield* fail("Sign-in was denied.")
+    return yield* fail(`Sign-in failed: ${error.error}`)
   }
-  return fail("The code expired before sign-in completed. Run the command again.")
-}
+  return yield* fail("The code expired before sign-in completed. Run the command again.")
+})
 
-async function accept(url: string, invite: string) {
-  const res = await fetch(`${url}/api/v1/invites/${encodeURIComponent(invite)}/accept`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: "{}",
-  }).catch((err: Error) => err)
-  if (res instanceof Error) return fail(`Cannot reach ${url}: ${res.message}`)
-  const data = await json(res)
-  if (!res.ok) return fail(String(data.error ?? `HTTP ${res.status}`))
-  return String(data.token)
-}
+const accept = Effect.fn("Cli.enterprise.accept")(function* (url: string, invite: string) {
+  const enterprise = yield* Enterprise.Service
+  const signin = (yield* enterprise.client({ url }))["enterprise.signin"]
+  const accepted = yield* signin["invite.accept"]({ params: { token: invite }, payload: {} }).pipe(
+    Effect.catch((error) =>
+      Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "ForbiddenError")
+        ? fail(error.message)
+        : unreachable(url)(error),
+    ),
+  )
+  return accepted.token
+})
 
-const LoginCommand = cmd({
+const LoginCommand = effectCmd({
   command: "login",
   describe: "sign in to your organization (single sign-on by default)",
+  instance: false,
   builder: (yargs: Argv) =>
     yargs
       .option("url", { type: "string", describe: "control plane URL, e.g. https://ai.example.com" })
       .option("org", { type: "string", describe: "organization slug" })
       .option("token", { type: "string", describe: "use an access token issued by an administrator" })
       .option("invite", { type: "string", describe: "accept an invite and sign in" }),
-  handler: async (args) => {
-    const Enterprise = await load()
-    const cfg = Enterprise.settings()
+  handler: Effect.fn("Cli.enterprise.login")(function* (args) {
+    const enterprise = yield* Enterprise.Service
+    const cfg = yield* enterprise.settings()
     if (cfg?.source === "managed" && ((args.url && args.url !== cfg.url) || (args.org && args.org !== cfg.org)))
-      return fail(`This device is managed by your organization and signs in to ${cfg.org} at ${cfg.url} only.`)
+      return yield* fail(`This device is managed by your organization and signs in to ${cfg.org} at ${cfg.url} only.`)
     const url = (args.url ?? cfg?.url)?.replace(/\/$/, "")
     const org = args.org ?? cfg?.org
-    if (!url || !org) return fail("Pass --url and --org, or ask IT to deploy enterprise.json to this device.")
-    const token = args.token ?? (args.invite ? await accept(url, args.invite) : await device(url, org))
-    if (!token) return
-    const res = await fetch(`${url}/api/v1/me`, { headers: { authorization: `Bearer ${token}` } }).catch(
-      (err: Error) => err,
+    if (!url || !org) return yield* fail("Pass --url and --org, or ask IT to deploy enterprise.json to this device.")
+    const token = args.token ?? (args.invite ? yield* accept(url, args.invite) : yield* device(url, org))
+    const account = (yield* enterprise.client({ url, token }))["enterprise.account"]
+    const me = yield* account["me.get"]().pipe(
+      Effect.catch((error) =>
+        Predicate.isTagged(error, "UnauthorizedError") || Predicate.isTagged(error, "ForbiddenError")
+          ? fail("The control plane rejected this token.")
+          : unreachable(url)(error),
+      ),
     )
-    if (res instanceof Error) return fail(`Cannot reach ${url}: ${res.message}`)
-    if (!res.ok) return fail("The control plane rejected this token.")
-    const { z } = await import("zod")
-    const parsed = z
-      .object({
-        user: z.object({ id: z.string(), email: z.string() }),
-        orgs: z.array(z.object({ id: z.string(), slug: z.string(), name: z.string(), role: z.string() })),
-      })
-      .safeParse(await json(res))
-    if (!parsed.success) return fail("Unexpected response from the control plane.")
-    const me = parsed.data
     const target = me.orgs.find((item) => item.slug === org || item.id === org)
-    if (!target) return fail(`${me.user.email} does not have access to ${org}.`)
-    await Enterprise.save({ url, org, token, user: me.user, saved: Date.now() })
-    await Enterprise.refresh()
+    if (!target) return yield* fail(`${me.user.email} does not have access to ${org}.`)
+    yield* enterprise.save({
+      url,
+      org,
+      token,
+      user: { id: me.user.id, email: me.user.email },
+      saved: yield* Clock.currentTimeMillis,
+    })
+    yield* enterprise.refresh()
     UI.println(`Signed in to ${target.name} as ${me.user.email} (${target.role}).`)
-  },
+  }),
 })
 
-const LogoutCommand = cmd({
+const LogoutCommand = effectCmd({
   command: "logout",
   describe: "sign out and forget the cached organization policy",
-  handler: async () => {
-    const Enterprise = await load()
-    const cfg = Enterprise.settings()
-    const login = Enterprise.stored()
-    if (login)
-      await fetch(`${login.url}/api/v1/auth/logout`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${login.token}` },
-      }).catch(() => undefined)
-    await Enterprise.forget()
+  instance: false,
+  handler: Effect.fn("Cli.enterprise.logout")(function* () {
+    const enterprise = yield* Enterprise.Service
+    const cfg = yield* enterprise.settings()
+    const login = yield* enterprise.stored()
+    if (login) {
+      const account = (yield* enterprise.client({ url: login.url, token: login.token }))["enterprise.account"]
+      yield* account.logout().pipe(Effect.timeout("10 seconds"), Effect.ignore)
+    }
+    yield* enterprise.forget()
     UI.println("Signed out.")
     if (process.env.KILO_ENTERPRISE_TOKEN) UI.println("Note: KILO_ENTERPRISE_TOKEN is still set in this environment.")
     if (cfg?.required) UI.println(`${cfg.org} requires sign-in: the agent stays blocked until you sign in again.`)
-  },
+  }),
 })
 
-const StatusCommand = cmd({
+const StatusCommand = effectCmd({
   command: "status",
   describe: "show organization, sign-in and policy status",
+  instance: false,
   builder: (yargs: Argv) => yargs.option("json", { type: "boolean", default: false, describe: "output as JSON" }),
-  handler: async (args) => {
-    const Enterprise = await load()
-    if (!Enterprise.settings()) {
+  handler: Effect.fn("Cli.enterprise.status")(function* (args) {
+    const enterprise = yield* Enterprise.Service
+    if (!(yield* enterprise.settings())) {
       UI.println("Enterprise mode is off: no enterprise.json, KILO_ENTERPRISE_URL, or stored login.")
       return
     }
-    await Enterprise.ready()
-    const info = Enterprise.status()
-    const blocked = Enterprise.blocked()
+    yield* enterprise.ready()
+    const info = yield* enterprise.status()
+    const blocked = yield* enterprise.blocked()
     if (args.json) {
       console.log(JSON.stringify({ ...info, settings: { ...info.settings, token: undefined }, blocked }, null, 2))
       return
@@ -161,20 +157,21 @@ const StatusCommand = cmd({
       ...(blocked ? [`Blocked:       ${blocked}`] : []),
     ]
     UI.println(lines.join("\n"))
-  },
+  }),
 })
 
-const PolicyCommand = cmd({
+const PolicyCommand = effectCmd({
   command: "policy",
   describe: "print the effective organization policy for this user",
-  handler: async () => {
-    const Enterprise = await load()
-    if (!Enterprise.settings()) return fail("Enterprise mode is off.")
-    await Enterprise.ready()
-    const policy = Enterprise.current()
-    if (!policy) return fail(Enterprise.blocked() ?? "No policy loaded.")
+  instance: false,
+  handler: Effect.fn("Cli.enterprise.policy")(function* () {
+    const enterprise = yield* Enterprise.Service
+    if (!(yield* enterprise.settings())) return yield* fail("Enterprise mode is off.")
+    yield* enterprise.ready()
+    const policy = yield* enterprise.current()
+    if (!policy) return yield* fail((yield* enterprise.blocked()) ?? "No policy loaded.")
     console.log(JSON.stringify(policy, null, 2))
-  },
+  }),
 })
 
 export const EnterpriseCommand = cmd({

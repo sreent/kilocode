@@ -289,6 +289,7 @@ const layer = Layer.effect(
     const http = yield* HttpClient.HttpClient
     const git = yield* Git.Service // kilocode_change
     const flock = yield* EffectFlock.Service // kilocode_change - serialize global config read-merge-write updates
+    const enterprise = yield* Enterprise.Service // enterprise_change
 
     const readConfigFile = (filepath: string) => fs.readFileStringSafe(filepath).pipe(Effect.orDie)
 
@@ -1057,9 +1058,7 @@ const layer = Layer.effect(
         // kilocode_change start — inject Kilo default plugins into both plugin list and origins
         KilocodeDefaultPlugins.apply(result, { disabled: Flag.KILO_DISABLE_DEFAULT_PLUGINS, log })
         // kilocode_change end
-        // enterprise_change start - the org policy is the last layer, above managed and env config
-        yield* Effect.promise(() => Enterprise.overlay(result))
-        // enterprise_change end
+        yield* enterprise.overlay(result) // enterprise_change - the org policy is the last layer, above managed and env config
 
         return {
           config: result,
@@ -1244,7 +1243,17 @@ const layer = Layer.effect(
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [FSUtil.node, Auth.node, Account.node, Env.node, Npm.node, httpClient, Git.node, EffectFlock.node], // kilocode_change
+  deps: [
+    FSUtil.node,
+    Auth.node,
+    Account.node,
+    Env.node,
+    Npm.node,
+    httpClient,
+    Git.node,
+    EffectFlock.node,
+    Enterprise.node,
+  ], // kilocode_change, enterprise_change
 })
 
 export * as Config from "./config"

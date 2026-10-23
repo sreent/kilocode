@@ -289,6 +289,7 @@ const layer = Layer.effect(
     const auth = yield* McpAuth.Service
     const events = yield* EventV2Bridge.Service
     const browser = yield* McpBrowser.Service
+    const enterprise = yield* Enterprise.Service // enterprise_change
 
     type Transport = StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport
 
@@ -491,7 +492,7 @@ const layer = Layer.effect(
         }
 
         // enterprise_change start - every connection path (startup, add, connect) passes through here
-        const refused = Enterprise.mcp(mcp)
+        const refused = yield* enterprise.refusal(mcp)
         if (refused) return { status: { status: "failed" as const, error: refused } }
         // enterprise_change end
 
@@ -1247,7 +1248,7 @@ export type AuthStatus = "authenticated" | "expired" | "not_authenticated"
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [CrossSpawnSpawner.node, McpAuth.node, EventV2Bridge.node, Config.node, McpBrowser.node],
+  deps: [CrossSpawnSpawner.node, McpAuth.node, EventV2Bridge.node, Config.node, McpBrowser.node, Enterprise.node], // enterprise_change
 })
 
 export * as MCP from "."

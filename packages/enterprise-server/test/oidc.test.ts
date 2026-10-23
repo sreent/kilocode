@@ -69,7 +69,7 @@ const idp = await provider()
 afterAll(() => idp.server.stop(true))
 
 async function configured() {
-  const env = setup()
+  const env = await setup()
   const res = await env.call("PUT", "/api/v1/orgs/acme/sso", {
     token: env.owner.token,
     body: { issuer: idp.issuer, client_id: idp.client.id, client_secret: idp.client.secret },
@@ -97,14 +97,14 @@ async function signin(
 
 describe("sso configuration", () => {
   test("requires a reachable issuer and stores the client secret sealed", async () => {
-    const env = setup()
+    const env = await setup()
     const bad = await env.call("PUT", "/api/v1/orgs/acme/sso", {
       token: env.owner.token,
       body: { issuer: "http://localhost:1/nope", client_id: "x", client_secret: "y" },
     })
     expect(bad.status).toBe(400)
     const ok = await configured()
-    const row = ok.store.sso.get(ok.owner.org.id)!
+    const row = (await ok.store.sso.get(ok.owner.org.id))!
     expect(row.secret.startsWith("v1.")).toBe(true)
     expect(row.secret).not.toContain(idp.client.secret)
     const view = await ok.call("GET", "/api/v1/orgs/acme/sso", { token: ok.owner.token })
@@ -113,7 +113,7 @@ describe("sso configuration", () => {
   })
 
   test("cannot be configured without a server secret", async () => {
-    const env = setup({ secret: undefined })
+    const env = await setup({ secret: undefined })
     const res = await env.call("PUT", "/api/v1/orgs/acme/sso", {
       token: env.owner.token,
       body: { issuer: idp.issuer, client_id: "x", client_secret: "y" },
@@ -134,19 +134,21 @@ describe("browser sign-in", () => {
     const session = cookie.match(/ent_session=([^;]+)/)![1]
     const me = await env.call("GET", "/api/v1/me", { headers: { cookie: `ent_session=${session}` } })
     expect(me.data.user.email).toBe("owner@acme.com")
-    const logins = env.store.audit.query({ org: env.owner.org.id, actions: ["user.login"], limit: 5 })
-    expect(JSON.parse(logins[0].details)).toEqual({ method: "sso", device: false })
+    const logins = await env.store.audit.query({ org: env.owner.org.id, actions: ["user.login"], limit: 5 })
+    expect(logins[0].details).toEqual({ method: "sso", device: false })
   })
 
   test("strangers are refused; verified-domain users are provisioned just in time", async () => {
     const env = await configured()
     expect((await signin(env, "stranger@acme.com")).status).toBe(403)
-    const domain = env.store.domain.create(env.owner.org.id, "acme.com")
-    env.store.domain.verify(domain.name)
+    const domain = await env.store.domain.create(env.owner.org.id, "acme.com")
+    await env.store.domain.verify(domain.name)
     expect((await signin(env, "newbie@acme.com")).status).toBe(302)
-    const user = env.store.user.find("newbie@acme.com")!
-    expect(env.store.member.role(env.owner.org.id, user.id)?.role).toBe("member")
-    expect(env.store.audit.query({ org: env.owner.org.id, actions: ["sso.auto_provision"], limit: 5 })).toHaveLength(1)
+    const user = (await env.store.user.find("newbie@acme.com"))!
+    expect((await env.store.member.role(env.owner.org.id, user.id))?.role).toBe("member")
+    expect(
+      await env.store.audit.query({ org: env.owner.org.id, actions: ["sso.auto_provision"], limit: 5 }),
+    ).toHaveLength(1)
   })
 
   test("a pending invite is honoured at first sign-in with the invited role", async () => {
@@ -156,8 +158,8 @@ describe("browser sign-in", () => {
       body: { email: "lead@partner.io", role: "admin" },
     })
     expect((await signin(env, "lead@partner.io")).status).toBe(302)
-    const user = env.store.user.find("lead@partner.io")!
-    expect(env.store.member.role(env.owner.org.id, user.id)?.role).toBe("admin")
+    const user = (await env.store.user.find("lead@partner.io"))!
+    expect((await env.store.member.role(env.owner.org.id, user.id))?.role).toBe("admin")
   })
 
   test("rejects a replayed state, a wrong nonce and unverified email", async () => {
@@ -173,8 +175,8 @@ describe("browser sign-in", () => {
 
   test("suspended members cannot sign in", async () => {
     const env = await configured()
-    const dev = env.join("dev@acme.com", "member")
-    env.store.member.suspend(env.owner.org.id, dev.user.id, true)
+    const dev = await env.join("dev@acme.com", "member")
+    await env.store.member.suspend(env.owner.org.id, dev.user.id, true)
     expect((await signin(env, "dev@acme.com")).status).toBe(403)
   })
 })
@@ -193,7 +195,7 @@ describe("device login for the CLI and IDEs", () => {
     const res = await signin(env, "owner@acme.com", `?device=${begin.data.user_code.toLowerCase()}`)
     expect(res.status).toBe(200)
     expect(await res.text()).toContain("signed in")
-    env.store.db.query("update devices set polled = null").run()
+    await env.exec("update devices set polled = null")
     const done = await poll()
     expect(done.status).toBe(200)
     expect(done.data).toMatchObject({ token_type: "Bearer", org: { slug: "acme" }, user: { email: "owner@acme.com" } })
@@ -211,10 +213,10 @@ describe("device login for the CLI and IDEs", () => {
   })
 
   test("orgs without SSO point users at their administrator", async () => {
-    const env = setup()
+    const env = await setup()
     const res = await env.call("POST", "/api/v1/auth/device", { body: { org: "acme" } })
     expect(res.status).toBe(400)
-    expect(res.data.error).toContain("administrator")
+    expect(res.data.message).toContain("administrator")
   })
 })
 
@@ -222,8 +224,8 @@ describe("cross-org isolation", () => {
   test("an org's own IdP cannot mint access to another org that shares the user", async () => {
     const env = await configured()
     // Globex's owner points Globex SSO at an IdP they control and asserts Acme's owner email.
-    const globex = env.store.org.create({ name: "Globex", slug: "globex" })
-    const evil = env.join("boss@globex.com", "owner", globex.id)
+    const globex = await env.store.org.create({ name: "Globex", slug: "globex" })
+    const evil = await env.join("boss@globex.com", "owner", globex.id)
     await env.call("PUT", "/api/v1/orgs/globex/sso", {
       token: evil.token,
       body: { issuer: idp.issuer, client_id: idp.client.id, client_secret: idp.client.secret },

@@ -51,6 +51,7 @@ import { Todo } from "@/session/todo"
 import { SessionShare } from "@/share/session"
 import { ShareNext } from "@/share/share-next"
 import { Credential } from "@opencode-ai/core/credential" // kilocode_change
+import { Enterprise } from "@/enterprise/enterprise" // enterprise_change
 import { Skill } from "@/skill"
 import { Discovery } from "@/skill/discovery"
 import { Snapshot } from "@/snapshot"
@@ -239,6 +240,7 @@ const app = LayerNode.group([
   FSUtil.node,
   Database.node,
   Credential.node, // kilocode_change
+  Enterprise.node, // enterprise_change
   Auth.node,
   Account.node,
   Config.node,

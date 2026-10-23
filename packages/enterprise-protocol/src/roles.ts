@@ -1,7 +1,5 @@
-import { z } from "zod"
-
-export const Role = z.enum(["owner", "admin", "member", "billing_manager"])
-export type Role = z.infer<typeof Role>
+import { Context } from "effect"
+import type { Role } from "./schema"
 
 const all: Role[] = ["owner", "admin", "member", "billing_manager"]
 const managers: Role[] = ["owner", "admin", "billing_manager"]
@@ -33,10 +31,14 @@ export const capabilities = {
 
 export type Capability = keyof typeof capabilities
 
-export function can(role: Role | undefined, cap: Capability) {
+export function can(role: Role | undefined, capability: Capability) {
   if (!role) return false
-  return (capabilities[cap] as Role[]).includes(role)
+  return (capabilities[capability] as Role[]).includes(role)
 }
 
 // Parent-org managers get the same role in sub-orgs without becoming members.
 export const inherited: Role[] = managers
+
+// Endpoint annotation: the capability an org-scoped endpoint requires. OrgScope enforces it before
+// the request body is read, so a caller without the role learns nothing from validation errors.
+export class Requires extends Context.Service<Requires, Capability>()("@enterprise/Requires") {}

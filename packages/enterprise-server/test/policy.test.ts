@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { Policy, resolve } from "../src/policy"
+import { Schema } from "effect"
+import { Policy as PolicySchema } from "@enterprise/protocol/schema"
+import { resolve } from "../src/policy"
+
+const Policy = { parse: Schema.decodeUnknownSync(PolicySchema) }
 
 const base = (input: Partial<Parameters<typeof resolve>[0]> = {}) =>
   resolve({ policy: Policy.parse({}), version: 1, groups: [], modes: [], budgets: [], ...input })

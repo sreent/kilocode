@@ -105,9 +105,11 @@ export namespace KiloCli {
     })
     // enterprise_change start - under enterprise management, product analytics and session sharing/sync
     // stay off unless the org policy allows them (this also overrides KILO_TELEMETRY_LEVEL)
-    const { Enterprise } = await import("@/enterprise")
-    await Enterprise.bootstrap()
-    if (!Enterprise.telemetry()) Telemetry.setEnabled(false)
+    const { Enterprise } = await import("@/enterprise/enterprise")
+    const enterprise = runtime
+      ? await runtime.KiloCliBootstrapRuntime.enterprise()
+      : await app!.AppRuntime.runPromise(Enterprise.Service.use((service) => service.bootstrap()))
+    if (!enterprise.telemetry) Telemetry.setEnabled(false)
     // enterprise_change end
 
     const { migrateLegacyKiloAuth } = gateway
