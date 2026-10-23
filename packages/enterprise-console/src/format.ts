@@ -2,7 +2,7 @@ const day = 24 * 60 * 60 * 1000
 
 export const when = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleString() : "—")
 export const date = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleDateString() : "—")
-export const money = (value: number) => `$${value.toFixed(2)}`
+export { dollars as money } from "@enterprise/protocol/match"
 export const count = (value: number) => value.toLocaleString()
 
 // <input type="date"> values as an inclusive UTC window, in the epoch milliseconds the API accepts.

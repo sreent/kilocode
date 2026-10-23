@@ -19,7 +19,7 @@ import {
 } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/http"
 import { EnterpriseClient } from "@enterprise/protocol/client"
-import { refusal as mcpRefusal } from "@enterprise/protocol/match"
+import { overBudget, refusal as mcpRefusal } from "@enterprise/protocol/match"
 import { Effective, UsageRecord } from "@enterprise/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Global } from "@opencode-ai/core/global"
@@ -380,13 +380,7 @@ export const layer = Layer.effect(
           return `Your organization (${cfg.org}) requires you to sign in. Run \`kilo enterprise login\`.`
         return `Cannot load your organization's policy from ${cfg.url}${state.error ? ` (${state.error})` : ""}.`
       }
-      const limit = policy.budget.limits.find((item) => item.spent >= item.amount)
-      if (policy.budget.exceeded && limit) {
-        const period = limit.period === "day" ? "daily" : "monthly"
-        const scope = limit.scope === "org" ? "organization" : "personal"
-        return `Your ${period} ${scope} AI budget of $${limit.amount.toFixed(2)} has been reached ($${limit.spent.toFixed(2)} spent). Contact your administrator.`
-      }
-      return undefined
+      return policy.budget.exceeded ? overBudget(policy) : undefined
     })
 
     // Matching uses the server's target (URL or command line), never its name, which users choose freely.

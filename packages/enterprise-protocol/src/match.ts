@@ -42,3 +42,20 @@ export function refusal(policy: { readonly mcp: Pick<Effective["mcp"], "allow" |
     return `Not on your organization's MCP allowlist: ${name}`
   return undefined
 }
+
+// Cents for everyday amounts, and two significant digits below ten cents, so a single call's cost
+// or a small budget isn't rounded into looking free.
+export function dollars(value: number) {
+  if (value === 0 || value >= 0.1) return `$${value.toFixed(2)}`
+  if (value < 0.0001) return "<$0.0001"
+  return `$${value.toPrecision(2)}`
+}
+
+// Why requests are refused once a budget is spent, if one is. The CLI and the gateway say the same.
+export function overBudget(policy: { readonly budget: Pick<Effective["budget"], "limits"> }) {
+  const limit = policy.budget.limits.find((item) => item.spent >= item.amount)
+  if (!limit) return undefined
+  const period = limit.period === "day" ? "daily" : "monthly"
+  const scope = limit.scope === "org" ? "organization" : "personal"
+  return `Your ${period} ${scope} AI budget of ${dollars(limit.amount)} has been reached (${dollars(limit.spent)} spent). Contact your administrator.`
+}

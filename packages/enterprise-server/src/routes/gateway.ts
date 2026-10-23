@@ -7,8 +7,8 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "effect/unstable/http"
-import { allows } from "@enterprise/protocol/match"
-import type { BudgetStatus, GatewayKind } from "@enterprise/protocol/schema"
+import { allows, overBudget } from "@enterprise/protocol/match"
+import type { GatewayKind } from "@enterprise/protocol/schema"
 import * as Crypto from "../crypto"
 import { ServerConfig } from "../config"
 import { Meter } from "../meter"
@@ -83,15 +83,6 @@ function failure(status: number, code: string, message: string) {
     { type: "error", error: { type: kinds[status] ?? "api_error", code, message } },
     { status },
   )
-}
-
-// Same wording clients use when they refuse a request locally.
-function overBudget(limits: ReadonlyArray<BudgetStatus>) {
-  const limit = limits.find((item) => item.spent >= item.amount)
-  if (!limit) return "Your organization's AI budget has been reached. Contact your administrator."
-  const period = limit.period === "day" ? "daily" : "monthly"
-  const scope = limit.scope === "org" ? "organization" : "personal"
-  return `Your ${period} ${scope} AI budget of $${limit.amount.toFixed(2)} has been reached ($${limit.spent.toFixed(2)} spent). Contact your administrator.`
 }
 
 // Anthropic SDKs send the key as x-api-key, OpenAI-style ones as a bearer token; Azure and Google
@@ -205,7 +196,11 @@ export const gatewayRoutes = HttpRouter.use((router) =>
           `The model ${provider.id}/${model} is not allowed by your organization's policy.`,
         )
       if (route.meter && policy.budget.exceeded)
-        return failure(402, "budget_exceeded", overBudget(policy.budget.limits))
+        return failure(
+          402,
+          "budget_exceeded",
+          overBudget(policy) ?? "Your organization's AI budget has been reached. Contact your administrator.",
+        )
 
       // Streamed chat completions only carry usage when asked to.
       const options = payload?.stream_options

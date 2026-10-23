@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { Schema } from "effect"
 import { OpenApi } from "effect/unstable/httpapi"
 import { Api } from "../src/api"
-import { allows, normalize, refusal, target } from "../src/match"
+import { allows, dollars, normalize, overBudget, refusal, target } from "../src/match"
 import { Effective, GatewayProviderInput, Mode, Policy, UsageRecord } from "../src/schema"
 
 describe("schemas", () => {
@@ -120,6 +120,19 @@ describe("matching", () => {
     expect(refusal(policy, { type: "local", command: ["git-mcp", "--readonly"] })).toBeUndefined()
     expect(refusal(policy, { type: "local", command: ["npx", "-y", "evil-server"] })).toContain("Blocked")
     expect(refusal(policy, { type: "remote", url: "https://elsewhere.dev/mcp" })).toContain("allowlist")
+  })
+
+  test("a spent budget is explained without rounding small amounts away", () => {
+    const limits = (amount: number, spent: number) => ({
+      budget: { limits: [{ scope: "member" as const, period: "day" as const, amount, spent }] },
+    })
+    expect(overBudget(limits(10, 3))).toBeUndefined()
+    expect(overBudget(limits(25, 25.5))).toBe(
+      "Your daily personal AI budget of $25.00 has been reached ($25.50 spent). Contact your administrator.",
+    )
+    expect(overBudget(limits(0.005, 0.00846))).toContain("budget of $0.0050 has been reached ($0.0085 spent)")
+    expect(overBudget(limits(0, 0))).toContain("budget of $0.00 has been reached ($0.00 spent)")
+    expect([0.25, 0.0995, 0.00004].map(dollars)).toEqual(["$0.25", "$0.10", "<$0.0001"])
   })
 
   test("bare providers normalize to provider wildcards", () => {
