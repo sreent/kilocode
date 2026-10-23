@@ -12,6 +12,7 @@ import {
   type BudgetStatus,
   type GatewayKind,
   type Role,
+  type StreamTarget,
   type UsageBy,
 } from "@enterprise/protocol/schema"
 import * as Crypto from "./crypto"
@@ -31,6 +32,7 @@ import {
   OrgTable,
   PolicyTable,
   SsoTable,
+  StreamTable,
   TokenTable,
   UsageTable,
   UserTable,
@@ -43,6 +45,7 @@ export type Group = typeof GroupTable.$inferSelect
 export type Audit = typeof AuditTable.$inferSelect
 export type Sso = typeof SsoTable.$inferSelect
 export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
+export type Stream = typeof StreamTable.$inferSelect
 
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
 export type Actor = { readonly id: string | null; readonly email: string }
@@ -901,6 +904,142 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
   }
 
+  const pending = (row: { org: string; cursor: number }) =>
+    db.$count(AuditTable, and(eq(AuditTable.org, row.org), gt(AuditTable.id, row.cursor)))
+
+  const stream = {
+    list: Effect.fn("Store.stream.list")(function* (orgID: string) {
+      const rows = yield* db
+        .select()
+        .from(StreamTable)
+        .where(eq(StreamTable.org, orgID))
+        .orderBy(asc(StreamTable.created))
+      return yield* Effect.forEach(rows, (row) => Effect.map(pending(row), (count) => ({ ...row, pending: count })))
+    }, Effect.orDie),
+    get: Effect.fn("Store.stream.get")(function* (orgID: string, id: string) {
+      return yield* db
+        .select()
+        .from(StreamTable)
+        .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
+        .get()
+    }, Effect.orDie),
+    pending: Effect.fn("Store.stream.pending")(function* (row: { org: string; cursor: number }) {
+      return yield* pending(row)
+    }, Effect.orDie),
+    // New streams start after the latest event; history is available as CSV.
+    create: Effect.fn("Store.stream.create")(function* (
+      orgID: string,
+      input: {
+        name: string
+        target: StreamTarget
+        secret: string | null
+        headers: string | null
+        names: string[]
+        enabled: boolean
+      },
+    ) {
+      const latest = yield* db
+        .select({ id: sql<number | null>`max(${AuditTable.id})` })
+        .from(AuditTable)
+        .where(eq(AuditTable.org, orgID))
+        .get()
+      const time = yield* now
+      return yield* db
+        .insert(StreamTable)
+        .values({
+          id: Crypto.id("str"),
+          org: orgID,
+          ...input,
+          cursor: latest?.id ?? 0,
+          created: time,
+          updated: time,
+        })
+        .returning()
+        .get()
+    }, Effect.orDie),
+    update: Effect.fn("Store.stream.update")(function* (
+      orgID: string,
+      id: string,
+      patch: Partial<{
+        name: string
+        target: StreamTarget
+        secret: string | null
+        headers: string | null
+        names: string[]
+        enabled: boolean
+      }>,
+    ) {
+      // A change of destination or a resume gets a fresh attempt rather than waiting out a backoff.
+      return yield* db
+        .update(StreamTable)
+        .set({ ...patch, retry: null, updated: yield* now })
+        .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
+        .returning()
+        .get()
+    }, Effect.orDie),
+    remove: Effect.fn("Store.stream.remove")(function* (orgID: string, id: string) {
+      const row = yield* db
+        .delete(StreamTable)
+        .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
+        .returning({ id: StreamTable.id })
+        .get()
+      return row !== undefined
+    }, Effect.orDie),
+    // Streams with events to send and no backoff or other delivery in the way.
+    due: Effect.fn("Store.stream.due")(function* () {
+      const time = yield* now
+      return yield* db
+        .select()
+        .from(StreamTable)
+        .where(
+          and(
+            eq(StreamTable.enabled, true),
+            or(isNull(StreamTable.retry), lte(StreamTable.retry, time)),
+            or(isNull(StreamTable.lease), lt(StreamTable.lease, time)),
+            sql`exists (select 1 from ${AuditTable} where ${AuditTable.org} = ${StreamTable.org} and ${AuditTable.id} > ${StreamTable.cursor})`,
+          ),
+        )
+    }, Effect.orDie),
+    // Atomic, so of several workers racing for a stream exactly one wins it.
+    claim: Effect.fn("Store.stream.claim")(function* (id: string, ttl: number) {
+      const time = yield* now
+      const row = yield* db
+        .update(StreamTable)
+        .set({ lease: time + ttl })
+        .where(and(eq(StreamTable.id, id), or(isNull(StreamTable.lease), lt(StreamTable.lease, time))))
+        .returning()
+        .get()
+      return row
+    }, Effect.orDie),
+    events: Effect.fn("Store.stream.events")(function* (row: { org: string; cursor: number }, limit: number) {
+      return yield* db
+        .select()
+        .from(AuditTable)
+        .where(and(eq(AuditTable.org, row.org), gt(AuditTable.id, row.cursor)))
+        .orderBy(asc(AuditTable.id))
+        .limit(limit)
+    }, Effect.orDie),
+    delivered: Effect.fn("Store.stream.delivered")(function* (id: string, cursor: number) {
+      yield* db
+        .update(StreamTable)
+        .set({ cursor, delivered: yield* now, error: null, failing: null, failures: 0, retry: null, lease: null })
+        .where(eq(StreamTable.id, id))
+    }, Effect.orDie),
+    failed: Effect.fn("Store.stream.failed")(function* (id: string, error: string, retry: number) {
+      const time = yield* now
+      yield* db
+        .update(StreamTable)
+        .set({
+          error,
+          failing: sql`coalesce(${StreamTable.failing}, ${time})`,
+          failures: sql`${StreamTable.failures} + 1`,
+          retry,
+          lease: null,
+        })
+        .where(eq(StreamTable.id, id))
+    }, Effect.orDie),
+  }
+
   const listBudgets = Effect.fn("Store.budget.list")(function* (orgID: string) {
     return yield* db
       .select({
@@ -965,6 +1104,7 @@ const make = Effect.gen(function* () {
     audit,
     usage,
     gateway,
+    stream,
     budget,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.

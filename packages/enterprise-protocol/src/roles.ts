@@ -19,6 +19,8 @@ export const capabilities = {
   "mode.read": all,
   "mode.write": ["owner", "admin"],
   "audit.read": ["owner", "admin"],
+  // Streaming sends the whole audit trail to another system.
+  "audit.stream": ["owner", "admin"],
   "usage.read": managers,
   "budget.write": ["owner", "billing_manager"],
   "sso.write": ["owner", "admin"],

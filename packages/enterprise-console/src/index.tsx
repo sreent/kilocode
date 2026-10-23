@@ -19,6 +19,7 @@ import { Modes } from "./routes/modes"
 import { Overview } from "./routes/overview"
 import { Policy } from "./routes/policy"
 import { Security } from "./routes/security"
+import { Streams } from "./routes/streams"
 import { SignIn } from "./routes/signin"
 import { Suborgs } from "./routes/suborgs"
 import { Usage } from "./routes/usage"
@@ -98,6 +99,7 @@ render(
         <Route path="/gateway" component={requires("gateway.read", Gateway)} />
         <Route path="/usage" component={Usage} />
         <Route path="/audit" component={requires("audit.read", Audit)} />
+        <Route path="/streams" component={requires("audit.read", Streams)} />
         <Route path="/security" component={requires("sso.write", Security)} />
         <Route path="/suborgs" component={requires("suborg.read", Suborgs)} />
         <Route path="*" component={NotFound} />

@@ -262,6 +262,73 @@ export const AuditEvent = Schema.Struct({
 
 export const AuditPage = Schema.Struct({ events: Schema.Array(AuditEvent), next: Schema.NullOr(Schema.Finite) })
 
+// Destinations that receive every new audit event: a SIEM's HTTPS collector, or a syslog server.
+export const StreamKind = Schema.Literals(["webhook", "syslog"])
+export type StreamKind = typeof StreamKind.Type
+
+// Header names a webhook may set itself (an authorization header for the collector, say); the
+// signature and delivery headers are always the server's.
+const HeaderName = Schema.String.check(
+  Schema.isPattern(/^(?!x-enterprise-)[a-z0-9][a-z0-9-]{0,63}$/i, { message: "must be a header name" }),
+)
+
+// A DNS name, an IPv4 address or a bare IPv6 address.
+const Host = Schema.String.check(
+  Schema.isMaxLength(253),
+  Schema.isPattern(/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*|[0-9a-f:]+)$/i, {
+    message: "must be a host name or IP address",
+  }),
+)
+
+export const StreamTarget = Schema.Union([
+  Schema.Struct({
+    kind: Schema.Literal("webhook"),
+    url: Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/, { message: "must be an http(s) URL" })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("syslog"),
+    host: Host,
+    port: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 65535 })),
+    tls: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+  }),
+])
+export type StreamTarget = typeof StreamTarget.Type
+
+export const AuditStream = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  target: StreamTarget,
+  // Names of the extra headers a webhook sends; their values are write-only.
+  headers: Schema.Array(Schema.String),
+  enabled: Schema.Boolean,
+  // Events not yet delivered.
+  pending: Count,
+  delivered: Schema.NullOr(Time),
+  error: Schema.NullOr(Schema.String),
+  failing: Schema.NullOr(Time),
+  created: Time,
+})
+
+export const AuditStreamInput = Schema.Struct({
+  name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
+  target: StreamTarget,
+  headers: Schema.optional(Schema.Record(HeaderName, Schema.String.check(Schema.isMaxLength(4096)))),
+  enabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+})
+
+export const AuditStreamPatch = Schema.Struct({
+  name: Schema.optional(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100))),
+  target: Schema.optional(StreamTarget),
+  // Replaces every extra header; omit to keep them.
+  headers: Schema.optional(Schema.Record(HeaderName, Schema.String.check(Schema.isMaxLength(4096)))),
+  enabled: Schema.optional(Schema.Boolean),
+})
+
+// A new webhook's signing secret, shown once. Receivers check each delivery with it.
+export const AuditStreamCreated = Schema.Struct({ stream: AuditStream, secret: Schema.NullOr(Schema.String) })
+
+export const StreamTest = Schema.Struct({ ok: Schema.Boolean, error: Schema.NullOr(Schema.String) })
+
 // Accepts epoch milliseconds or anything Date.parse understands (ISO dates).
 export const Instant = Schema.String.check(
   Schema.makeFilter((value) => /^\d+$/.test(value) || !Number.isNaN(Date.parse(value)), {

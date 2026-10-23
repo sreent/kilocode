@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core"
-import type { GatewayKind, ModelAccess, Policy, Role } from "@enterprise/protocol/schema"
+import type { GatewayKind, ModelAccess, Policy, Role, StreamTarget } from "@enterprise/protocol/schema"
 
 const roles = sql`('owner', 'admin', 'member', 'billing_manager')`
 
@@ -291,4 +291,35 @@ export const GatewayProviderTable = sqliteTable(
     primaryKey({ columns: [table.org, table.id] }),
     check("gateway_providers_kind", sql`${table.kind} in ('anthropic', 'openai', 'openai-compatible')`),
   ],
+)
+
+// Destinations that receive every new audit event (SIEM webhooks, syslog), with delivery state.
+export const StreamTable = sqliteTable(
+  "audit_streams",
+  {
+    id: text().primaryKey(),
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    target: text({ mode: "json" }).$type<StreamTarget>().notNull(),
+    // Sealed with ENTERPRISE_SECRET: a webhook's signing secret, and its extra headers as JSON.
+    secret: text(),
+    headers: text(),
+    names: text({ mode: "json" }).$type<string[]>().notNull().default([]),
+    enabled: integer({ mode: "boolean" }).notNull().default(true),
+    // The id of the last audit event delivered; delivery resumes after it.
+    cursor: integer().notNull().default(0),
+    delivered: integer(),
+    error: text(),
+    // When the current run of failures began, how long it is, and when to try again.
+    failing: integer(),
+    failures: integer().notNull().default(0),
+    retry: integer(),
+    // A delivery in progress holds the stream until this time, so replicas never send the same events.
+    lease: integer(),
+    created: integer().notNull(),
+    updated: integer().notNull(),
+  },
+  (table) => [index("audit_streams_org").on(table.org)],
 )

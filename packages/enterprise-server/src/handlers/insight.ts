@@ -1,14 +1,36 @@
 import { Clock, Effect } from "effect"
 import { HttpEffect, HttpServerResponse } from "effect/unstable/http"
-import { HttpApiBuilder } from "effect/unstable/httpapi"
+import { HttpApiBuilder, HttpApiSchema } from "effect/unstable/httpapi"
 import { Api } from "@enterprise/protocol/api"
+import { InvalidRequestError, NotFoundError } from "@enterprise/protocol/errors"
 import { Caller, Membership } from "@enterprise/protocol/middleware"
 import { can } from "@enterprise/protocol/roles"
-import { instant } from "@enterprise/protocol/schema"
-import { Store } from "../store"
-import { csv } from "./shared"
+import { instant, type StreamTarget } from "@enterprise/protocol/schema"
+import * as Crypto from "../crypto"
+import { ServerConfig } from "../config"
+import { RequestContext } from "../request"
+import { Store, type Stream } from "../store"
+import { Streams } from "../streams"
+import { changed, csv } from "./shared"
 
 const day = 24 * 60 * 60 * 1000
+
+const stream = (row: Stream & { pending: number }) => ({
+  id: row.id,
+  name: row.name,
+  target: row.target,
+  headers: row.names,
+  enabled: row.enabled,
+  pending: row.pending,
+  delivered: row.delivered,
+  error: row.error,
+  failing: row.failing,
+  created: row.created,
+})
+
+// Collector URLs often carry their token in the path, so audit entries name only the host.
+const destination = (target: StreamTarget) =>
+  target.kind === "webhook" ? new URL(target.url).host : `${target.host}:${target.port}${target.tls ? " (TLS)" : ""}`
 
 const actions = (value: string | undefined) =>
   value
@@ -41,6 +63,19 @@ const usageColumns = [
 export const InsightHandler = HttpApiBuilder.group(Api, "enterprise.insight", (handlers) =>
   Effect.gen(function* () {
     const store = yield* Store.Service
+    const config = yield* ServerConfig.Service
+    const streams = yield* Streams.Service
+    const audit = RequestContext.auditor(store, config)
+
+    // Webhook signing secrets and extra headers are sealed at rest, like SSO and gateway secrets.
+    const seal = (value: string) =>
+      config.secret
+        ? Crypto.seal(config.secret, value)
+        : Effect.fail(
+            new InvalidRequestError({ message: "set ENTERPRISE_SECRET on the server before adding webhook streams" }),
+          )
+    const sealHeaders = (headers: Record<string, string> | undefined) =>
+      headers && Object.keys(headers).length > 0 ? seal(JSON.stringify(headers)) : Effect.succeed(null)
 
     const range = Effect.fn(function* (query: { from?: string; to?: string }) {
       const now = yield* Clock.currentTimeMillis
@@ -81,6 +116,92 @@ export const InsightHandler = HttpApiBuilder.group(Api, "enterprise.insight", (h
             events.map((row) => ({ ...row, at: new Date(row.at).toISOString() })),
             ["id", "at", "action", "email", "target", "details", "ip"],
           )
+        }),
+      )
+      .handle(
+        "streams.list",
+        Effect.fn(function* () {
+          return { streams: (yield* store.stream.list((yield* Membership).org.id)).map(stream) }
+        }),
+      )
+      .handle(
+        "streams.create",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const input = ctx.payload
+          if (input.target.kind !== "webhook" && input.headers && Object.keys(input.headers).length > 0)
+            return yield* new InvalidRequestError({ message: "headers apply to webhook streams only" })
+          const secret = input.target.kind === "webhook" ? Crypto.secret(32) : null
+          const row = yield* store.stream.create(scope.org.id, {
+            name: input.name,
+            target: input.target,
+            secret: secret ? yield* seal(secret) : null,
+            headers: yield* sealHeaders(input.headers),
+            names: Object.keys(input.headers ?? {}),
+            enabled: input.enabled,
+          })
+          yield* audit("audit.stream_create", row!.id, {
+            name: row!.name,
+            kind: row!.target.kind,
+            destination: destination(row!.target),
+          })
+          return { stream: stream({ ...row!, pending: 0 }), secret }
+        }),
+      )
+      .handle(
+        "streams.update",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.stream.get(scope.org.id, ctx.params.id)
+          if (!current) return yield* new NotFoundError({ message: "stream not found" })
+          const patch = ctx.payload
+          const target = patch.target ?? current.target
+          // A webhook's signing secret is issued once, at creation.
+          if (target.kind !== current.target.kind)
+            return yield* new InvalidRequestError({ message: "create a new stream to change its kind" })
+          if (target.kind !== "webhook" && patch.headers && Object.keys(patch.headers).length > 0)
+            return yield* new InvalidRequestError({ message: "headers apply to webhook streams only" })
+          const row = yield* store.stream.update(scope.org.id, current.id, {
+            ...(patch.name !== undefined && { name: patch.name }),
+            ...(patch.target !== undefined && { target: patch.target }),
+            ...(patch.enabled !== undefined && { enabled: patch.enabled }),
+            ...(patch.headers !== undefined && {
+              headers: yield* sealHeaders(patch.headers),
+              names: Object.keys(patch.headers),
+            }),
+          })
+          yield* audit("audit.stream_update", current.id, {
+            changed: changed(
+              { name: current.name, target: current.target, enabled: current.enabled, headers: current.names },
+              { name: row!.name, target: row!.target, enabled: row!.enabled, headers: row!.names },
+            ),
+            destination: destination(row!.target),
+            headers_replaced: patch.headers !== undefined,
+          })
+          return stream({ ...row!, pending: yield* store.stream.pending(row!) })
+        }),
+      )
+      .handle(
+        "streams.remove",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.stream.get(scope.org.id, ctx.params.id)
+          if (!current || !(yield* store.stream.remove(scope.org.id, current.id)))
+            return yield* new NotFoundError({ message: "stream not found" })
+          yield* audit("audit.stream_remove", current.id, {
+            name: current.name,
+            destination: destination(current.target),
+          })
+          return HttpApiSchema.NoContent.make()
+        }),
+      )
+      .handle(
+        "streams.test",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.stream.get(scope.org.id, ctx.params.id)
+          if (!current) return yield* new NotFoundError({ message: "stream not found" })
+          return yield* streams.test(scope.org, current)
         }),
       )
       .handle(

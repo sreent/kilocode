@@ -26,6 +26,7 @@ import { deviceRoutes } from "./routes/device"
 import { gatewayRoutes } from "./routes/gateway"
 import { ssoRoutes } from "./routes/sso"
 import { Store } from "./store"
+import { Streams } from "./streams"
 
 // Application services. Tests and embedders replace nodes (an in-memory database, fixed config)
 // with LayerNode.compile replacements, the same way core's server does.
@@ -35,6 +36,7 @@ export const services = LayerNode.group([
   Store.node,
   Oidc.node,
   Pricing.node,
+  Streams.node,
   httpClient,
   consoleAssets,
 ])
@@ -69,6 +71,7 @@ export function routes<E>(
     | Store.Service
     | Oidc.Service
     | Pricing.Service
+    | Streams.Service
     | HttpClient.HttpClient
     | ConsoleAssets,
     E
@@ -81,13 +84,16 @@ export function routes<E>(
 }
 
 // Device codes, abandoned SSO logins and audit history past retention, swept hourly. Model prices
-// are loaded at startup and refreshed daily, so gateway calls rarely wait for the catalog.
+// are loaded at startup and refreshed daily, so gateway calls rarely wait for the catalog. Audit
+// streams are delivered every few seconds.
 export const housekeeping = Layer.effectDiscard(
   Effect.gen(function* () {
     const store = yield* Store.Service
     const config = yield* ServerConfig.Service
     const pricing = yield* Pricing.Service
+    const streams = yield* Streams.Service
     yield* Effect.forkScoped(pricing.refresh().pipe(Effect.repeat(Schedule.spaced("1 day"))))
+    yield* Effect.forkScoped(streams.run().pipe(Effect.repeat(Schedule.spaced("5 seconds"))))
     const sweep = store
       .sweep(config.retention)
       .pipe(

@@ -147,7 +147,7 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 3. **Rebranding and distribution** (see above).
 4. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.
 5. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
-6. **SIEM streaming.** Push audit events to webhooks, OTLP or syslog. Opt-in audit of client-side events such as tool runs.
+6. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
 7. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
 8. **Live policy reload** of the model list in running clients, without a restart.
 9. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.

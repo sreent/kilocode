@@ -5,6 +5,10 @@ import { Authorization, OrgScope } from "../middleware"
 import { Requires } from "../roles"
 import {
   AuditPage,
+  AuditStream,
+  AuditStreamCreated,
+  AuditStreamInput,
+  AuditStreamPatch,
   Budget,
   Domain,
   Effective,
@@ -31,6 +35,7 @@ import {
   Sso,
   SsoInput,
   StoredMode,
+  StreamTest,
   Suborg,
   Token,
   UsageBy,
@@ -311,6 +316,44 @@ export const InsightGroup = HttpApiGroup.make("enterprise.insight")
       success: csv,
       error: failures,
     }).annotate(Requires, "audit.read"),
+  )
+  .add(
+    HttpApiEndpoint.get("streams.list", "/api/v1/orgs/:org/audit/streams", {
+      params: org,
+      success: Schema.Struct({ streams: Schema.Array(AuditStream) }),
+      error: failures,
+    }).annotate(Requires, "audit.read"),
+  )
+  .add(
+    HttpApiEndpoint.post("streams.create", "/api/v1/orgs/:org/audit/streams", {
+      params: org,
+      payload: AuditStreamInput,
+      success: AuditStreamCreated.pipe(HttpApiSchema.status(201)),
+      error: failures,
+    }).annotate(Requires, "audit.stream"),
+  )
+  .add(
+    HttpApiEndpoint.patch("streams.update", "/api/v1/orgs/:org/audit/streams/:id", {
+      params: { ...org, id: Schema.String },
+      payload: AuditStreamPatch,
+      success: AuditStream,
+      error: failures,
+    }).annotate(Requires, "audit.stream"),
+  )
+  .add(
+    HttpApiEndpoint.delete("streams.remove", "/api/v1/orgs/:org/audit/streams/:id", {
+      params: { ...org, id: Schema.String },
+      success: HttpApiSchema.NoContent,
+      error: failures,
+    }).annotate(Requires, "audit.stream"),
+  )
+  // Sends one test event now and reports how the destination answered.
+  .add(
+    HttpApiEndpoint.post("streams.test", "/api/v1/orgs/:org/audit/streams/:id/test", {
+      params: { ...org, id: Schema.String },
+      success: StreamTest,
+      error: failures,
+    }).annotate(Requires, "audit.stream"),
   )
   .add(
     HttpApiEndpoint.post("usage.ingest", "/api/v1/orgs/:org/usage", {

@@ -17,6 +17,7 @@ It is part of this fork, not of upstream Kilo Code. Upstream's enterprise featur
 | Org agents | Custom modes delivered to clients as locked agents |
 | Guardrails | Org rules appended to every system prompt; session sharing, vendor session sync and product analytics off unless the org enables them |
 | Audit log | Every administrative and sign-in event, filterable by action, actor and date, cursor-paged, CSV export, configurable retention |
+| Audit streaming | New audit events pushed to SIEMs as they happen: HMAC-signed HTTPS webhooks or RFC 5424 syslog over TLS, in order, at least once, resuming after outages |
 | LLM gateway | Routes chosen providers (Anthropic, OpenAI, OpenAI-compatible) through the server, which holds the org's API keys, enforces model policy and budgets on every call and meters usage from the responses |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
 | Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
@@ -173,9 +174,18 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 
 Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
 
+## Audit streaming
+
+Under Insight → Audit streaming (or `POST /api/v1/orgs/{org}/audit/streams`), owners and admins add destinations that receive every new audit event. A stream starts with the events recorded after it is created, its own creation first; older history is in the CSV export.
+
+- **Webhook**: a `POST` of `{ "org": { "id", "slug", "name" }, "events": [...] }`, up to 200 events per request. Each event is the audit API's event plus an ISO `time`. An optional header, such as Splunk HEC's `Authorization: Splunk <token>`, is stored encrypted. Every delivery carries `x-enterprise-delivery` (a unique id) and `x-enterprise-signature: t=<unix seconds>,v1=<hex>`, where the hex is the HMAC-SHA256 of `<t>.<raw body>` keyed with the stream's signing secret, which is shown once when the stream is created. Compare signatures in constant time, and reject timestamps more than a few minutes old. Any 2xx response accepts the batch; redirects are not followed.
+- **Syslog**: one RFC 5424 message per event over TCP, TLS by default (RFC 5425), with RFC 6587 octet-counting framing: facility 13 (log audit), severity informational, `APP-NAME` `kilo-enterprise`, `MSGID` the action, and the event as JSON in the message.
+
+Events are delivered in order and at least once, so receivers can use the event `id` to drop the rare duplicate. A failing destination is retried with backoff, from 5 seconds up to every 5 minutes, and resumes exactly where it stopped. Its error shows on the stream until it recovers, and pausing a stream keeps its place. "Send test" sends a synthetic `audit.stream_test` event (id `0`) without affecting delivery. Each delivery holds a short lease on its stream, so several server processes never send the same events twice.
+
 ## Audit events
 
-`budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `gateway.provider_create`, `gateway.provider_remove`, `gateway.provider_update`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
+`audit.stream_create`, `audit.stream_remove`, `audit.stream_update`, `budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `gateway.provider_create`, `gateway.provider_remove`, `gateway.provider_update`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
 
 Each entry records time, action, actor (user and email snapshot), target, details (for example the role before and after, or the models added to the blocklist) and client IP.
 
@@ -195,6 +205,7 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 | `/api/v1/orgs/{org}/policy`, `/policy/effective` | Policy and what a client enforces for the caller (supports `If-None-Match`) |
 | `/api/v1/orgs/{org}/modes` | Org-managed agents |
 | `/api/v1/orgs/{org}/audit`, `/audit/export` | Audit log (`action`, `actor`, `from`, `to`, `before`, `limit`) and its CSV export |
+| `/api/v1/orgs/{org}/audit/streams`, `/audit/streams/{id}`, `/audit/streams/{id}/test` | Audit streams (webhook and syslog destinations) |
 | `/api/v1/orgs/{org}/usage`, `/usage/export` | Usage ingestion and analytics |
 | `/api/v1/orgs/{org}/budgets` | Budgets |
 | `/api/v1/orgs/{org}/gateway`, `/gateway/providers/{id}` | LLM gateway providers (keys are write-only) |
@@ -209,7 +220,7 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 - Bearer tokens are random 256-bit values, stored only as SHA-256 hashes, prefixed (`ent_`, `ents_`) so secret scanners can find leaked ones, revocable, and expiring (90 days for CLI logins, 8 hours for browser sessions).
 - **Every token is bound to the organization it was issued for**, and reaches only that org and its sub-orgs. An org's admins configure that org's identity provider, so an identity asserted through it must never carry into another org that happens to share the person. The test suite includes this attack.
 - Deactivating a user revokes all of their tokens at once. Suspended memberships grant nothing.
-- SSO client secrets and gateway API keys are encrypted at rest; the API only ever returns a key's last four characters. The gateway relays only its providers' chat endpoints and never follows upstream redirects, so an org key cannot be used for anything else or sent to another host.
+- SSO client secrets, gateway API keys, and audit streams' signing secrets and headers are encrypted at rest. The API never returns them; for a gateway key it shows only the last four characters. The gateway relays only its providers' chat endpoints and never follows upstream redirects, so an org key cannot be used for anything else or sent to another host.
 - Invite and device codes are single-use, and device codes expire after 10 minutes.
 - The browser session cookie is `HttpOnly`, `Secure` on HTTPS, and `SameSite=Lax`. Every cookie-authenticated write must carry a same-origin `Origin` header.
 - The admin console is served with a strict Content Security Policy and renders all data as text.

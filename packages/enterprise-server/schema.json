@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "00b34581-c536-4eab-8032-cfc0e9a2f711",
+  "id": "40f747bf-7c09-447f-b50b-ab79dd3c8ef1",
   "prevIds": [
-    "c1ab99e4-9f9f-47b0-a955-f766d5582f26"
+    "00b34581-c536-4eab-8032-cfc0e9a2f711"
   ],
   "ddl": [
     {
@@ -60,6 +60,10 @@
     },
     {
       "name": "sso",
+      "entityType": "tables"
+    },
+    {
+      "name": "audit_streams",
       "entityType": "tables"
     },
     {
@@ -982,6 +986,176 @@
       "generated": null,
       "name": "id",
       "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "org",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "target",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "secret",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "headers",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'[]'",
+      "generated": null,
+      "name": "names",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "cursor",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "delivered",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "error",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "failing",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "failures",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "retry",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lease",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated",
+      "entityType": "columns",
+      "table": "audit_streams"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
       "table": "tokens"
     },
     {
@@ -1541,6 +1715,21 @@
     },
     {
       "columns": [
+        "org"
+      ],
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_audit_streams_org_orgs_id_fk",
+      "entityType": "fks",
+      "table": "audit_streams"
+    },
+    {
+      "columns": [
         "user"
       ],
       "tableTo": "users",
@@ -1746,6 +1935,15 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "audit_streams_pk",
+      "table": "audit_streams",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "tokens_pk",
       "table": "tokens",
       "entityType": "pks"
@@ -1844,6 +2042,20 @@
       "name": "modes_org_slug",
       "entityType": "indexes",
       "table": "modes"
+    },
+    {
+      "columns": [
+        {
+          "value": "org",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "audit_streams_org",
+      "entityType": "indexes",
+      "table": "audit_streams"
     },
     {
       "columns": [

@@ -38,6 +38,7 @@ const groups: ReadonlyArray<Group> = [
     items: [
       { path: "/usage", label: "Usage" },
       { path: "/audit", label: "Audit log", requires: "audit.read" },
+      { path: "/streams", label: "Audit streaming", requires: "audit.read" },
     ],
   },
   { label: "Identity", items: [{ path: "/security", label: "Single sign-on and SCIM", requires: "sso.write" }] },
