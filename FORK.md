@@ -111,6 +111,8 @@ Fresh clones need the remote once: `git remote add upstream https://github.com/K
 git fetch upstream --tags
 git merge v7.9.0                      # or upstream/main
 git grep -n "kilocode_change.*enterprise"   # check each hook still sits where it should
+git lfs fetch upstream HEAD           # LFS files of the merged tree (screenshot baselines, videos)
+git lfs push --object-id origin $(git lfs ls-files -l | cut -d' ' -f1)   # upload the ones the fork lacks
 bun install                           # regenerates bun.lock; on a bun.lock conflict take upstream's, then re-run
 (cd packages/enterprise-protocol && bun test)
 (cd packages/enterprise-server && bun test && bun run typecheck)
@@ -121,15 +123,19 @@ bun install                           # regenerates bun.lock; on a bun.lock conf
 
 Because all new code lives in fork-owned directories, merges normally touch only the marked hooks above. The enterprise packages depend on upstream's `effect`, `@opencode-ai/core` and `@kilocode/kilo-web-ui`, so an upstream change to those can surface as a typecheck error in them; the commands above catch it.
 
-## CI: a decision for you
+## CI
 
-The import brought upstream's GitHub Actions workflows along, unchanged. Several only make sense inside Kilo's organization:
+The import brought upstream's GitHub Actions workflows along. Two adjustments make the pull-request checks work in this repository:
 
-- **Private runners:** some jobs target Kilo's private `blacksmith-*` runners and will wait for a runner forever. `test.yml`'s change-detection job does this unconditionally.
+- **Runners:** `test.yml` runs on GitHub-hosted runners (`ubuntu-24.04`, `windows-2025`, `macos-15`) instead of Kilo's private Blacksmith runners, which this repository can't use. The other workflows that target Blacksmith are guarded with `github.repository == 'Kilo-Org/kilocode'` and skip themselves here.
+- **Git LFS:** the screenshot baselines and videos are stored in this repository's own LFS storage. Pushing upstream history doesn't upload them, because husky replaces git-lfs's `pre-push` hook, so upload them after each merge (see the commands above). Without them, the Visual Regression checks fail at checkout.
+
+Still open, and yours to decide before the fork lands on `main`:
+
 - **Missing secrets:** release and publish workflows need Kilo's secrets.
-- **Scheduled bots:** stale-PR, auto-close, community sweep and beta releases all run on a schedule.
+- **Scheduled bots:** stale-PR, auto-close, community sweep and beta releases run on a schedule from the default branch. Most are guarded like the Blacksmith workflows, but not all.
 
-Most are guarded with `github.repository == 'Kilo-Org/kilocode'`, but not all. Scheduled workflows only run from the default branch, so none of this starts until the fork lands on `main`. Before that, either turn off the workflows you don't want in the repository's Actions settings, or move them under `.github/workflows/disabled/` (the pattern upstream uses) and add a small CI for the fork: the test, typecheck and `generate` commands above. Workflows were left untouched pending your decision.
+Turn off the workflows you don't want in the repository's Actions settings, or move them under `.github/workflows/disabled/` (the pattern upstream uses).
 
 The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plugin typecheck. The JetBrains step downloads Kilo's pinned CLI release metadata from the GitHub API. Where that API is unreachable, `./gradlew typecheck -Pkilo.cli.pinned=false` checks the plugin against the CLI in this repository instead; build it first with `bun run script/build.ts --single --skip-install` in `packages/opencode`.
 
