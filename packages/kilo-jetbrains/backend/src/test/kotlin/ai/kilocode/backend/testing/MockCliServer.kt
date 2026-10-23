@@ -116,6 +116,15 @@ class MockCliServer : AutoCloseable {
     @Volatile var lastMarketplaceInstallBody: String? = null
     @Volatile var lastMarketplaceRemoveBody: String? = null
 
+    // Organization routes; a null status answers 404 like a CLI without organization support.
+    @Volatile var enterpriseStatus: String? = null
+    @Volatile var enterpriseSignin = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var enterpriseSigninStatus = 200
+    @Volatile var enterpriseWait = """{"enabled":true,"required":false,"gateway":[]}"""
+    @Volatile var enterpriseWaitStatus = 200
+    @Volatile var enterpriseSignout = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var lastEnterpriseSigninBody: String? = null
+
     // Project-scoped REST responses
     @Volatile var providers = """{"all":[],"default":{},"connected":[],"failed":[]}"""
     @Volatile var providerAuth = "{}"
@@ -475,6 +484,16 @@ class MockCliServer : AutoCloseable {
                     lastMarketplaceRemoveBody = body
                     respond(output, marketplaceRemoveStatus, marketplaceRemoveResult)
                 }
+                bare == "/kilo/enterprise/status" && method == "GET" -> {
+                    val status = enterpriseStatus
+                    if (status == null) respond(output, 404, """{"error":"Not found"}""") else respond(output, 200, status)
+                }
+                bare == "/kilo/enterprise/signin" && method == "POST" -> {
+                    lastEnterpriseSigninBody = body
+                    respond(output, enterpriseSigninStatus, enterpriseSignin)
+                }
+                bare == "/kilo/enterprise/signin/wait" && method == "POST" -> respond(output, enterpriseWaitStatus, enterpriseWait)
+                bare == "/kilo/enterprise/signout" && method == "POST" -> respond(output, 200, enterpriseSignout)
                 bare.matches(Regex("/kilocode/session/ses_[^/]+/board")) && method == "GET" -> {
                     lastSessionBoardPath = path
                     respond(output, sessionBoardStatus, sessionBoard)

@@ -104,6 +104,12 @@ Client-side enforcement guards against mistakes and drift, not against a user wh
 
 With none of these present, every hook is a no-op and the CLI behaves exactly like upstream.
 
+### Signing in from the IDEs
+
+People sign in from their IDE's profile: the Profile page in VS Code, and Settings → Tools → Kilo → User Profile in JetBrains IDEs. Both show the organization, who is signed in, the policy version, gateway providers and why the agent is blocked, and sign in with the same device code as `kilo enterprise login`. On a device that isn't enrolled, a small link on the same page connects to an organization. Both drive the CLI's `/kilo/enterprise` routes, and a sign-in or sign-out reloads the providers, models and agents the policy shapes.
+
+JetBrains builds use Kilo's released CLI unless built with `-Pkilo.cli.pinned=false`. That CLI has no organization routes, so the section stays hidden until the plugin pins or bundles this fork's CLI (see [Trademarks and distribution](#trademarks-and-distribution)).
+
 ## Keeping up with upstream
 
 Fresh clones need the remote once: `git remote add upstream https://github.com/Kilo-Org/kilocode.git`.
@@ -143,12 +149,11 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 ## Roadmap
 
 1. **LLM gateway, next steps.** The gateway relays Anthropic, OpenAI and OpenAI-compatible APIs today. Next: Bedrock, Vertex and Azure OpenAI upstreams, per-org price overrides for negotiated rates, rate limits, and request logging for audits.
-2. **IDE surfaces.** Show the org, sign-in state and blocked reasons in the VS Code and JetBrains UIs, with a sign-in button. Today they appear as session errors and through `kilo enterprise status`.
-3. **Rebranding and distribution** (see above).
-4. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.
-5. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
-6. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
-7. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
-8. **Live policy reload** of the model list in running clients, without a restart.
-9. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
-10. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.
+2. **Rebranding and distribution** (see above).
+3. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.
+4. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
+5. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
+6. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
+7. **Live policy reload** of the model list in running clients, without a restart.
+8. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
+9. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.

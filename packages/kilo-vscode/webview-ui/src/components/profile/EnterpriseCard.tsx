@@ -39,8 +39,10 @@ const EnterpriseCard: Component = () => {
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
       if (message.type === "enterpriseStatus") {
         setStatus(message.status)
-        // A waiting sign-in shows its code; anything else ends the flow.
-        if (message.status.signin) setPhase("pending")
+        // The code shows while this card waits for its own sign-in. The CLI keeps reporting one
+        // that was cancelled until it expires, and that one stays hidden.
+        const waiting = phase() === "initiating" || phase() === "pending"
+        if (message.status.signin && waiting) setPhase("pending")
         else if (phase() !== "error") setPhase("idle")
         if (message.status.user) setConnecting(false)
       }

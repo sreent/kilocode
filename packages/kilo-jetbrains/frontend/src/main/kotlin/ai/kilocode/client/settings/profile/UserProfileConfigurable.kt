@@ -3,6 +3,7 @@ package ai.kilocode.client.settings.profile
 import ai.kilocode.client.app.KiloAppService
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.settings.base.KiloReadyConfigurable
+import ai.kilocode.client.ui.layout.Stack
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -19,13 +20,15 @@ import javax.swing.JComponent
  *
  * Located at Settings -> Tools -> Kilo -> User Profile.
  *
- * Shows login / logout, current balance, Kilo Pass, personal/org account selector,
- * and account billing actions. This is a status/action panel — it
- * has no persistent settings, so [isModified] always returns false.
+ * Shows the self-hosted organization the device is enrolled in, if any, then login / logout,
+ * current balance, Kilo Pass, personal/org account selector, and account billing actions.
+ * This is a status/action panel — it has no persistent settings, so [isModified] always
+ * returns false.
  */
 class UserProfileConfigurable : KiloReadyConfigurable() {
 
     private var ui: ProfileUi? = null
+    private var org: OrganizationUi? = null
     private var watchJob: Job? = null
     private var focus = false
 
@@ -44,9 +47,12 @@ class UserProfileConfigurable : KiloReadyConfigurable() {
 
     override fun createReadyComponent(cs: CoroutineScope): JComponent {
         val panel = buildPanel(cs)
+        val enterprise = OrganizationUi(cs)
         ui = panel
+        org = enterprise
         startWatching(cs, panel)
-        return panel
+        enterprise.load()
+        return Stack.vertical().next(enterprise).next(panel)
     }
 
     override fun onReadyComponentCreated(component: JComponent) {
@@ -83,10 +89,13 @@ class UserProfileConfigurable : KiloReadyConfigurable() {
     override fun disposeReadyComponent(component: JComponent) {
         // Dispose UI first to invalidate pending login attempts before scope cancellation.
         val panel = ui
+        val enterprise = org
         val job = watchJob
         ui = null
+        org = null
         watchJob = null
         panel?.dispose()
+        enterprise?.dispose()
         job?.cancel()
     }
 
