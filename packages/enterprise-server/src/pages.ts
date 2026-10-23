@@ -1,7 +1,7 @@
 import { HttpServerResponse } from "effect/unstable/http"
 
 // Server-rendered pages for the browser legs of sign-in (device approval, SSO results). They use
-// the Kilo theme's tokens and palette (kilo-ui's "kilo" theme), so they look like the admin console.
+// the tokens of kilo-web-ui's console theme, so they look like the admin console they lead to.
 
 export function escape(text: string) {
   return text
@@ -17,42 +17,46 @@ const logo = `<svg width="40" height="40" viewBox="0 0 512 512" aria-hidden="tru
 const style = `
   :root {
     color-scheme: dark;
-    --background-base: #1e1e1e; --background-weak: #252526; --text-base: #cccccc; --text-weak: #a0a0a0;
-    --text-strong: #d4d4d4; --text-interactive-base: #3794ff; --surface-brand-base: #0e639c;
-    --surface-brand-hover: #1177bb; --border-base: #454545; --input-base: #3c3c3c; --border-focus: #007fd4;
+    --background: oklch(0.147 0.004 49.25); --card: oklch(0.216 0.006 56.043);
+    --foreground: oklch(0.985 0.001 106.423); --muted-foreground: oklch(0.709 0.01 56.259);
+    --border: oklch(1 0 0 / 10%); --input: oklch(1 0 0 / 15%); --ring: oklch(0.553 0.013 58.071);
+    --primary: oklch(0.9519 0.1569 108.263); --primary-hover: oklch(0.9 0.16 108.263);
+    --primary-foreground: oklch(0.147 0.004 49.25);
   }
   @media (prefers-color-scheme: light) {
     :root {
       color-scheme: light;
-      --background-base: #ffffff; --background-weak: #f3f3f3; --text-base: #616161; --text-weak: #767676;
-      --text-strong: #333333; --text-interactive-base: #006ab1; --surface-brand-base: #007acc;
-      --surface-brand-hover: #0062a3; --border-base: #cecece; --input-base: #ffffff; --border-focus: #0090f1;
+      --background: oklch(0.97 0.001 106.424); --card: oklch(1 0 0);
+      --foreground: oklch(0.147 0.004 49.25); --muted-foreground: oklch(0.553 0.013 58.071);
+      --border: oklch(0.923 0.003 48.717); --input: oklch(0.923 0.003 48.717); --ring: oklch(0.709 0.01 56.259);
     }
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--background-base);
-    color: var(--text-base); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--background);
+    color: var(--foreground);
+    font: 14px/1.5 "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   main {
-    width: min(420px, calc(100vw - 32px)); padding: 32px 28px; text-align: center; background: var(--background-weak);
-    border: 1px solid var(--border-base); border-radius: 6px;
+    width: min(420px, calc(100vw - 32px)); padding: 32px 28px; text-align: center; background: var(--card);
+    border: 1px solid var(--border); border-radius: 0.63rem;
   }
-  h1 { margin: 16px 0 8px; font-size: 16px; font-weight: 500; color: var(--text-strong); }
-  p { margin: 8px 0; color: var(--text-weak); }
-  a { color: var(--text-interactive-base); }
-  .code { font: 600 24px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 4px; margin: 16px 0; color: var(--text-strong); }
+  h1 { margin: 16px 0 8px; font-size: 16px; font-weight: 500; }
+  p { margin: 8px 0; color: var(--muted-foreground); }
+  a { color: var(--foreground); text-underline-offset: 3px; }
+  .code { font: 500 24px "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 4px; margin: 16px 0; }
   .button, button {
-    display: inline-block; padding: 6px 14px; border: 0; border-radius: 2px; background: var(--surface-brand-base);
-    color: #ffffff; font: inherit; text-decoration: none; cursor: pointer;
+    display: inline-block; padding: 8px 16px; border: 0; border-radius: 0.36rem; background: var(--primary);
+    color: var(--primary-foreground); font: inherit; font-weight: 500; text-decoration: none; cursor: pointer;
   }
-  .button:hover, button:hover { background: var(--surface-brand-hover); }
+  .button:hover, button:hover { background: var(--primary-hover); }
+  .button:focus-visible, button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   input {
-    font: 600 18px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 8px; width: 12ch; text-align: center;
-    text-transform: uppercase; color: var(--text-strong); background: var(--input-base); border: 1px solid var(--border-base);
-    border-radius: 2px;
+    font: 500 18px "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 8px; width: 12ch;
+    text-align: center; text-transform: uppercase; color: var(--foreground); background: transparent;
+    border: 1px solid var(--input); border-radius: 0.36rem;
   }
-  input:focus { outline: 1px solid var(--border-focus); }
+  input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
 `
 
 const csp =
