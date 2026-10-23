@@ -64,6 +64,7 @@ import { cumulativeSessionDiff } from "@/kilocode/session-portability/cumulative
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder" // kilocode_change
 import { KiloShutdown } from "@/kilocode/cli/shutdown"
+import { Enterprise } from "@/enterprise" // enterprise_change
 
 async function provide<R>(input: { directory: string; fn: () => R }): Promise<R> {
   const { provide } = await import("@/kilocode/instance")
@@ -246,6 +247,7 @@ export namespace KiloSessions {
   }
 
   async function getClient(): Promise<Client | undefined> {
+    if (!Enterprise.sync()) return undefined // enterprise_change - org policy keeps sessions off the vendor cloud
     return withInFlightCache(clientKey, ttlMs, async () => {
       const token = await kilocodeToken()
       if (!token) return undefined

@@ -18,6 +18,14 @@ export const RollCallCommand = lazy({
   load: async () => (await import("@/kilocode/cli/cmd/roll-call")).RollCallCommand,
 })
 
+// enterprise_change start
+export const EnterpriseCommand = lazy({
+  command: "enterprise",
+  describe: "sign in to your organization and inspect its policy",
+  load: async () => (await import("@/enterprise/cli")).EnterpriseCommand,
+})
+// enterprise_change end
+
 export const ProfileCommand = lazy({
   command: "profile",
   describe: "show Kilo account profile",

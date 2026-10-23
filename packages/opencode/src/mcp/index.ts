@@ -51,6 +51,7 @@ import { McpEvent } from "@opencode-ai/schema/mcp-event"
 import { McpBrowser } from "./browser"
 import { authFailure } from "@/kilocode/mcp/auth-failure" // kilocode_change
 import * as KiloAuthTelemetry from "@/kilocode/mcp/auth-telemetry" // kilocode_change
+import { Enterprise } from "@/enterprise" // enterprise_change
 
 const DEFAULT_TIMEOUT = 30_000
 const CLIENT_OPTIONS = {
@@ -488,6 +489,11 @@ const layer = Layer.effect(
         if (mcp.enabled === false) {
           return DISABLED_RESULT
         }
+
+        // enterprise_change start - every connection path (startup, add, connect) passes through here
+        const refused = Enterprise.mcp(mcp)
+        if (refused) return { status: { status: "failed" as const, error: refused } }
+        // enterprise_change end
 
         const { client: mcpClient, status } =
           mcp.type === "remote"

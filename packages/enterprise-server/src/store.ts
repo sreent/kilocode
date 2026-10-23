@@ -786,21 +786,19 @@ export function create(db: Db, now: () => number = Date.now) {
         )
         .all(...args)
     },
+    // Rounded to micro-dollars so float summation noise never reaches budgets or the UI.
     spent(input: { org: string; from: number; user?: string }) {
-      if (input.user)
-        return (
-          db
+      const sum = input.user
+        ? db
             .query<
               { n: number | null },
               [string, number, string]
             >("select sum(cost) as n from usage where org = ? and at >= ? and user = ?")
-            .get(input.org, input.from, input.user)!.n ?? 0
-        )
-      return (
-        db
-          .query<{ n: number | null }, [string, number]>("select sum(cost) as n from usage where org = ? and at >= ?")
-          .get(input.org, input.from)!.n ?? 0
-      )
+            .get(input.org, input.from, input.user)!.n
+        : db
+            .query<{ n: number | null }, [string, number]>("select sum(cost) as n from usage where org = ? and at >= ?")
+            .get(input.org, input.from)!.n
+      return Math.round((sum ?? 0) * 1e6) / 1e6
     },
   }
 

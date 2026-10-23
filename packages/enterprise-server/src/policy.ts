@@ -53,7 +53,8 @@ export const Policy = z.object({
   permission: Permission.default({}),
   // Org-wide rules appended to the agent system prompt.
   instructions: z.string().max(50_000).optional(),
-  share: z.enum(["allowed", "disabled"]).default("allowed"),
+  // Session sharing and syncing sessions to the upstream vendor's cloud. Off unless an org opts in.
+  share: z.enum(["allowed", "disabled"]).default("disabled"),
   telemetry: z
     .object({
       // Product analytics sent to the upstream vendor. Enterprises usually turn this off.

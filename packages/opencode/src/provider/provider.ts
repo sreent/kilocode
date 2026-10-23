@@ -53,6 +53,7 @@ import * as ModelsRefresh from "@/kilocode/provider/models-refresh"
 import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions } from "@/kilocode/provider/cloud-auth"
 // kilocode_change end
 import { ProviderError } from "./error"
+import { Enterprise } from "@/enterprise" // enterprise_change
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -1800,6 +1801,7 @@ const layer = Layer.effect(
               (configProvider?.whitelist && !configProvider.whitelist.includes(modelID))
             )
               delete provider.models[modelID]
+            if (!Enterprise.model(providerID, modelID)) delete provider.models[modelID] // enterprise_change - org model access
 
             if (model.variants === undefined) {
               model.variants = mapValues(ProviderTransform.variants(model), (v) => v)

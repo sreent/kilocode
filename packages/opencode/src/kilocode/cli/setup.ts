@@ -12,6 +12,7 @@ import {
   DaemonCommand,
   DevAliasCommand,
   DevSetupCommand,
+  EnterpriseCommand, // enterprise_change
   KiloConsoleCommand,
   ProfileCommand,
   PtySmokeCommand,
@@ -48,6 +49,7 @@ export namespace KiloCli {
       .command(CloudCommand)
       .command(RollCallCommand)
       .command(ProfileCommand)
+      .command(EnterpriseCommand) // enterprise_change
       .command(AutoCommand)
       .command(RemoteCommand)
       .command(DaemonCommand)
@@ -101,6 +103,12 @@ export namespace KiloCli {
       version: InstallationVersion,
       enabled: cfg.experimental?.openTelemetry !== false,
     })
+    // enterprise_change start - under enterprise management, product analytics and session sharing/sync
+    // stay off unless the org policy allows them (this also overrides KILO_TELEMETRY_LEVEL)
+    const { Enterprise } = await import("@/enterprise")
+    await Enterprise.bootstrap()
+    if (!Enterprise.telemetry()) Telemetry.setEnabled(false)
+    // enterprise_change end
 
     const { migrateLegacyKiloAuth } = gateway
     const getAuth = async () => {

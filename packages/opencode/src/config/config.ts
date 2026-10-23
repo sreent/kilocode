@@ -65,6 +65,7 @@ import { installLocalPluginDependency, needsLocalPluginDependency } from "@/kilo
 // kilocode_change end
 import { withTransientReadRetry } from "@/util/effect-http-client"
 import * as Log from "@opencode-ai/core/util/log" // kilocode_change
+import { Enterprise } from "@/enterprise" // enterprise_change
 
 const log = Log.create({ service: "config" }) // kilocode_change
 
@@ -1056,6 +1057,9 @@ const layer = Layer.effect(
         // kilocode_change start — inject Kilo default plugins into both plugin list and origins
         KilocodeDefaultPlugins.apply(result, { disabled: Flag.KILO_DISABLE_DEFAULT_PLUGINS, log })
         // kilocode_change end
+        // enterprise_change start - the org policy is the last layer, above managed and env config
+        yield* Effect.promise(() => Enterprise.overlay(result))
+        // enterprise_change end
 
         return {
           config: result,

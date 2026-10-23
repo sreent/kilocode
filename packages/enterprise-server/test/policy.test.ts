@@ -105,3 +105,9 @@ describe("modes and budgets", () => {
     expect(base().telemetry.product).toBe(false)
   })
 })
+
+describe("secure defaults", () => {
+  test("sharing and vendor session sync are off unless an org opts in", () => {
+    expect(base().share).toBe("disabled")
+  })
+})

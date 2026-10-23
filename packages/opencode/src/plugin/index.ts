@@ -31,6 +31,7 @@ import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } fro
 import { KiloAuthPlugin } from "@kilocode/kilo-gateway" // kilocode_change
 import { AtomicChatPlugin } from "@kilocode/plugin-atomic-chat" // kilocode_change
 import { AnacondaDesktopPlugin } from "@/kilocode/anaconda-desktop/provider" // kilocode_change
+import { EnterprisePlugin } from "@/enterprise" // enterprise_change
 import { registerAdapter } from "@/control-plane/adapters"
 import type { WorkspaceAdapter } from "@/control-plane/types"
 import { RuntimeFlags } from "@/effect/runtime-flags"
@@ -177,7 +178,8 @@ const layer = Layer.effect(
           $: typeof Bun === "undefined" ? undefined : Bun.$,
         }
 
-        for (const plugin of flags.disableDefaultPlugins ? [] : internalPlugins(flags)) {
+        // enterprise_change - the enterprise plugin enforces org policy, so disabling defaults must not drop it
+        for (const plugin of [...(flags.disableDefaultPlugins ? [] : internalPlugins(flags)), EnterprisePlugin]) {
           const init = yield* Effect.tryPromise({
             try: () => plugin(input),
             catch: errorMessage,

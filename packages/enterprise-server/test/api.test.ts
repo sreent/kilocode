@@ -273,7 +273,7 @@ describe("policy", () => {
       headers: { "if-none-match": etag },
     })
     expect(again.status).toBe(304)
-    await env.call("PUT", "/api/v1/orgs/acme/policy", { token: env.owner.token, body: { share: "disabled" } })
+    await env.call("PUT", "/api/v1/orgs/acme/policy", { token: env.owner.token, body: { share: "allowed" } })
     const changed = await env.call("GET", "/api/v1/orgs/acme/policy/effective", {
       token: env.owner.token,
       headers: { "if-none-match": etag },
@@ -473,5 +473,20 @@ describe("verified domains", () => {
       (await env.call("POST", "/api/v1/orgs/globex/domains", { token: steal.token, body: { domain: "acme.com" } }))
         .status,
     ).toBe(409)
+  })
+})
+
+describe("admin console", () => {
+  test("is served with a strict content security policy", async () => {
+    const env = setup()
+    const page = await env.server.request("/admin")
+    expect(page.status).toBe(200)
+    expect(page.headers.get("content-security-policy")).toContain("script-src 'self'")
+    expect(page.headers.get("x-frame-options")).toBeTruthy()
+    expect(await page.text()).toContain('<script src="/admin/app.js" defer>')
+    const script = await env.server.request("/admin/app.js")
+    expect(script.headers.get("content-type")).toContain("text/javascript")
+    expect(await script.text()).toContain("async function start()")
+    expect((await env.server.request("/")).headers.get("location")).toBe("/admin")
   })
 })
