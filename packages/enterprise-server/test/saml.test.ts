@@ -75,7 +75,10 @@ function respond(input: Assert) {
   const nameID = input.nameID ?? input.email ?? "user@acme.com"
   const answer = input.inResponseTo ? ` InResponseTo="${input.inResponseTo}"` : ""
   const attributes = Object.entries(input.attributes ?? {})
-    .map(([name, value]) => `<saml:Attribute Name="${name}"><saml:AttributeValue>${value}</saml:AttributeValue></saml:Attribute>`)
+    .map(
+      ([name, value]) =>
+        `<saml:Attribute Name="${name}"><saml:AttributeValue>${value}</saml:AttributeValue></saml:Attribute>`,
+    )
     .join("")
   let assertion = `<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="${input.id ?? `_a${crypto.randomUUID()}`}" Version="2.0" IssueInstant="${issued.toISOString()}"><saml:Issuer>${input.issuer ?? entity}</saml:Issuer><saml:Subject><saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">${nameID}</saml:NameID><saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer"><saml:SubjectConfirmationData${answer} NotOnOrAfter="${later.toISOString()}" Recipient="${input.recipient ?? acs}"/></saml:SubjectConfirmation></saml:Subject><saml:Conditions NotBefore="${issued.toISOString()}" NotOnOrAfter="${later.toISOString()}"><saml:AudienceRestriction><saml:Audience>${input.audience ?? audience}</saml:Audience></saml:AudienceRestriction></saml:Conditions><saml:AuthnStatement AuthnInstant="${issued.toISOString()}"><saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement>${attributes ? `<saml:AttributeStatement>${attributes}</saml:AttributeStatement>` : ""}</saml:Assertion>`
   const mode = input.sign ?? "assertion"
@@ -165,9 +168,9 @@ describe("saml configuration", () => {
     expect(await bad({ entity_id: entity, sso_url: entry })).toContain("metadata")
     expect(await bad({ entity_id: entity, sso_url: entry, certificate: "not a certificate" })).toContain("certificate")
     expect(await bad({ metadata: "<not xml" })).toContain("metadata")
-    expect(await bad({ metadata: metadata().replace(/<md:KeyDescriptor use="signing">.*?<\/md:KeyDescriptor>/s, "") })).toContain(
-      "signing certificate",
-    )
+    expect(
+      await bad({ metadata: metadata().replace(/<md:KeyDescriptor use="signing">.*?<\/md:KeyDescriptor>/s, "") }),
+    ).toContain("signing certificate")
     expect(
       await bad({ metadata: metadata().replace(/<md:SingleSignOnService Binding="[^"]+HTTP-Redirect"[^>]*\/>/, "") }),
     ).toContain("HTTP-Redirect")
@@ -206,7 +209,9 @@ describe("saml sign-in", () => {
     // The AuthnRequest names this server and where to send the answer.
     expect(sent.url.origin + sent.url.pathname).toBe(entry)
     expect(sent.xml).toContain(`AssertionConsumerServiceURL="${acs}"`)
-    expect(sent.xml).toContain(`<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${audience}</saml:Issuer>`)
+    expect(sent.xml).toContain(
+      `<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">${audience}</saml:Issuer>`,
+    )
     expect(response.status).toBe(302)
     expect(response.headers.get("location")).toBe("/admin")
     const session = response.headers.get("set-cookie")!.match(/ent_session=([^;]+)/)![1]
@@ -257,7 +262,10 @@ describe("saml sign-in", () => {
 
   test("refuses forged, tampered, misdirected and unsigned responses", async () => {
     const env = await configured()
-    const rejected = async (input: Assert, body: (sent: ReturnType<typeof request>) => Record<string, string> = () => ({})) => {
+    const rejected = async (
+      input: Assert,
+      body: (sent: ReturnType<typeof request>) => Record<string, string> = () => ({}),
+    ) => {
       const start = await env.server.request("/sso/acme/start")
       const sent = request(start.headers.get("location")!)
       const response = await post(env, {
@@ -312,9 +320,9 @@ describe("saml sign-in", () => {
     expect(replay.status).toBe(403)
     expect(await replay.text()).toContain("already used")
     // Even when allowed, a response that claims to answer a request must answer a real one.
-    expect((await post(env, { SAMLResponse: respond({ email: "owner@acme.com", inResponseTo: "_forged" }) })).status).toBe(
-      403,
-    )
+    expect(
+      (await post(env, { SAMLResponse: respond({ email: "owner@acme.com", inResponseTo: "_forged" }) })).status,
+    ).toBe(403)
   })
 
   test("one org's identity provider can't sign in to another org", async () => {
@@ -325,7 +333,10 @@ describe("saml sign-in", () => {
     // A sign-in started for Globex, posted to Acme's ACS.
     const start = await env.server.request("/sso/globex/start")
     const sent = request(start.headers.get("location")!)
-    const res = await post(env, { SAMLResponse: respond({ inResponseTo: sent.id, email: "owner@acme.com" }), RelayState: sent.relay! })
+    const res = await post(env, {
+      SAMLResponse: respond({ inResponseTo: sent.id, email: "owner@acme.com" }),
+      RelayState: sent.relay!,
+    })
     expect(res.status).toBe(400)
     // Acme's own response is addressed to Acme's ACS and audience, so Globex's ACS refuses it.
     const acme = await env.server.request("/sso/acme/start")

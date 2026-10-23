@@ -66,7 +66,11 @@ export function certificates(input: string): string[] {
 /** Subject, SHA-256 fingerprint and expiry, so admins can match a certificate to their IdP. */
 export function describe(pem: string) {
   const cert = new X509Certificate(pem)
-  return { subject: cert.subject.replaceAll("\n", ", "), fingerprint: cert.fingerprint256, expires: Date.parse(cert.validTo) }
+  return {
+    subject: cert.subject.replaceAll("\n", ", "),
+    fingerprint: cert.fingerprint256,
+    expires: Date.parse(cert.validTo),
+  }
 }
 
 const children = (parent: Element, ns: string, name: string) => Array.from(parent.getElementsByTagNameNS(ns, name))
@@ -136,7 +140,8 @@ export type Request = { readonly id: string; readonly sent: number }
 // was sent. The sign-in row this server keeps for each request is the real record, so the cache only
 // knows the one request a response may answer.
 function cache(expected?: Request): CacheProvider {
-  const known = (key: string) => (expected !== undefined && key === expected.id ? new Date(expected.sent).toISOString() : null)
+  const known = (key: string) =>
+    expected !== undefined && key === expected.id ? new Date(expected.sent).toISOString() : null
   return {
     saveAsync: async (_key, value) => ({ value, createdAt: Date.now() }),
     getAsync: async (key) => known(key),
@@ -192,7 +197,8 @@ export const validate = (sso: SamlConnection, sp: ServiceProvider, response: str
         throw fail(`it was issued by ${profile.issuer || "an unnamed identity provider"}, not ${sso.issuer}`)
       return profile
     },
-    catch: (error) => (error instanceof SamlError ? error : fail(error instanceof Error ? error.message : String(error))),
+    catch: (error) =>
+      error instanceof SamlError ? error : fail(error instanceof Error ? error.message : String(error)),
   })
 
 // ---- who signed in ----------------------------------------------------------------------------
@@ -206,9 +212,24 @@ const keys = {
     "urn:oid:0.9.2342.19200300.100.1.3",
     "urn:oid:1.2.840.113549.1.9.1",
   ],
-  name: ["displayName", "http://schemas.microsoft.com/identity/claims/displayname", "urn:oid:2.16.840.1.113730.3.1.241"],
-  given: ["givenName", "firstName", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "urn:oid:2.5.4.42"],
-  family: ["sn", "surname", "lastName", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "urn:oid:2.5.4.4"],
+  name: [
+    "displayName",
+    "http://schemas.microsoft.com/identity/claims/displayname",
+    "urn:oid:2.16.840.1.113730.3.1.241",
+  ],
+  given: [
+    "givenName",
+    "firstName",
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+    "urn:oid:2.5.4.42",
+  ],
+  family: [
+    "sn",
+    "surname",
+    "lastName",
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+    "urn:oid:2.5.4.4",
+  ],
 }
 
 function attribute(profile: Profile, names: ReadonlyArray<string>) {

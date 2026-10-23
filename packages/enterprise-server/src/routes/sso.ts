@@ -55,7 +55,8 @@ export const ssoRoutes = HttpRouter.use((router) =>
       if (known && !known.active) return failure("Account deactivated", "Your account has been deactivated.", 403)
       const access = known ? yield* store.member.role(org.id, known.id) : undefined
       const membership = known ? yield* store.member.get(org.id, known.id) : undefined
-      if (membership?.suspended) return failure("Access suspended", "Your access to this organization is suspended.", 403)
+      if (membership?.suspended)
+        return failure("Access suspended", "Your access to this organization is suspended.", 403)
 
       const user = yield* Effect.gen(function* () {
         if (access) return known
@@ -86,7 +87,11 @@ export const ssoRoutes = HttpRouter.use((router) =>
         return undefined
       })
       if (!user)
-        return failure("Not a member", `${email} is not a member of ${org.name}. Ask an administrator to invite you.`, 403)
+        return failure(
+          "Not a member",
+          `${email} is not a member of ${org.name}. Ask an administrator to invite you.`,
+          403,
+        )
       if (!user.name && name) yield* store.user.update(user.id, { name })
       yield* record({
         org: org.id,
