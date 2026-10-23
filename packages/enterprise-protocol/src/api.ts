@@ -1,0 +1,27 @@
+import { HttpApi, OpenApi } from "effect/unstable/httpapi"
+import { AccountGroup } from "./groups/account"
+import { GovernanceGroup, IdentityGroup, InsightGroup, OrgGroup, PeopleGroup } from "./groups/org"
+import { HealthGroup, SigninGroup } from "./groups/public"
+import { ScimGroup } from "./groups/scim"
+import { SchemaErrorMiddleware } from "./middleware"
+
+// The single source of truth for the control plane's HTTP surface. The server implements it,
+// and the CLI and admin console derive typed clients from it with HttpApiClient.
+export const Api = HttpApi.make("enterprise")
+  .add(HealthGroup)
+  .add(SigninGroup)
+  .add(AccountGroup)
+  .add(OrgGroup)
+  .add(PeopleGroup)
+  .add(GovernanceGroup)
+  .add(InsightGroup)
+  .add(IdentityGroup)
+  .add(ScimGroup)
+  .annotateMerge(
+    OpenApi.annotations({
+      title: "Enterprise control plane",
+      version: "0.2.0",
+      description: "Organizations, single sign-on, SCIM provisioning, policy, audit and usage for Kilo clients.",
+    }),
+  )
+  .middleware(SchemaErrorMiddleware)

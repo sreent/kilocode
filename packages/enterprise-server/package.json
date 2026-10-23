@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@enterprise/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Self-hosted enterprise control plane: SSO, SCIM, org policy, audit logs and usage analytics",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "bin": {
+    "enterprise-server": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run --watch src/index.ts serve",
+    "start": "bun run src/index.ts serve",
+    "bootstrap": "bun run src/index.ts bootstrap",
+    "build": "bun run script/build.ts",
+    "migration": "bun run script/migration.ts",
+    "db": "bun drizzle-kit",
+    "typecheck": "tsgo --noEmit",
+    "test": "bun test",
+    "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml"
+  },
+  "dependencies": {
+    "@enterprise/protocol": "workspace:*",
+    "@opencode-ai/core": "workspace:*",
+    "@opencode-ai/effect-drizzle-sqlite": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "jose": "6.2.8"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "catalog:",
+    "@types/bun": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "drizzle-kit": "catalog:",
+    "typescript": "catalog:"
+  }
+}
