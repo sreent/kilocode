@@ -38,7 +38,7 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0 # kilocode_change - enterprise: no version-update PRs in this fork; upstream merges bring dependency bumps
     labels:
       - "dependencies"
     commit-message:
@@ -82,7 +82,7 @@ updates:
     cooldown:
       default-days: 7
     # One slot per group below (6), so no group waits for another to merge.
-    open-pull-requests-limit: 6
+    open-pull-requests-limit: 0 # kilocode_change - enterprise: no version-update PRs in this fork; upstream merges bring dependency bumps
     labels:
       - "dependencies"
     commit-message:
