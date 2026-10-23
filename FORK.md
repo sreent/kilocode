@@ -4,7 +4,7 @@ This repository is a fork of [Kilo Code](https://github.com/Kilo-Org/kilocode), 
 
 Upstream Kilo's enterprise features run on Kilo's hosted backend, which is not open source. The open-source repository contains only the clients (CLI, VS Code extension, JetBrains plugin), so this fork implements both sides itself:
 
-- **Control plane**: [`packages/enterprise-server`](packages/enterprise-server/README.md), a server you run (SQLite, ships as a single binary with the admin console inside).
+- **Control plane**: [`packages/enterprise-server`](packages/enterprise-server/README.md), a server you run (Postgres, embedded or on a PostgreSQL server for high availability; ships as a single binary with the admin console inside).
 - **Admin console**: [`packages/enterprise-console`](packages/enterprise-console), the web UI the server hosts at `/admin`.
 - **Contract**: [`packages/enterprise-protocol`](packages/enterprise-protocol), the API definition, schemas and role model shared by the server, the CLI and the console.
 - **Client integration**: [`packages/opencode/src/enterprise`](packages/opencode/src/enterprise), which makes the CLI, and therefore the IDE extensions that run it, fetch and enforce the org policy.
@@ -66,7 +66,7 @@ The enterprise layer uses the same stack and conventions as the rest of Kilo, so
 |---|---|---|
 | HTTP API | `effect/unstable/httpapi` contract, handlers and middleware (`packages/opencode/src/server`) | One contract in `packages/enterprise-protocol`, served by `HttpApiBuilder` in the control plane and called through `HttpApiClient` by the CLI and the console |
 | Schemas | Effect Schema | Effect Schema, shared by all three; the console validates edits with the same schemas the server enforces |
-| Storage | Drizzle on SQLite, generated TypeScript migrations (`packages/core`) | The same, through core's SQLite layer and migration journal |
+| Storage | Drizzle on SQLite, generated TypeScript migrations (`packages/core`) | Drizzle on Postgres through Effect's SQL client, with the same generated TypeScript migrations: embedded with PGlite for one server, or a PostgreSQL server for several |
 | Services | Effect services in a `LayerNode` graph | The control plane is a `LayerNode` graph; the CLI's `Enterprise` service is one more node in the CLI's graph |
 | Configuration and logs | Effect `Config`, Effect logging, OTLP | The same |
 | Web UI | SolidJS + Vite on `@kilocode/kilo-web-ui` (`packages/kilo-console`) | The admin console reuses the web console's shell, page anatomy, components and themes |
@@ -150,7 +150,7 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 
 1. **LLM gateway, next steps.** The gateway relays Anthropic, OpenAI and OpenAI-compatible APIs today. Next: Bedrock, Vertex and Azure OpenAI upstreams, per-org price overrides for negotiated rates, rate limits, and request logging for audits.
 2. **Rebranding and distribution** (see above).
-3. **Operations.** Postgres storage and high availability, a Helm chart, rate limiting, backups. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)).
+3. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/enterprise-server/Dockerfile`](packages/enterprise-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/enterprise-server/README.md#storage-and-high-availability)).
 4. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
 5. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
 6. **Live policy reload** of the model list in running clients, without a restart.

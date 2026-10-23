@@ -1,39 +1,42 @@
 import { sql } from "drizzle-orm"
 import {
+  bigint,
+  boolean,
   check,
+  doublePrecision,
   index,
   integer,
+  jsonb,
+  pgTable,
   primaryKey,
-  real,
-  sqliteTable,
   text,
   uniqueIndex,
-  type AnySQLiteColumn,
-} from "drizzle-orm/sqlite-core"
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core"
 import type { GatewayKind, ModelAccess, Policy, Role, SsoProtocol, StreamTarget } from "@enterprise/protocol/schema"
 
 const roles = sql`('owner', 'admin', 'member', 'billing_manager')`
 
-export const OrgTable = sqliteTable("orgs", {
+export const OrgTable = pgTable("orgs", {
   id: text().primaryKey(),
   name: text().notNull(),
   slug: text().notNull().unique(),
-  parent: text().references((): AnySQLiteColumn => OrgTable.id, { onDelete: "cascade" }),
-  settings: text({ mode: "json" }).$type<Record<string, unknown>>().notNull().default({}),
-  created: integer().notNull(),
+  parent: text().references((): AnyPgColumn => OrgTable.id, { onDelete: "cascade" }),
+  settings: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  created: bigint({ mode: "number" }).notNull(),
 })
 
 // Emails are stored lowercase and always looked up lowercase.
-export const UserTable = sqliteTable("users", {
+export const UserTable = pgTable("users", {
   id: text().primaryKey(),
   email: text().notNull().unique(),
   name: text(),
   external: text(),
-  active: integer({ mode: "boolean" }).notNull().default(true),
-  created: integer().notNull(),
+  active: boolean().notNull().default(true),
+  created: bigint({ mode: "number" }).notNull(),
 })
 
-export const MemberTable = sqliteTable(
+export const MemberTable = pgTable(
   "members",
   {
     org: text()
@@ -43,9 +46,9 @@ export const MemberTable = sqliteTable(
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
     role: text().$type<Role>().notNull(),
-    created: integer().notNull(),
+    created: bigint({ mode: "number" }).notNull(),
     // SCIM active=false suspends a membership without losing its role or history.
-    suspended: integer(),
+    suspended: bigint({ mode: "number" }),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.user] }),
@@ -54,7 +57,7 @@ export const MemberTable = sqliteTable(
   ],
 )
 
-export const InviteTable = sqliteTable(
+export const InviteTable = pgTable(
   "invites",
   {
     id: text().primaryKey(),
@@ -65,10 +68,10 @@ export const InviteTable = sqliteTable(
     role: text().$type<Role>().notNull(),
     hash: text().notNull().unique(),
     actor: text().references(() => UserTable.id, { onDelete: "set null" }),
-    created: integer().notNull(),
-    expires: integer().notNull(),
-    accepted: integer(),
-    revoked: integer(),
+    created: bigint({ mode: "number" }).notNull(),
+    expires: bigint({ mode: "number" }).notNull(),
+    accepted: bigint({ mode: "number" }),
+    revoked: bigint({ mode: "number" }),
   },
   (table) => [
     check("invites_role", sql`${table.role} in ${roles}`),
@@ -76,7 +79,7 @@ export const InviteTable = sqliteTable(
   ],
 )
 
-export const GroupTable = sqliteTable(
+export const GroupTable = pgTable(
   "org_groups",
   {
     id: text().primaryKey(),
@@ -85,13 +88,13 @@ export const GroupTable = sqliteTable(
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     name: text().notNull(),
     external: text(),
-    models: text({ mode: "json" }).$type<ModelAccess>(),
-    created: integer().notNull(),
+    models: jsonb().$type<ModelAccess>(),
+    created: bigint({ mode: "number" }).notNull(),
   },
   (table) => [uniqueIndex("org_groups_org_name").on(table.org, table.name)],
 )
 
-export const GroupMemberTable = sqliteTable(
+export const GroupMemberTable = pgTable(
   "group_members",
   {
     grp: text()
@@ -105,17 +108,17 @@ export const GroupMemberTable = sqliteTable(
 )
 
 // Domain names are stored lowercase.
-export const DomainTable = sqliteTable("domains", {
+export const DomainTable = pgTable("domains", {
   name: text().primaryKey(),
   org: text()
     .notNull()
     .references(() => OrgTable.id, { onDelete: "cascade" }),
   token: text().notNull(),
-  verified: integer(),
-  created: integer().notNull(),
+  verified: bigint({ mode: "number" }),
+  created: bigint({ mode: "number" }).notNull(),
 })
 
-export const TokenTable = sqliteTable(
+export const TokenTable = pgTable(
   "tokens",
   {
     id: text().primaryKey(),
@@ -127,15 +130,15 @@ export const TokenTable = sqliteTable(
       .notNull()
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     name: text().notNull(),
-    created: integer().notNull(),
-    expires: integer(),
-    used: integer(),
-    revoked: integer(),
+    created: bigint({ mode: "number" }).notNull(),
+    expires: bigint({ mode: "number" }),
+    used: bigint({ mode: "number" }),
+    revoked: bigint({ mode: "number" }),
   },
   (table) => [check("tokens_kind", sql`${table.kind} in ('user', 'scim')`), index("tokens_user").on(table.user)],
 )
 
-export const DeviceTable = sqliteTable(
+export const DeviceTable = pgTable(
   "devices",
   {
     hash: text().primaryKey(),
@@ -145,15 +148,15 @@ export const DeviceTable = sqliteTable(
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     user: text().references(() => UserTable.id, { onDelete: "cascade" }),
     status: text().$type<"pending" | "approved" | "denied" | "consumed">().notNull(),
-    created: integer().notNull(),
-    expires: integer().notNull(),
-    polled: integer(),
+    created: bigint({ mode: "number" }).notNull(),
+    expires: bigint({ mode: "number" }).notNull(),
+    polled: bigint({ mode: "number" }),
   },
   (table) => [check("devices_status", sql`${table.status} in ('pending', 'approved', 'denied', 'consumed')`)],
 )
 
 // One single sign-on connection per org, OpenID Connect or SAML 2.0.
-export const SsoTable = sqliteTable(
+export const SsoTable = pgTable(
   "sso",
   {
     org: text()
@@ -169,31 +172,31 @@ export const SsoTable = sqliteTable(
     // SAML: the identity provider's sign-in URL, its signing certificates (PEM), and whether it may
     // start sign-ins itself (unsolicited responses).
     entry: text(),
-    certificates: text({ mode: "json" }).$type<string[]>(),
-    unsolicited: integer({ mode: "boolean" }).notNull().default(false),
-    enforce: integer({ mode: "boolean" }).notNull().default(false),
-    provision: integer({ mode: "boolean" }).notNull().default(true),
-    updated: integer().notNull(),
+    certificates: jsonb().$type<string[]>(),
+    unsolicited: boolean().notNull().default(false),
+    enforce: boolean().notNull().default(false),
+    provision: boolean().notNull().default(true),
+    updated: bigint({ mode: "number" }).notNull(),
   },
   (table) => [check("sso_protocol", sql`${table.protocol} in ('oidc', 'saml')`)],
 )
 
 // SAML assertions already used to sign in, kept until they expire so a captured response can't be
 // replayed.
-export const AssertionTable = sqliteTable(
+export const AssertionTable = pgTable(
   "saml_assertions",
   {
     org: text()
       .notNull()
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     id: text().notNull(),
-    expires: integer().notNull(),
+    expires: bigint({ mode: "number" }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.org, table.id] }), index("saml_assertions_expires").on(table.expires)],
 )
 
 // Pending sign-ins; single use. For SAML, the nonce is the AuthnRequest ID the response must answer.
-export const LoginTable = sqliteTable("logins", {
+export const LoginTable = pgTable("logins", {
   state: text().primaryKey(),
   org: text()
     .notNull()
@@ -201,20 +204,20 @@ export const LoginTable = sqliteTable("logins", {
   verifier: text().notNull(),
   nonce: text().notNull(),
   device: text(),
-  created: integer().notNull(),
+  created: bigint({ mode: "number" }).notNull(),
 })
 
-export const PolicyTable = sqliteTable("policies", {
+export const PolicyTable = pgTable("policies", {
   org: text()
     .primaryKey()
     .references(() => OrgTable.id, { onDelete: "cascade" }),
-  data: text({ mode: "json" }).$type<Policy>().notNull(),
+  data: jsonb().$type<Policy>().notNull(),
   version: integer().notNull(),
-  updated: integer().notNull(),
+  updated: bigint({ mode: "number" }).notNull(),
   actor: text(),
 })
 
-export const ModeTable = sqliteTable(
+export const ModeTable = pgTable(
   "modes",
   {
     id: text().primaryKey(),
@@ -223,30 +226,30 @@ export const ModeTable = sqliteTable(
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     slug: text().notNull(),
     name: text().notNull(),
-    config: text({ mode: "json" }).$type<unknown>().notNull(),
-    created: integer().notNull(),
-    updated: integer().notNull(),
+    config: jsonb().$type<unknown>().notNull(),
+    created: bigint({ mode: "number" }).notNull(),
+    updated: bigint({ mode: "number" }).notNull(),
   },
   (table) => [uniqueIndex("modes_org_slug").on(table.org, table.slug)],
 )
 
-export const AuditTable = sqliteTable(
+export const AuditTable = pgTable(
   "audit",
   {
-    id: integer().primaryKey({ autoIncrement: true }),
+    id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
     org: text().notNull(),
-    at: integer().notNull(),
+    at: bigint({ mode: "number" }).notNull(),
     action: text().notNull(),
     actor: text(),
     email: text(),
     target: text(),
-    details: text({ mode: "json" }).$type<unknown>().notNull().default({}),
+    details: jsonb().$type<unknown>().notNull().default({}),
     ip: text(),
   },
   (table) => [index("audit_org_at").on(table.org, table.at)],
 )
 
-export const UsageTable = sqliteTable(
+export const UsageTable = pgTable(
   "usage",
   {
     org: text()
@@ -257,17 +260,18 @@ export const UsageTable = sqliteTable(
     user: text()
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
-    at: integer().notNull(),
+    at: bigint({ mode: "number" }).notNull(),
     session: text(),
     project: text(),
     provider: text().notNull(),
     model: text().notNull(),
-    input: integer().notNull().default(0),
-    output: integer().notNull().default(0),
-    reasoning: integer().notNull().default(0),
-    cache_read: integer().notNull().default(0),
-    cache_write: integer().notNull().default(0),
-    cost: real().notNull().default(0),
+    // 64-bit, so any count the API accepts fits; one that didn't would fail the client's whole batch.
+    input: bigint({ mode: "number" }).notNull().default(0),
+    output: bigint({ mode: "number" }).notNull().default(0),
+    reasoning: bigint({ mode: "number" }).notNull().default(0),
+    cache_read: bigint({ mode: "number" }).notNull().default(0),
+    cache_write: bigint({ mode: "number" }).notNull().default(0),
+    cost: doublePrecision().notNull().default(0),
     // "client": reported by a client after the call. "gateway": metered by the gateway as it relayed the call.
     source: text().$type<"client" | "gateway">().notNull().default("client"),
   },
@@ -278,7 +282,7 @@ export const UsageTable = sqliteTable(
   ],
 )
 
-export const BudgetTable = sqliteTable(
+export const BudgetTable = pgTable(
   "budgets",
   {
     org: text()
@@ -287,7 +291,7 @@ export const BudgetTable = sqliteTable(
     scope: text().$type<"org" | "member" | "user">().notNull(),
     target: text().notNull().default(""),
     period: text().$type<"day" | "month">().notNull(),
-    amount: real().notNull(),
+    amount: doublePrecision().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.scope, table.target, table.period] }),
@@ -297,7 +301,7 @@ export const BudgetTable = sqliteTable(
 )
 
 // Upstream providers the LLM gateway relays to, with the org's API key for each.
-export const GatewayProviderTable = sqliteTable(
+export const GatewayProviderTable = pgTable(
   "gateway_providers",
   {
     org: text()
@@ -310,8 +314,8 @@ export const GatewayProviderTable = sqliteTable(
     // Sealed with ENTERPRISE_SECRET (AES-256-GCM); never stored in clear text.
     secret: text().notNull(),
     hint: text().notNull(),
-    created: integer().notNull(),
-    updated: integer().notNull(),
+    created: bigint({ mode: "number" }).notNull(),
+    updated: bigint({ mode: "number" }).notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.id] }),
@@ -320,7 +324,7 @@ export const GatewayProviderTable = sqliteTable(
 )
 
 // Destinations that receive every new audit event (SIEM webhooks, syslog), with delivery state.
-export const StreamTable = sqliteTable(
+export const StreamTable = pgTable(
   "audit_streams",
   {
     id: text().primaryKey(),
@@ -328,24 +332,24 @@ export const StreamTable = sqliteTable(
       .notNull()
       .references(() => OrgTable.id, { onDelete: "cascade" }),
     name: text().notNull(),
-    target: text({ mode: "json" }).$type<StreamTarget>().notNull(),
+    target: jsonb().$type<StreamTarget>().notNull(),
     // Sealed with ENTERPRISE_SECRET: a webhook's signing secret, and its extra headers as JSON.
     secret: text(),
     headers: text(),
-    names: text({ mode: "json" }).$type<string[]>().notNull().default([]),
-    enabled: integer({ mode: "boolean" }).notNull().default(true),
+    names: jsonb().$type<string[]>().notNull().default([]),
+    enabled: boolean().notNull().default(true),
     // The id of the last audit event delivered; delivery resumes after it.
-    cursor: integer().notNull().default(0),
-    delivered: integer(),
+    cursor: bigint({ mode: "number" }).notNull().default(0),
+    delivered: bigint({ mode: "number" }),
     error: text(),
     // When the current run of failures began, how long it is, and when to try again.
-    failing: integer(),
+    failing: bigint({ mode: "number" }),
     failures: integer().notNull().default(0),
-    retry: integer(),
+    retry: bigint({ mode: "number" }),
     // A delivery in progress holds the stream until this time, so replicas never send the same events.
-    lease: integer(),
-    created: integer().notNull(),
-    updated: integer().notNull(),
+    lease: bigint({ mode: "number" }),
+    created: bigint({ mode: "number" }).notNull(),
+    updated: bigint({ mode: "number" }).notNull(),
   },
   (table) => [index("audit_streams_org").on(table.org)],
 )

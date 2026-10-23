@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { Context, Effect, Layer, ManagedRuntime } from "effect"
+import { Cause, Context, Effect, Exit, Layer, ManagedRuntime } from "effect"
 import { parseArgs } from "node:util"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { App } from "./app"
@@ -19,6 +19,11 @@ const args = parseArgs({
 })
 const command = args.positionals.at(0) ?? "serve"
 const services = LayerNode.compile(App.services)
+// Why the database could not be opened, for instance: unreachable, or in use by another process.
+const reason = (cause: Cause.Cause<unknown>) => {
+  const error = Cause.squash(cause)
+  return error instanceof Error ? error.message : String(error)
+}
 
 if (command === "bootstrap") {
   const opts = args.values
@@ -29,10 +34,15 @@ if (command === "bootstrap") {
     process.exit(1)
   }
   const runtime = ManagedRuntime.make(services)
-  const result = await runtime.runPromise(
+  const exit = await runtime.runPromiseExit(
     bootstrap({ org: opts.org, slug: opts.slug, email: opts.email, name: opts.name }),
   )
   await runtime.dispose()
+  if (Exit.isFailure(exit)) {
+    console.error(`bootstrap failed: ${reason(exit.cause)}`)
+    process.exit(1)
+  }
+  const result = exit.value
   console.log(`organization: ${result.org.name} (${result.org.slug})`)
   console.log(`owner:        ${result.user.email}`)
   console.log(`token:        ${result.token}`)
@@ -55,7 +65,21 @@ const config = await Effect.runPromise(
 const layer = Layer.mergeAll(App.routes(services), App.housekeeping.pipe(Layer.provide(services))).pipe(
   Layer.provideMerge(Observability.layer),
 )
-const { handler, dispose } = App.webHandler(layer, { logger: true })
+// The services, and with them the database, start before the server listens, so a database it can't
+// reach or open stops it here instead of failing every request. The web handler reuses them.
+const memoMap = Layer.makeMemoMapUnsafe()
+const runtime = ManagedRuntime.make(services.pipe(Layer.provideMerge(Observability.layer)), { memoMap })
+const ready = await runtime.runPromiseExit(Effect.void)
+if (Exit.isFailure(ready)) {
+  await Effect.runPromise(
+    Effect.logError("enterprise control plane could not start").pipe(
+      Effect.annotateLogs({ error: reason(ready.cause) }),
+      Effect.provide(Observability.layer),
+    ),
+  )
+  process.exit(1)
+}
+const { handler, dispose } = App.webHandler(layer, { logger: true, memoMap })
 
 // Gateway calls carry whole conversations, images included, up to the providers' own 32 MB limit;
 // the control plane's API stays at 2 MB.
@@ -93,5 +117,6 @@ for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.on(signal, async () => {
     await server.stop()
     await dispose()
+    await runtime.dispose()
     process.exit(0)
   })

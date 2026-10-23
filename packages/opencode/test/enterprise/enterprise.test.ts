@@ -11,8 +11,9 @@ import { setup } from "../../../enterprise-server/test/fixture"
 // Contract tests: the client talks to the real control plane over HTTP, so the two packages
 // cannot drift apart on the wire format without these failing.
 
-async function plane() {
-  const env = await setup()
+// A second control plane, beside `cp`, needs a database of its own.
+async function plane(options: { isolated?: boolean } = {}) {
+  const env = await setup({}, options)
   const http = env.listen()
   const admin = (method: string, route: string, body?: unknown) =>
     fetch(`${http.url}/api/v1/orgs/acme${route}`, {
@@ -260,7 +261,7 @@ describe("usage and budgets", () => {
 
   test("records that cannot be delivered are spooled and sent by the next process", async () => {
     expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
-    const remote = await plane()
+    const remote = await plane({ isolated: true })
     const dev = await remote.join("spool@acme.com", "member")
     signin(dev.token, remote.url)
     const first = await client()
@@ -295,6 +296,7 @@ describe("sign-in", () => {
     const dev = await cp.join("device@acme.com", "member")
     // Device sign-in goes through the org's SSO; the browser leg is approved directly below.
     await cp.store.sso.set(cp.owner.org.id, {
+      protocol: "oidc",
       issuer: "https://idp.test",
       client: "kilo",
       secret: "unused",
@@ -408,7 +410,7 @@ describe("LLM gateway", () => {
 
 describe("resilience", () => {
   test("a cached policy keeps applying while the control plane is unreachable", async () => {
-    const remote = await plane()
+    const remote = await plane({ isolated: true })
     expect((await remote.admin("PUT", "/policy", strict)).status).toBe(200)
     signin((await remote.join("offline@acme.com", "member")).token, remote.url)
     const online = await client()

@@ -41,7 +41,8 @@ export const PeopleHandler = HttpApiBuilder.group(Api, "enterprise.people", (han
       }
     })
 
-    // An organization must keep at least one owner.
+    // An organization must keep at least one owner. Checked with the write in one store transaction,
+    // so two owners demoting each other at once can't leave none.
     const lastOwner = Effect.fn(function* (orgID: string) {
       if ((yield* store.member.owners(orgID)) <= 1)
         return yield* new ConflictError({ message: "an organization must keep at least one owner" })
@@ -88,11 +89,16 @@ export const PeopleHandler = HttpApiBuilder.group(Api, "enterprise.people", (han
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
           const target = ctx.params.user
-          const current = yield* store.member.get(scope.org.id, target)
-          if (!current) return yield* new NotFoundError({ message: "member not found" })
-          yield* guard(current.role, ctx.payload.role)
-          if (current.role === "owner" && ctx.payload.role !== "owner") yield* lastOwner(scope.org.id)
-          yield* store.member.set(scope.org.id, target, ctx.payload.role)
+          const current = yield* store.transaction(
+            Effect.gen(function* () {
+              const current = yield* store.member.get(scope.org.id, target)
+              if (!current) return yield* new NotFoundError({ message: "member not found" })
+              yield* guard(current.role, ctx.payload.role)
+              if (current.role === "owner" && ctx.payload.role !== "owner") yield* lastOwner(scope.org.id)
+              yield* store.member.set(scope.org.id, target, ctx.payload.role)
+              return current
+            }),
+          )
           yield* audit("member.change_role", target, { from: current.role, to: ctx.payload.role })
           return { id: target, role: ctx.payload.role }
         }),
@@ -102,12 +108,17 @@ export const PeopleHandler = HttpApiBuilder.group(Api, "enterprise.people", (han
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
           const target = ctx.params.user
-          const current = yield* store.member.get(scope.org.id, target)
-          if (!current) return yield* new NotFoundError({ message: "member not found" })
-          yield* guard(current.role)
-          if (current.role === "owner") yield* lastOwner(scope.org.id)
+          const current = yield* store.transaction(
+            Effect.gen(function* () {
+              const current = yield* store.member.get(scope.org.id, target)
+              if (!current) return yield* new NotFoundError({ message: "member not found" })
+              yield* guard(current.role)
+              if (current.role === "owner") yield* lastOwner(scope.org.id)
+              yield* store.member.remove(scope.org.id, target)
+              return current
+            }),
+          )
           const email = (yield* store.user.get(target))?.email
-          yield* store.member.remove(scope.org.id, target)
           yield* audit("member.remove", target, { role: current.role, email })
           return HttpApiSchema.NoContent.make()
         }),

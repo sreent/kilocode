@@ -25,6 +25,16 @@ const embedded = [
   `} as Record<string, string>`,
 ].join("\n")
 
+// PGlite, the embedded Postgres, loads its WebAssembly and file system bundle from its package
+// directory, which a compiled binary doesn't have; embed them and hand them over at startup.
+const pglite = path.dirname(Bun.resolveSync("@electric-sql/pglite", root))
+const database = [
+  `import wasm from ${JSON.stringify(path.join(pglite, "pglite.wasm"))} with { type: "file" }`,
+  `import initdb from ${JSON.stringify(path.join(pglite, "initdb.wasm"))} with { type: "file" }`,
+  `import data from ${JSON.stringify(path.join(pglite, "pglite.data"))} with { type: "file" }`,
+  `export default { wasm, initdb, data }`,
+].join("\n")
+
 const result = await Bun.build({
   entrypoints: [path.join(root, "src/index.ts")],
   minify: true,
@@ -35,7 +45,10 @@ const result = await Bun.build({
     autoloadBunfig: false,
     autoloadDotenv: true,
   },
-  files: { [path.join(root, "src/console.gen.ts")]: embedded },
+  files: {
+    [path.join(root, "src/console.gen.ts")]: embedded,
+    [path.join(root, "src/db/pglite.gen.ts")]: database,
+  },
 })
 if (!result.success) {
   for (const log of result.logs) console.error(log)

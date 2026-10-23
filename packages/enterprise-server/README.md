@@ -22,6 +22,7 @@ It is part of this fork, not of upstream Kilo Code. Upstream's enterprise featur
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
 | Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/enterprise-console`](../enterprise-console)), built like Kilo's own web console |
+| Deployment | One binary or container with Postgres embedded, or any number of replicas behind a load balancer on a shared PostgreSQL server ([storage and high availability](#storage-and-high-availability)) |
 
 ## Quick start
 
@@ -40,7 +41,7 @@ ENTERPRISE_BASE_URL=https://ai.acme.com ENTERPRISE_SECRET=$(openssl rand -hex 32
 
 Open `https://ai.acme.com/admin` and paste the owner token, or configure SSO and sign in with it.
 
-For production, build a self-contained binary (Bun runtime, SQLite, the admin console and all dependencies included) and run it anywhere with glibc:
+For production, build a self-contained binary (Bun runtime, an embedded Postgres, the admin console and all dependencies included) and run it anywhere with glibc:
 
 ```sh
 bun run build   # dist/enterprise-server
@@ -61,7 +62,7 @@ docker run -d -p 8787:8787 -v enterprise-data:/data \
   -e ENTERPRISE_BASE_URL=https://ai.acme.com -e ENTERPRISE_SECRET enterprise-server
 ```
 
-Point liveness and readiness probes at `GET /healthz`. A bind-mounted data directory must be writable by uid 65532.
+Point liveness and readiness probes at `GET /healthz`. A bind-mounted data directory must be writable by uid 65532. The embedded database opens in one process at a time, so run `bootstrap` while the server is stopped; while it runs, `bootstrap` exits with an error saying so. To run several containers, give them all `ENTERPRISE_DATABASE_URL` instead ([storage and high availability](#storage-and-high-availability)).
 
 Always run it behind HTTPS. Tokens and the admin session cookie must not travel in clear text, and the server warns at startup if `ENTERPRISE_BASE_URL` is not `https://` (localhost excepted).
 
@@ -72,7 +73,10 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ENTERPRISE_BASE_URL` | `http://localhost:<port>` | Public URL; used for SSO redirect URIs, device-login links and cookie scope |
 | `ENTERPRISE_PORT` | `8787` | Listen port |
 | `ENTERPRISE_HOST` | `0.0.0.0` | Listen address |
-| `ENTERPRISE_DB` | `./data/enterprise.db` | SQLite database file (WAL mode) |
+| `ENTERPRISE_DATABASE_URL` | unset | A PostgreSQL server to keep everything in, as `postgres://user:password@host:5432/database`. Needed for more than one replica. Unset, the server uses its embedded database |
+| `ENTERPRISE_DATABASE_POOL` | `10` | Connections each server opens to `ENTERPRISE_DATABASE_URL` |
+| `ENTERPRISE_DATA` | `./data` | Data directory. The embedded database lives in `postgres/` inside it |
+| `ENTERPRISE_DB` | `<ENTERPRISE_DATA>/enterprise.db` | The SQLite database of earlier versions, copied in on first start ([upgrading](#upgrading-from-sqlite)) |
 | `ENTERPRISE_SECRET` | unset | Key material for encrypting SSO client secrets and gateway API keys at rest (AES-256-GCM). Required before SSO or the gateway can be configured; keep it stable |
 | `ENTERPRISE_TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so audit entries record `X-Forwarded-For` |
 | `ENTERPRISE_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
@@ -80,7 +84,28 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ENTERPRISE_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`; logs are logfmt on stdout |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Also send logs and traces over OTLP (HTTP, JSON); `OTEL_EXPORTER_OTLP_HEADERS` adds headers |
 
-The server also reads a `.env` file from its working directory, a convenient place for these settings; keep it readable only by the service account. Back up the database file. It holds the audit log and usage history.
+The server also reads a `.env` file from its working directory, a convenient place for these settings; keep it readable only by the service account. Back up the database: it holds the audit log and usage history.
+
+## Storage and high availability
+
+Everything is kept in PostgreSQL, embedded in the server or on a PostgreSQL server.
+
+**Embedded (the default).** Without `ENTERPRISE_DATABASE_URL`, the server runs Postgres in its own process ([PGlite](https://pglite.dev), Postgres compiled to WebAssembly), with its files in `ENTERPRISE_DATA/postgres`. There is nothing else to install. It is for one server: the directory is locked while the server has it open, so a second server, or a `bootstrap` while the server runs, exits with an error instead of corrupting it. A commit is on disk before the request that made it completes. To back it up, stop the server and copy the directory, or snapshot the volume.
+
+**A PostgreSQL server, for high availability.** Point every server at the same database with `ENTERPRISE_DATABASE_URL` (PostgreSQL 14 or later; a managed service such as Amazon RDS, Cloud SQL or Azure Database for PostgreSQL works), give them all the same `ENTERPRISE_SECRET` and `ENTERPRISE_BASE_URL`, and put them behind a load balancer that checks `GET /healthz`. Back up and replicate the database with your usual Postgres tooling.
+
+- Any server handles any request, with no session affinity. Sign-ins keep their state in the database, so an SSO sign-in or a device login can start on one server and finish on another.
+- Servers apply database migrations as they start, one at a time under an advisory lock, so they can start together. A server that can't reach or open its database exits at startup with the reason.
+- Each audit stream is delivered by one server at a time, which holds a one-minute lease on it. If that server stops in the middle of a delivery, another sends the batch again when the lease runs out. Audit events get their ids in commit order, so a stream never passes over one that commits late.
+- Checks that guard a write, such as keeping an organization's last owner, run in one transaction under a database-wide lock, so two servers can't both pass them.
+
+### Upgrading from SQLite
+
+Earlier versions kept everything in a SQLite file (`ENTERPRISE_DB`, by default `data/enterprise.db`). Stop the old server and start the new one with the same data directory. On its first start on an empty database, the new server copies every row in, keeping ids so audit streams resume where they stopped, logs `copied the SQLite database into Postgres`, and leaves the file as it was. With `ENTERPRISE_DATABASE_URL` set, the rows go to the PostgreSQL server instead.
+
+### Moving to a PostgreSQL server
+
+Stop the server, then start it with `ENTERPRISE_DATABASE_URL` pointing at an empty database and the same `ENTERPRISE_DATA`. On its first start it copies the embedded database into the PostgreSQL server, logs `copied the embedded database into the Postgres server`, and leaves the embedded files as they were. Then start the other servers.
 
 ## Connecting clients
 
@@ -196,7 +221,7 @@ Under Insight → Audit streaming (or `POST /api/v1/orgs/{org}/audit/streams`), 
 - **Webhook**: a `POST` of `{ "org": { "id", "slug", "name" }, "events": [...] }`, up to 200 events per request. Each event is the audit API's event plus an ISO `time`. An optional header, such as Splunk HEC's `Authorization: Splunk <token>`, is stored encrypted. Every delivery carries `x-enterprise-delivery` (a unique id) and `x-enterprise-signature: t=<unix seconds>,v1=<hex>`, where the hex is the HMAC-SHA256 of `<t>.<raw body>` keyed with the stream's signing secret, which is shown once when the stream is created. Compare signatures in constant time, and reject timestamps more than a few minutes old. Any 2xx response accepts the batch; redirects are not followed.
 - **Syslog**: one RFC 5424 message per event over TCP, TLS by default (RFC 5425), with RFC 6587 octet-counting framing: facility 13 (log audit), severity informational, `APP-NAME` `kilo-enterprise`, `MSGID` the action, and the event as JSON in the message.
 
-Events are delivered in order and at least once, so receivers can use the event `id` to drop the rare duplicate. A failing destination is retried with backoff, from 5 seconds up to every 5 minutes, and resumes exactly where it stopped. Its error shows on the stream until it recovers, and pausing a stream keeps its place. "Send test" sends a synthetic `audit.stream_test` event (id `0`) without affecting delivery. Each delivery holds a short lease on its stream, so several server processes never send the same events twice.
+Events are delivered in order and at least once, so receivers can use the event `id` to drop the rare duplicate. A failing destination is retried with backoff, from 5 seconds up to every 5 minutes, and resumes exactly where it stopped. Its error shows on the stream until it recovers, and pausing a stream keeps its place. "Send test" sends a synthetic `audit.stream_test` event (id `0`) without affecting delivery. With several servers, one at a time delivers each stream (see [high availability](#storage-and-high-availability)).
 
 ## Audit events
 
@@ -250,7 +275,7 @@ The CLI enforces policy on the developer's machine. That stops honest mistakes a
 ## Development
 
 ```sh
-bun test                    # unit and integration tests, including a local OIDC provider and SAML-signed responses
+bun test                    # unit and integration tests on an in-memory Postgres, including a local OIDC provider and SAML-signed responses
 bun run typecheck
 bun run migration           # after changing src/db/schema.sql.ts; --check fails when one is missing
 bun run build               # dist/enterprise-server with the console embedded
@@ -262,6 +287,6 @@ The server is built on the same stack as the Kilo CLI's own server:
 |---|---|
 | HTTP API | `effect/unstable/httpapi`: the shared contract in `packages/enterprise-protocol`, handlers in `src/handlers/`, auth and org scoping as middleware in `src/middleware/` |
 | Browser flows | Device approval and SSO pages in `src/routes/`, the console's static files in `src/routes/console.ts` |
-| Storage | Drizzle on SQLite (`@opencode-ai/core`'s SQLite layer), schema in `src/db/schema.sql.ts`, generated TypeScript migrations in `src/db/migration/` |
+| Storage | Drizzle on PostgreSQL (`drizzle-orm/effect-postgres` over `@effect/sql-pg`), schema in `src/db/schema.sql.ts`, generated TypeScript migrations in `src/db/migration/`; the embedded database is PGlite behind the same client (`src/db/embedded.ts`), and earlier data is copied in by `src/db/legacy.ts` |
 | Services | Effect services wired as a `LayerNode` graph (`src/app.ts`); configuration through Effect `Config` (`src/config.ts`) |
 | Observability | Effect logging (logfmt) and OTLP export (`src/observability.ts`) |

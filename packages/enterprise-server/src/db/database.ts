@@ -1,18 +1,19 @@
 export * as Database from "./database"
 
-import { EffectDrizzleSqlite } from "@opencode-ai/effect-drizzle-sqlite"
-import { layer as sqliteLayer } from "@opencode-ai/core/database/sqlite.bun"
-import { Config, Context, Effect, Layer } from "effect"
+import { PgClient } from "@effect/sql-pg"
+import * as PgDrizzle from "drizzle-orm/effect-postgres"
+import { Config, Context, Effect, Layer, Option, Redacted } from "effect"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { mkdirSync } from "node:fs"
 import path from "node:path"
+import { Embedded } from "./embedded"
+import { Legacy } from "./legacy"
 import { DatabaseMigration } from "./migration"
 
-const makeDatabase = EffectDrizzleSqlite.makeWithDefaults()
-type DatabaseShape = Effect.Success<typeof makeDatabase>
+const makeDatabase = PgDrizzle.makeWithDefaults()
+export type Db = Effect.Success<typeof makeDatabase>
 
 export interface Interface {
-  readonly db: DatabaseShape
+  readonly db: Db
 }
 
 export class Service extends Context.Service<Service, Interface>()("@enterprise/Database") {}
@@ -21,27 +22,53 @@ const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const db = yield* makeDatabase
-    // Same connection settings as core's database: wait out lock contention, then WAL.
-    yield* db.run("PRAGMA busy_timeout = 5000")
-    yield* db.run("PRAGMA journal_mode = WAL")
-    yield* db.run("PRAGMA synchronous = NORMAL")
-    yield* db.run("PRAGMA foreign_keys = ON")
     yield* DatabaseMigration.apply(db)
     return { db }
   }).pipe(Effect.orDie),
 )
 
-export function layerFromPath(filename: string) {
-  if (filename !== ":memory:") mkdirSync(path.dirname(path.resolve(filename)), { recursive: true })
-  return layer.pipe(Layer.provide(sqliteLayer({ filename, disableWAL: true })))
+/** A Postgres server. Every replica of the control plane can share it. */
+export function layerFromUrl(url: string, connections = 10) {
+  return layer.pipe(Layer.provide(PgClient.layer({ url: Redacted.make(url), maxConnections: connections })))
 }
 
-// ENTERPRISE_DB is read when the layer builds, so tests and embedders can replace the node instead.
+/** Postgres embedded in this process, with its files in `dir`; in memory without one. One server only. */
+export function layerEmbedded(dir: string | undefined) {
+  return layer.pipe(Layer.provide(Embedded.layer(dir)))
+}
+
+/** Over a Postgres client the caller provides, such as one for a PGlite database it keeps open. */
+export function layerFrom<E>(client: Layer.Layer<PgClient.PgClient, E>) {
+  return layer.pipe(Layer.provide(client))
+}
+
+// Read when the layer builds, so tests and embedders can replace the node instead. On an empty
+// database, the server first copies in what it kept before: the embedded database when it now has a
+// Postgres server, then the SQLite file (ENTERPRISE_DB) of servers from before Postgres.
 export const node = LayerNode.make({
   service: Service,
   layer: Layer.unwrap(
     Effect.gen(function* () {
-      return layerFromPath(yield* Config.string("ENTERPRISE_DB").pipe(Config.withDefault("./data/enterprise.db")))
+      const env = yield* Config.all({
+        url: Config.string("ENTERPRISE_DATABASE_URL").pipe(Config.option),
+        pool: Config.int("ENTERPRISE_DATABASE_POOL").pipe(Config.withDefault(10)),
+        data: Config.string("ENTERPRISE_DATA").pipe(Config.withDefault("./data")),
+        legacy: Config.string("ENTERPRISE_DB").pipe(Config.option),
+      })
+      const base = Option.match(env.url, {
+        onSome: (url) => layerFromUrl(url, env.pool),
+        onNone: () => layerEmbedded(path.join(env.data, "postgres")),
+      })
+      const legacy = Option.getOrElse(env.legacy, () => path.join(env.data, "enterprise.db"))
+      const copy = Layer.effectDiscard(
+        Effect.gen(function* () {
+          const db = (yield* Service).db
+          // A single server moving to a Postgres server brings its embedded database along.
+          if (Option.isSome(env.url)) yield* Legacy.embedded(db, path.join(env.data, "postgres"))
+          yield* Legacy.copy(db, legacy)
+        }).pipe(Effect.orDie),
+      )
+      return copy.pipe(Layer.provideMerge(base))
     }),
   ),
   deps: [],

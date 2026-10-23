@@ -1,7 +1,10 @@
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { PGlite } from "@electric-sql/pglite"
+import { PgClient } from "@effect/sql-pg"
 import { sql } from "drizzle-orm"
+import * as PgDrizzle from "drizzle-orm/effect-postgres"
 import { Context, Effect, Layer, ManagedRuntime, References } from "effect"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import type { Role } from "@enterprise/protocol/schema"
@@ -9,6 +12,8 @@ import { App } from "../src/app"
 import { bootstrap } from "../src/bootstrap"
 import { ServerConfig } from "../src/config"
 import { Database } from "../src/db/database"
+import { Embedded } from "../src/db/embedded"
+import { DatabaseMigration } from "../src/db/migration"
 import { Pricing } from "../src/pricing"
 import { RequestContext } from "../src/request"
 import { ConsoleAssets, node as consoleAssets } from "../src/routes/console"
@@ -63,7 +68,28 @@ const assets = (() => {
   return dir
 })()
 
-export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
+// One Postgres per test process, migrated once and emptied by each setup(): tests stay isolated, and
+// the process holds one PGlite (each reserves a large WebAssembly memory) however many run. A control
+// plane that must outlive the next setup(), such as a second one beside the first, passes `isolated`
+// and gets a database of its own.
+const migrate = async (target: PGlite) => {
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      yield* DatabaseMigration.apply(yield* PgDrizzle.makeWithDefaults())
+    }).pipe(Effect.provide(PgClient.layerFrom(Embedded.client(target)))),
+  )
+  return target
+}
+const shared = await migrate(await PGlite.create())
+const tables = (
+  await shared.query<{ name: string }>(
+    "select tablename as name from pg_tables where schemaname = 'public' and tablename <> 'migration'",
+  )
+).rows.map((row) => `"${row.name}"`)
+// Which setup() last emptied the shared database; only that one may still use it.
+let generation = 0
+
+export async function setup(overrides: Partial<ServerConfig.Info> = {}, options: { isolated?: boolean } = {}) {
   const config: ServerConfig.Info = {
     base,
     secret: "test-secret",
@@ -73,10 +99,18 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
     models: undefined,
     ...overrides,
   }
-  // One memo map for the web handler and the test runtime, so both see the same in-memory database.
+  const pg = options.isolated ? await migrate(await PGlite.create()) : shared
+  if (!options.isolated) await shared.exec(`truncate ${tables.join(", ")} restart identity cascade`)
+  const mine = options.isolated ? undefined : ++generation
+  // Rather than failing on rows a later setup() deleted, say so.
+  const live = () => {
+    if (mine !== undefined && mine !== generation)
+      throw new Error("a later setup() emptied this control plane's database; pass { isolated: true } to keep it")
+  }
+  // One memo map for the web handler and the test runtime, so both see the same database.
   const memoMap = Layer.makeMemoMapUnsafe()
   const services = LayerNode.compile(App.services, [
-    [Database.node, Database.layerFromPath(":memory:")],
+    [Database.node, Database.layerFrom(PgClient.layerFrom(Embedded.client(pg)))],
     [ServerConfig.node, ServerConfig.Service.configLayer(config)],
     [consoleAssets, ConsoleAssets.fromDirectory(assets)],
     [Pricing.node, Pricing.Service.fromCatalog(prices)],
@@ -85,7 +119,10 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
   // Expected rejections log warnings; keep test output to real problems.
   const quiet = Layer.succeed(References.MinimumLogLevel, "Error")
   const { handler } = App.webHandler(App.routes(services).pipe(Layer.provide(quiet)), { memoMap })
-  const run = <A>(effect: Effect.Effect<A, unknown, Store.Service | Database.Service>) => runtime.runPromise(effect)
+  const run = <A>(effect: Effect.Effect<A, unknown, Store.Service | Database.Service>) => {
+    live()
+    return runtime.runPromise(effect)
+  }
   const store = promised(
     await run(
       Effect.gen(function* () {
@@ -97,7 +134,10 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
   const peer = Context.make(RequestContext.Peer, "203.0.113.7")
 
   const server = {
-    request: (route: string, init?: RequestInit) => handler(new Request(`${base}${route}`, init), peer),
+    request: (route: string, init?: RequestInit) => {
+      live()
+      return handler(new Request(`${base}${route}`, init), peer)
+    },
   }
   const call = async (
     method: string,
@@ -122,7 +162,7 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
     run(
       Effect.gen(function* () {
         const { db } = yield* Database.Service
-        yield* db.run(sql.raw(statement))
+        yield* db.execute(sql.raw(statement))
       }).pipe(Effect.orDie),
     )
   const owner = await run(bootstrap({ org: "Acme", slug: "acme", email: "owner@acme.com", name: "Olive Owner" }))
@@ -134,7 +174,13 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
   }
   // A real listening server, for clients that speak HTTP (the CLI's contract tests).
   const listen = () => {
-    const bun = Bun.serve({ port: 0, fetch: (request) => handler(request, peer) })
+    const bun = Bun.serve({
+      port: 0,
+      fetch: (request) => {
+        live()
+        return handler(request, peer)
+      },
+    })
     return { url: `http://localhost:${bun.port}`, stop: () => bun.stop(true) }
   }
   return { store, config, server, call, owner, join, exec, listen, runtime }

@@ -3,7 +3,8 @@ export * as Store from "./store"
 import { and, asc, count, desc, eq, getColumns, gt, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm"
 import { Clock, Context, Effect, Layer, Schema } from "effect"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
-import { isSqlError } from "effect/unstable/sql/SqlError"
+import { EffectDrizzleError, EffectDrizzleQueryError } from "drizzle-orm/effect-core"
+import { isSqlError, type SqlError } from "effect/unstable/sql/SqlError"
 import { inherited } from "@enterprise/protocol/roles"
 import {
   Mode,
@@ -78,6 +79,8 @@ const lower = (value: string) => value.trim().toLowerCase()
 const decodePolicy = Schema.decodeUnknownSync(Policy)
 const decodeMode = Schema.decodeUnknownSync(Mode)
 const decodeAccess = Schema.decodeUnknownSync(Schema.NullOr(ModelAccess))
+const failed = (error: unknown): error is SqlError | EffectDrizzleError | EffectDrizzleQueryError =>
+  isSqlError(error) || error instanceof EffectDrizzleError || error instanceof EffectDrizzleQueryError
 
 // Token rows without the secret hash, which never leaves the store.
 const { hash: _, ...tokenColumns } = getColumns(TokenTable)
@@ -86,17 +89,17 @@ const make = Effect.gen(function* () {
   const { db } = yield* Database.Service
 
   const findOrg = Effect.fn("Store.org.get")(function* (ref: string) {
-    return yield* db
+    return (yield* db
       .select()
       .from(OrgTable)
       .where(or(eq(OrgTable.id, ref), eq(OrgTable.slug, ref)))
-      .get()
+      .limit(1))[0]
   }, Effect.orDie)
 
   const org = {
     get: findOrg,
     create: Effect.fn("Store.org.create")(function* (input: { name: string; slug: string; parent?: string }) {
-      return yield* db
+      return (yield* db
         .insert(OrgTable)
         .values({
           id: Crypto.id("org"),
@@ -105,8 +108,7 @@ const make = Effect.gen(function* () {
           parent: input.parent ?? null,
           created: yield* now,
         })
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     update: Effect.fn("Store.org.update")(function* (
       id: string,
@@ -125,14 +127,14 @@ const make = Effect.gen(function* () {
   }
 
   const getUser = Effect.fn("Store.user.get")(function* (id: string) {
-    return yield* db.select().from(UserTable).where(eq(UserTable.id, id)).get()
+    return (yield* db.select().from(UserTable).where(eq(UserTable.id, id)).limit(1))[0]
   }, Effect.orDie)
   const findUser = Effect.fn("Store.user.find")(function* (email: string) {
-    return yield* db
+    return (yield* db
       .select()
       .from(UserTable)
       .where(eq(UserTable.email, lower(email)))
-      .get()
+      .limit(1))[0]
   }, Effect.orDie)
 
   const user = {
@@ -145,7 +147,8 @@ const make = Effect.gen(function* () {
     }) {
       const existing = yield* findUser(input.email)
       if (existing) return existing
-      return yield* db
+      // Two first sign-ins for one email can both get here; the one that loses reads the winner's row.
+      const created = (yield* db
         .insert(UserTable)
         .values({
           id: Crypto.id("usr"),
@@ -154,8 +157,9 @@ const make = Effect.gen(function* () {
           external: input.external ?? null,
           created: yield* now,
         })
-        .returning()
-        .get()
+        .onConflictDoNothing({ target: UserTable.email })
+        .returning())[0]
+      return created ?? (yield* findUser(input.email))!
     }, Effect.orDie),
     update: Effect.fn("Store.user.update")(function* (
       id: string,
@@ -186,28 +190,28 @@ const make = Effect.gen(function* () {
     // Direct membership wins; otherwise a parent-org manager inherits their role in a sub-org.
     // Suspended memberships (SCIM active=false) grant nothing.
     role: Effect.fn("Store.member.role")(function* (orgID: string, userID: string) {
-      const direct = yield* db
+      const direct = (yield* db
         .select({ role: MemberTable.role })
         .from(MemberTable)
         .where(and(eq(MemberTable.org, orgID), eq(MemberTable.user, userID), isNull(MemberTable.suspended)))
-        .get()
+        .limit(1))[0]
       if (direct) return { role: direct.role, inherited: false }
-      const parent = yield* db
+      const parent = (yield* db
         .select({ role: MemberTable.role })
         .from(OrgTable)
         .innerJoin(MemberTable, eq(MemberTable.org, OrgTable.parent))
         .where(and(eq(OrgTable.id, orgID), eq(MemberTable.user, userID), isNull(MemberTable.suspended)))
-        .get()
+        .limit(1))[0]
       if (parent && inherited.includes(parent.role)) return { role: parent.role, inherited: true }
       return undefined
     }, Effect.orDie),
     // Raw membership row, including suspended ones; used by SCIM, which must see deactivated users.
     get: Effect.fn("Store.member.get")(function* (orgID: string, userID: string) {
-      return yield* db
+      return (yield* db
         .select({ role: MemberTable.role, suspended: MemberTable.suspended })
         .from(MemberTable)
         .where(and(eq(MemberTable.org, orgID), eq(MemberTable.user, userID)))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     suspend: Effect.fn("Store.member.suspend")(function* (orgID: string, userID: string, value: boolean) {
       yield* db
@@ -235,14 +239,14 @@ const make = Effect.gen(function* () {
     // Memberships outside this org and its sub-orgs. SCIM may only rewrite a user's identity
     // (email, name) when no other org depends on it.
     foreign: Effect.fn("Store.member.foreign")(function* (userID: string, orgID: string) {
-      const row = yield* db
+      const row = (yield* db
         .select({ n: count() })
         .from(MemberTable)
         .innerJoin(OrgTable, eq(OrgTable.id, MemberTable.org))
         .where(
           and(eq(MemberTable.user, userID), ne(OrgTable.id, orgID), sql`coalesce(${OrgTable.parent}, '') <> ${orgID}`),
         )
-        .get()
+        .limit(1))[0]
       return row?.n ?? 0
     }, Effect.orDie),
     add: Effect.fn("Store.member.add")(function* (orgID: string, userID: string, role: Role) {
@@ -285,7 +289,7 @@ const make = Effect.gen(function* () {
 
   const sso = {
     get: Effect.fn("Store.sso.get")(function* (orgID: string) {
-      const row = yield* db.select().from(SsoTable).where(eq(SsoTable.org, orgID)).get()
+      const row = (yield* db.select().from(SsoTable).where(eq(SsoTable.org, orgID)).limit(1))[0]
       if (!row) return undefined
       const common = {
         org: row.org,
@@ -342,12 +346,11 @@ const make = Effect.gen(function* () {
   // SAML assertions a sign-in used up. False when this one was already used.
   const assertion = {
     consume: Effect.fn("Store.assertion.consume")(function* (orgID: string, id: string, expires: number) {
-      const row = yield* db
+      const row = (yield* db
         .insert(AssertionTable)
         .values({ org: orgID, id, expires })
         .onConflictDoNothing()
-        .returning({ id: AssertionTable.id })
-        .get()
+        .returning({ id: AssertionTable.id }))[0]
       return row !== undefined
     }, Effect.orDie),
   }
@@ -363,14 +366,14 @@ const make = Effect.gen(function* () {
       return { value, code }
     }, Effect.orDie),
     find: Effect.fn("Store.device.find")(function* (value: string) {
-      return yield* db
+      return (yield* db
         .select()
         .from(DeviceTable)
         .where(eq(DeviceTable.hash, Crypto.hash(value)))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     code: Effect.fn("Store.device.code")(function* (code: string) {
-      return yield* db.select().from(DeviceTable).where(eq(DeviceTable.code, code.trim().toUpperCase())).get()
+      return (yield* db.select().from(DeviceTable).where(eq(DeviceTable.code, code.trim().toUpperCase())).limit(1))[0]
     }, Effect.orDie),
     poll: Effect.fn("Store.device.poll")(function* (hash: string) {
       yield* db
@@ -380,21 +383,19 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     // Only a pending, unexpired code can change state, so a code can never be approved twice.
     decide: Effect.fn("Store.device.decide")(function* (code: string, status: "approved" | "denied", userID?: string) {
-      const row = yield* db
+      const row = (yield* db
         .update(DeviceTable)
         .set({ status, user: userID ?? null })
         .where(and(eq(DeviceTable.code, code), eq(DeviceTable.status, "pending"), gt(DeviceTable.expires, yield* now)))
-        .returning({ hash: DeviceTable.hash })
-        .get()
+        .returning({ hash: DeviceTable.hash }))[0]
       return row !== undefined
     }, Effect.orDie),
     consume: Effect.fn("Store.device.consume")(function* (hash: string) {
-      const row = yield* db
+      const row = (yield* db
         .update(DeviceTable)
         .set({ status: "consumed" })
         .where(and(eq(DeviceTable.hash, hash), eq(DeviceTable.status, "approved")))
-        .returning({ hash: DeviceTable.hash })
-        .get()
+        .returning({ hash: DeviceTable.hash }))[0]
       return row !== undefined
     }, Effect.orDie),
   }
@@ -419,7 +420,7 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     // Single use: the row is deleted as it is read.
     take: Effect.fn("Store.login.take")(function* (state: string) {
-      return yield* db.delete(LoginTable).where(eq(LoginTable.state, state)).returning().get()
+      return (yield* db.delete(LoginTable).where(eq(LoginTable.state, state)).returning())[0]
     }, Effect.orDie),
   }
 
@@ -451,11 +452,11 @@ const make = Effect.gen(function* () {
       return { id, value }
     }, Effect.orDie),
     find: Effect.fn("Store.invite.find")(function* (value: string) {
-      return yield* db
+      return (yield* db
         .select()
         .from(InviteTable)
         .where(and(eq(InviteTable.hash, Crypto.hash(value)), yield* live()))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     pending: Effect.fn("Store.invite.pending")(function* (orgID: string, email?: string) {
       return yield* db
@@ -466,16 +467,15 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     // Only a live invite can be accepted, so concurrent accepts of one invite admit one person.
     accept: Effect.fn("Store.invite.accept")(function* (id: string) {
-      const row = yield* db
+      const row = (yield* db
         .update(InviteTable)
         .set({ accepted: yield* now })
         .where(and(eq(InviteTable.id, id), yield* live()))
-        .returning({ id: InviteTable.id })
-        .get()
+        .returning({ id: InviteTable.id }))[0]
       return row !== undefined
     }, Effect.orDie),
     revoke: Effect.fn("Store.invite.revoke")(function* (orgID: string, id: string) {
-      const row = yield* db
+      const row = (yield* db
         .update(InviteTable)
         .set({ revoked: yield* now })
         .where(
@@ -486,8 +486,7 @@ const make = Effect.gen(function* () {
             isNull(InviteTable.revoked),
           ),
         )
-        .returning({ id: InviteTable.id })
-        .get()
+        .returning({ id: InviteTable.id }))[0]
       return row !== undefined
     }, Effect.orDie),
   }
@@ -497,14 +496,14 @@ const make = Effect.gen(function* () {
       return yield* db.select().from(DomainTable).where(eq(DomainTable.org, orgID)).orderBy(asc(DomainTable.name))
     }, Effect.orDie),
     get: Effect.fn("Store.domain.get")(function* (name: string) {
-      return yield* db
+      return (yield* db
         .select()
         .from(DomainTable)
         .where(eq(DomainTable.name, lower(name)))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     create: Effect.fn("Store.domain.create")(function* (orgID: string, name: string) {
-      return yield* db
+      return (yield* db
         .insert(DomainTable)
         .values({
           name: lower(name),
@@ -512,8 +511,7 @@ const make = Effect.gen(function* () {
           token: `enterprise-verify=${Crypto.secret(18)}`,
           created: yield* now,
         })
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     verify: Effect.fn("Store.domain.verify")(function* (name: string) {
       yield* db
@@ -522,22 +520,21 @@ const make = Effect.gen(function* () {
         .where(eq(DomainTable.name, lower(name)))
     }, Effect.orDie),
     remove: Effect.fn("Store.domain.remove")(function* (orgID: string, name: string) {
-      const row = yield* db
+      const row = (yield* db
         .delete(DomainTable)
         .where(and(eq(DomainTable.org, orgID), eq(DomainTable.name, lower(name))))
-        .returning({ name: DomainTable.name })
-        .get()
+        .returning({ name: DomainTable.name }))[0]
       return row !== undefined
     }, Effect.orDie),
     // The org that owns the verified domain of this email address, if any.
     owner: Effect.fn("Store.domain.owner")(function* (email: string) {
       const host = email.split("@").at(-1)?.toLowerCase()
       if (!host) return undefined
-      const row = yield* db
+      const row = (yield* db
         .select({ org: DomainTable.org })
         .from(DomainTable)
         .where(and(eq(DomainTable.name, host), sql`${DomainTable.verified} is not null`))
-        .get()
+        .limit(1))[0]
       return row?.org
     }, Effect.orDie),
   }
@@ -568,11 +565,11 @@ const make = Effect.gen(function* () {
       return { id, value }
     }, Effect.orDie),
     verify: Effect.fn("Store.token.verify")(function* (value: string) {
-      const row = yield* db
+      const row = (yield* db
         .select(tokenColumns)
         .from(TokenTable)
         .where(eq(TokenTable.hash, Crypto.hash(value)))
-        .get()
+        .limit(1))[0]
       const time = yield* now
       if (!row || row.revoked) return undefined
       if (row.expires && row.expires < time) return undefined
@@ -606,7 +603,7 @@ const make = Effect.gen(function* () {
         .where(and(eq(TokenTable.id, id), isNull(TokenTable.revoked)))
     }, Effect.orDie),
     get: Effect.fn("Store.token.get")(function* (id: string) {
-      return yield* db.select(tokenColumns).from(TokenTable).where(eq(TokenTable.id, id)).get()
+      return (yield* db.select(tokenColumns).from(TokenTable).where(eq(TokenTable.id, id)).limit(1))[0]
     }, Effect.orDie),
   }
 
@@ -623,17 +620,17 @@ const make = Effect.gen(function* () {
       return yield* db.select().from(GroupTable).where(eq(GroupTable.org, orgID)).orderBy(asc(GroupTable.name))
     }, Effect.orDie),
     get: Effect.fn("Store.group.get")(function* (orgID: string, id: string) {
-      return yield* db
+      return (yield* db
         .select()
         .from(GroupTable)
         .where(and(eq(GroupTable.org, orgID), eq(GroupTable.id, id)))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     create: Effect.fn("Store.group.create")(function* (
       orgID: string,
       input: { name: string; external?: string | null; models?: ModelAccess | null },
     ) {
-      return yield* db
+      return (yield* db
         .insert(GroupTable)
         .values({
           id: Crypto.id("grp"),
@@ -643,8 +640,7 @@ const make = Effect.gen(function* () {
           models: input.models ?? null,
           created: yield* now,
         })
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     update: Effect.fn("Store.group.update")(function* (
       orgID: string,
@@ -698,7 +694,7 @@ const make = Effect.gen(function* () {
   }
 
   const getPolicy = Effect.fn("Store.policy.get")(function* (orgID: string) {
-    const row = yield* db.select().from(PolicyTable).where(eq(PolicyTable.org, orgID)).get()
+    const row = (yield* db.select().from(PolicyTable).where(eq(PolicyTable.org, orgID)).limit(1))[0]
     return { policy: decodePolicy(row?.data ?? {}), version: row?.version ?? 0, updated: row?.updated ?? null }
   }, Effect.orDie)
 
@@ -762,7 +758,7 @@ const make = Effect.gen(function* () {
       details?: Record<string, unknown>
       ip?: string | null
     }) {
-      yield* db.insert(AuditTable).values({
+      const values = {
         org: input.org,
         at: yield* now,
         action: input.action,
@@ -771,7 +767,15 @@ const make = Effect.gen(function* () {
         target: input.target ?? null,
         details: input.details ?? {},
         ip: input.ip ?? null,
-      })
+      }
+      // Audit streams send what comes after the last id they delivered. Ids are taken and committed
+      // one at a time across replicas, so an event can never commit behind one already delivered.
+      yield* db.transaction(() =>
+        Effect.gen(function* () {
+          yield* db.execute(sql`select pg_advisory_xact_lock(hashtext('kilo-enterprise:audit'))`)
+          yield* db.insert(AuditTable).values(values)
+        }),
+      )
     }, Effect.orDie),
     query: Effect.fn("Store.audit.query")(function* (input: {
       org: string
@@ -789,7 +793,7 @@ const make = Effect.gen(function* () {
           and(
             eq(AuditTable.org, input.org),
             input.actions?.length ? inArray(AuditTable.action, [...input.actions]) : undefined,
-            input.actor ? sql`${AuditTable.email} = ${input.actor} collate nocase` : undefined,
+            input.actor ? sql`lower(${AuditTable.email}) = lower(${input.actor})` : undefined,
             input.from != null ? gte(AuditTable.at, input.from) : undefined,
             input.to != null ? lte(AuditTable.at, input.to) : undefined,
             input.before != null ? lt(AuditTable.id, input.before) : undefined,
@@ -849,7 +853,7 @@ const make = Effect.gen(function* () {
         Effect.gen(function* () {
           let accepted = 0
           for (const row of rows) {
-            const inserted = yield* db
+            const inserted = (yield* db
               .insert(UsageTable)
               .values({
                 org: orgID,
@@ -870,8 +874,7 @@ const make = Effect.gen(function* () {
               })
               // Client-provided ids make resends idempotent.
               .onConflictDoNothing()
-              .returning({ id: UsageTable.id })
-              .get()
+              .returning({ id: UsageTable.id }))[0]
             if (inserted) accepted++
           }
           return accepted
@@ -889,11 +892,13 @@ const make = Effect.gen(function* () {
         user: sql`u.email`,
         model: sql`s.provider || '/' || s.model`,
         provider: sql`s.provider`,
-        day: sql`strftime('%Y-%m-%d', s.at / 1000, 'unixepoch')`,
+        day: sql`to_char(to_timestamp(s.at / 1000.0) at time zone 'UTC', 'YYYY-MM-DD')`,
         project: sql`coalesce(s.project, '')`,
         source: sql`s.source`,
       }[input.by]
-      return yield* db.all<{
+      // Counts and sums come back as 64-bit values, which Postgres drivers return as strings: cast
+      // them to numbers in SQL.
+      return yield* db.execute<{
         key: string
         requests: number
         users: number
@@ -904,23 +909,25 @@ const make = Effect.gen(function* () {
         cache_write: number
         cost: number
       }>(sql`
-        select ${key} as key, count(*) as requests, count(distinct s.user) as users,
-          sum(s.input) as input, sum(s.output) as output, sum(s.reasoning) as reasoning,
-          sum(s.cache_read) as cache_read, sum(s.cache_write) as cache_write, round(sum(s.cost), 6) as cost
+        select ${key} as key, count(*)::float8 as requests, count(distinct s.user)::float8 as users,
+          sum(s.input)::float8 as input, sum(s.output)::float8 as output, sum(s.reasoning)::float8 as reasoning,
+          sum(s.cache_read)::float8 as cache_read, sum(s.cache_write)::float8 as cache_write,
+          round(sum(s.cost)::numeric, 6)::float8 as cost
         from usage s join users u on u.id = s.user
         where ${window(input)}
         group by 1 order by cost desc, requests desc`)
     }, Effect.orDie),
     rows: Effect.fn("Store.usage.rows")(function* (input: { org: string; from: number; to: number; user?: string }) {
-      return yield* db.all<Record<string, string | number | null>>(sql`
-        select s.id, s.at, u.email, s.session, s.project, s.provider, s.model, s.input, s.output, s.reasoning,
-          s.cache_read, s.cache_write, s.cost, s.source
+      return yield* db.execute<Record<string, string | number | null>>(sql`
+        select s.id, s.at::float8 as at, u.email, s.session, s.project, s.provider, s.model, s.input::float8 as input,
+          s.output::float8 as output, s.reasoning::float8 as reasoning, s.cache_read::float8 as cache_read,
+          s.cache_write::float8 as cache_write, s.cost, s.source
         from usage s join users u on u.id = s.user
         where ${window(input)} order by s.at`)
     }, Effect.orDie),
     // Rounded to micro-dollars so float summation noise never reaches budgets or the UI.
     spent: Effect.fn("Store.usage.spent")(function* (input: { org: string; from: number; user?: string }) {
-      const row = yield* db
+      const row = (yield* db
         .select({ n: sql<number | null>`sum(${UsageTable.cost})` })
         .from(UsageTable)
         .where(
@@ -930,7 +937,7 @@ const make = Effect.gen(function* () {
             input.user ? eq(UsageTable.user, input.user) : undefined,
           ),
         )
-        .get()
+        .limit(1))[0]
       return Math.round((row?.n ?? 0) * 1e6) / 1e6
     }, Effect.orDie),
   }
@@ -946,7 +953,7 @@ const make = Effect.gen(function* () {
         .orderBy(asc(GatewayProviderTable.id))
     }, Effect.orDie),
     get: Effect.fn("Store.gateway.get")(function* (orgID: string, id: string) {
-      return yield* db.select().from(GatewayProviderTable).where(where(orgID, id)).get()
+      return (yield* db.select().from(GatewayProviderTable).where(where(orgID, id)).limit(1))[0]
     }, Effect.orDie),
     // `secret` is already sealed.
     set: Effect.fn("Store.gateway.set")(function* (
@@ -955,22 +962,20 @@ const make = Effect.gen(function* () {
       input: { kind: GatewayKind; base: string; secret: string; hint: string },
     ) {
       const time = yield* now
-      return yield* db
+      return (yield* db
         .insert(GatewayProviderTable)
         .values({ org: orgID, id, ...input, created: time, updated: time })
         .onConflictDoUpdate({
           target: [GatewayProviderTable.org, GatewayProviderTable.id],
           set: { ...input, updated: time },
         })
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     remove: Effect.fn("Store.gateway.remove")(function* (orgID: string, id: string) {
-      const row = yield* db
+      const row = (yield* db
         .delete(GatewayProviderTable)
         .where(where(orgID, id))
-        .returning({ id: GatewayProviderTable.id })
-        .get()
+        .returning({ id: GatewayProviderTable.id }))[0]
       return row !== undefined
     }, Effect.orDie),
   }
@@ -988,11 +993,11 @@ const make = Effect.gen(function* () {
       return yield* Effect.forEach(rows, (row) => Effect.map(pending(row), (count) => ({ ...row, pending: count })))
     }, Effect.orDie),
     get: Effect.fn("Store.stream.get")(function* (orgID: string, id: string) {
-      return yield* db
+      return (yield* db
         .select()
         .from(StreamTable)
         .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
-        .get()
+        .limit(1))[0]
     }, Effect.orDie),
     pending: Effect.fn("Store.stream.pending")(function* (row: { org: string; cursor: number }) {
       return yield* pending(row)
@@ -1009,13 +1014,13 @@ const make = Effect.gen(function* () {
         enabled: boolean
       },
     ) {
-      const latest = yield* db
-        .select({ id: sql<number | null>`max(${AuditTable.id})` })
+      const latest = (yield* db
+        .select({ id: sql<number | null>`max(${AuditTable.id})::float8` })
         .from(AuditTable)
         .where(eq(AuditTable.org, orgID))
-        .get()
+        .limit(1))[0]
       const time = yield* now
-      return yield* db
+      return (yield* db
         .insert(StreamTable)
         .values({
           id: Crypto.id("str"),
@@ -1025,8 +1030,7 @@ const make = Effect.gen(function* () {
           created: time,
           updated: time,
         })
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     update: Effect.fn("Store.stream.update")(function* (
       orgID: string,
@@ -1041,19 +1045,17 @@ const make = Effect.gen(function* () {
       }>,
     ) {
       // A change of destination or a resume gets a fresh attempt rather than waiting out a backoff.
-      return yield* db
+      return (yield* db
         .update(StreamTable)
         .set({ ...patch, retry: null, updated: yield* now })
         .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
-        .returning()
-        .get()
+        .returning())[0]
     }, Effect.orDie),
     remove: Effect.fn("Store.stream.remove")(function* (orgID: string, id: string) {
-      const row = yield* db
+      const row = (yield* db
         .delete(StreamTable)
         .where(and(eq(StreamTable.org, orgID), eq(StreamTable.id, id)))
-        .returning({ id: StreamTable.id })
-        .get()
+        .returning({ id: StreamTable.id }))[0]
       return row !== undefined
     }, Effect.orDie),
     // Streams with events to send and no backoff or other delivery in the way.
@@ -1074,12 +1076,11 @@ const make = Effect.gen(function* () {
     // Atomic, so of several workers racing for a stream exactly one wins it.
     claim: Effect.fn("Store.stream.claim")(function* (id: string, ttl: number) {
       const time = yield* now
-      const row = yield* db
+      const row = (yield* db
         .update(StreamTable)
         .set({ lease: time + ttl })
         .where(and(eq(StreamTable.id, id), or(isNull(StreamTable.lease), lt(StreamTable.lease, time))))
-        .returning()
-        .get()
+        .returning())[0]
       return row
     }, Effect.orDie),
     events: Effect.fn("Store.stream.events")(function* (row: { org: string; cursor: number }, limit: number) {
@@ -1180,8 +1181,19 @@ const make = Effect.gen(function* () {
     budget,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.
-    transaction: <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-      db.transaction(() => effect, { behavior: "immediate" }).pipe(Effect.catchIf(isSqlError, Effect.die)),
+    transaction: <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
+      db
+        .transaction(() =>
+          Effect.gen(function* () {
+            // One at a time across every replica, so a check and the writes that depend on it can't
+            // interleave with another request's.
+            yield* db.execute(sql`select pg_advisory_xact_lock(hashtext('kilo-enterprise:store'))`)
+            return yield* effect
+          }),
+        )
+        // A failed query or commit is a defect here, as everywhere else in the store. TypeScript
+        // can't subtract those errors from a generic E, so the type says what the code does.
+        .pipe(Effect.catchIf(failed, Effect.die)) as Effect.Effect<A, E, R>,
   }
 })
 

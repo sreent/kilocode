@@ -108,6 +108,23 @@ describe("roles", () => {
     expect(remove.status).toBe(409)
   })
 
+  test("two owners demoting each other at once leave one owner", async () => {
+    const env = await setup()
+    const second = await env.join("second@acme.com", "owner")
+    const results = await Promise.all([
+      env.call("PATCH", `/api/v1/orgs/acme/members/${second.user.id}`, {
+        token: env.owner.token,
+        body: { role: "admin" },
+      }),
+      env.call("PATCH", `/api/v1/orgs/acme/members/${env.owner.user.id}`, {
+        token: second.token,
+        body: { role: "admin" },
+      }),
+    ])
+    expect(results.filter((res) => res.status === 200)).toHaveLength(1)
+    expect(await env.store.member.owners(env.owner.org.id)).toBe(1)
+  })
+
   test("role changes and removals are audited with before and after", async () => {
     const env = await setup()
     const dev = await env.join("dev@acme.com", "member")
@@ -352,6 +369,17 @@ describe("usage and budgets", () => {
         cost: 0.75,
       },
     ])
+  })
+
+  test("token counts past 32 bits are stored, summed and exported as numbers", async () => {
+    const env = await setup()
+    const big = { ...record("b1", 1), tokens: { input: 3_000_000_000, output: 7 } }
+    const res = await env.call("POST", "/api/v1/orgs/acme/usage", { token: env.owner.token, body: { records: [big] } })
+    expect(res.data.accepted).toBe(1)
+    const summary = await env.call("GET", "/api/v1/orgs/acme/usage?by=model", { token: env.owner.token })
+    expect(summary.data.rows[0].input).toBe(3_000_000_000)
+    const csv = await env.call("GET", "/api/v1/orgs/acme/usage/export", { token: env.owner.token })
+    expect(csv.data.split("\n")[1]).toContain(",3000000000,7,0,0,0,1,")
   })
 
   test("members only ever see their own usage", async () => {

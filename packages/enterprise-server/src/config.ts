@@ -29,11 +29,10 @@ export class Service extends Context.Service<Service, Info>()("@enterprise/Serve
 
 export const port = Config.port("ENTERPRISE_PORT").pipe(Config.withDefault(8787))
 
-// Where to listen and which database to open; only the entrypoint needs these.
+// Where to listen; only the entrypoint needs it. The database is configured in db/database.ts.
 export const listen = Config.all({
   port,
   host: Config.string("ENTERPRISE_HOST").pipe(Config.withDefault("0.0.0.0")),
-  db: Config.string("ENTERPRISE_DB").pipe(Config.withDefault("./data/enterprise.db")),
 })
 
 // A failed lookup means no record was found, which domain verification reports to the admin.
