@@ -6,11 +6,8 @@
  * No vscode dependency.
  */
 
-import type { EnterpriseStatusResponse } from "@kilocode/sdk/v2/client"
 import { getErrorMessage } from "../../kilo-provider-utils"
 import type { AuthContext } from "./auth"
-
-export type EnterpriseStatus = EnterpriseStatusResponse
 
 /** Push the current organization status to the webview. */
 export async function sendEnterpriseStatus(ctx: AuthContext): Promise<void> {
