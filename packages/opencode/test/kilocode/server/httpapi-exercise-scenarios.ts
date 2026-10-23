@@ -469,6 +469,21 @@ export const kiloScenarios: Scenario[] = [
     .post("/kilo/cloud/session/import", "kilo.cloud.session.import")
     .at((ctx) => ({ path: "/kilo/cloud/session/import", headers: ctx.headers(), body: { sessionId: "missing" } }))
     .status(401),
+  // Self-hosted enterprise: the exerciser's device has no enterprise.json, environment or stored sign-in.
+  http.protected.get("/kilo/enterprise/status", "enterprise.status").json(200, (body) => {
+    object(body)
+    check(body.enabled === false, "a device without enterprise configuration should not be enrolled")
+    array(body.gateway)
+  }),
+  http.protected
+    .post("/kilo/enterprise/signin", "enterprise.signin")
+    .at((ctx) => ({ path: "/kilo/enterprise/signin", headers: ctx.headers(), body: {} }))
+    .status(400),
+  http.protected.post("/kilo/enterprise/signin/wait", "enterprise.wait").status(400),
+  http.protected.post("/kilo/enterprise/signout", "enterprise.signout").json(200, (body) => {
+    object(body)
+    check(body.enabled === false, "signing out of no organization should leave the device unenrolled")
+  }),
   http.protected.get("/network", "network.list").json(200, array),
   http.protected
     .post("/network/{requestID}/reply", "network.reply")
