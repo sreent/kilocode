@@ -22443,6 +22443,677 @@
         ]
       }
     },
+    "/kilo/enterprise/status": {
+      "get": {
+        "tags": ["enterprise"],
+        "operationId": "enterprise.status",
+        "parameters": [
+          {
+            "name": "directory",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["managed", "env", "login"]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["slug"],
+                      "additionalProperties": false
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "The agent may not run until the person signs in"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["email", "role"],
+                      "additionalProperties": false
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number"
+                        },
+                        "fetched": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["version", "fetched"],
+                      "additionalProperties": false
+                    },
+                    "blocked": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "gateway": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Providers routed through the org's LLM gateway"
+                    },
+                    "signin": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "org": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Code the person confirms in the browser"
+                        },
+                        "verification": {
+                          "type": "string",
+                          "description": "Page where the code is confirmed"
+                        },
+                        "link": {
+                          "type": "string",
+                          "description": "The same page with the code filled in"
+                        },
+                        "expires": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["url", "org", "code", "verification", "link", "expires"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["enabled", "required", "gateway"],
+                  "additionalProperties": false,
+                  "description": "Organization status"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest | InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRequestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Sign-in, policy and blocking state of the self-hosted enterprise enrollment.",
+        "summary": "Get organization status",
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.status({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/kilo/enterprise/signin": {
+      "post": {
+        "tags": ["enterprise"],
+        "operationId": "enterprise.signin",
+        "parameters": [
+          {
+            "name": "directory",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status, with the waiting sign-in, or signed in when a token was given",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["managed", "env", "login"]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["slug"],
+                      "additionalProperties": false
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "The agent may not run until the person signs in"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["email", "role"],
+                      "additionalProperties": false
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number"
+                        },
+                        "fetched": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["version", "fetched"],
+                      "additionalProperties": false
+                    },
+                    "blocked": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "gateway": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Providers routed through the org's LLM gateway"
+                    },
+                    "signin": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "org": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Code the person confirms in the browser"
+                        },
+                        "verification": {
+                          "type": "string",
+                          "description": "Page where the code is confirmed"
+                        },
+                        "link": {
+                          "type": "string",
+                          "description": "The same page with the code filled in"
+                        },
+                        "expires": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["url", "org", "code", "verification", "link", "expires"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["enabled", "required", "gateway"],
+                  "additionalProperties": false,
+                  "description": "Status, with the waiting sign-in, or signed in when a token was given"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest | EnterpriseSigninError | InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/EnterpriseSigninError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRequestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Start a device sign-in and return its code and link, or sign in at once with an access token.",
+        "summary": "Sign in to the organization",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "org": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.signin({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/kilo/enterprise/signin/wait": {
+      "post": {
+        "tags": ["enterprise"],
+        "operationId": "enterprise.wait",
+        "parameters": [
+          {
+            "name": "directory",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status after the sign-in was approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["managed", "env", "login"]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["slug"],
+                      "additionalProperties": false
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "The agent may not run until the person signs in"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["email", "role"],
+                      "additionalProperties": false
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number"
+                        },
+                        "fetched": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["version", "fetched"],
+                      "additionalProperties": false
+                    },
+                    "blocked": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "gateway": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Providers routed through the org's LLM gateway"
+                    },
+                    "signin": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "org": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Code the person confirms in the browser"
+                        },
+                        "verification": {
+                          "type": "string",
+                          "description": "Page where the code is confirmed"
+                        },
+                        "link": {
+                          "type": "string",
+                          "description": "The same page with the code filled in"
+                        },
+                        "expires": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["url", "org", "code", "verification", "link", "expires"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["enabled", "required", "gateway"],
+                  "additionalProperties": false,
+                  "description": "Status after the sign-in was approved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest | EnterpriseSigninError | InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/EnterpriseSigninError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRequestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Block until the waiting device sign-in is approved, denied or expires.",
+        "summary": "Wait for the device sign-in",
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.wait({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/kilo/enterprise/signout": {
+      "post": {
+        "tags": ["enterprise"],
+        "operationId": "enterprise.signout",
+        "parameters": [
+          {
+            "name": "directory",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status after signing out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": ["managed", "env", "login"]
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "org": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["slug"],
+                      "additionalProperties": false
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "The agent may not run until the person signs in"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["email", "role"],
+                      "additionalProperties": false
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number"
+                        },
+                        "fetched": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["version", "fetched"],
+                      "additionalProperties": false
+                    },
+                    "blocked": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "gateway": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Providers routed through the org's LLM gateway"
+                    },
+                    "signin": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "org": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string",
+                          "description": "Code the person confirms in the browser"
+                        },
+                        "verification": {
+                          "type": "string",
+                          "description": "Page where the code is confirmed"
+                        },
+                        "link": {
+                          "type": "string",
+                          "description": "The same page with the code filled in"
+                        },
+                        "expires": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["url", "org", "code", "verification", "link", "expires"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["enabled", "required", "gateway"],
+                  "additionalProperties": false,
+                  "description": "Status after signing out"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest | InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidRequestError"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "Revoke and forget this device's organization sign-in and cached policy.",
+        "summary": "Sign out of the organization",
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.signout({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": ["Kilo HttpApi"],
@@ -42947,6 +43618,20 @@
         "required": ["name", "data"],
         "additionalProperties": false
       },
+      "EnterpriseSigninError": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["EnterpriseSigninError"]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "message"],
+        "additionalProperties": false
+      },
       "UnauthorizedError": {
         "type": "object",
         "properties": {
@@ -62519,6 +63204,10 @@
     {
       "name": "memory",
       "description": "Kilo memory routes."
+    },
+    {
+      "name": "enterprise",
+      "description": "Self-hosted enterprise routes."
     },
     {
       "name": "Kilo HttpApi",

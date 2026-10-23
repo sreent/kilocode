@@ -4845,6 +4845,11 @@ export type MemoryApiServerError = {
   }
 }
 
+export type EnterpriseSigninError = {
+  name: "EnterpriseSigninError"
+  message: string
+}
+
 export type UnauthorizedError = {
   _tag: "UnauthorizedError"
   message: string
@@ -19676,6 +19681,306 @@ export type MemoryPurgeResponses = {
 }
 
 export type MemoryPurgeResponse = MemoryPurgeResponses[keyof MemoryPurgeResponses]
+
+export type EnterpriseStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/enterprise/status"
+}
+
+export type EnterpriseStatusErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type EnterpriseStatusError = EnterpriseStatusErrors[keyof EnterpriseStatusErrors]
+
+export type EnterpriseStatusResponses = {
+  /**
+   * Organization status
+   */
+  200: {
+    /**
+     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type EnterpriseStatusResponse = EnterpriseStatusResponses[keyof EnterpriseStatusResponses]
+
+export type EnterpriseSigninData = {
+  body?: {
+    url?: string
+    org?: string
+    token?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/enterprise/signin"
+}
+
+export type EnterpriseSigninErrors = {
+  /**
+   * BadRequest | EnterpriseSigninError | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | EnterpriseSigninError | InvalidRequestError
+}
+
+export type EnterpriseSigninError2 = EnterpriseSigninErrors[keyof EnterpriseSigninErrors]
+
+export type EnterpriseSigninResponses = {
+  /**
+   * Status, with the waiting sign-in, or signed in when a token was given
+   */
+  200: {
+    /**
+     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type EnterpriseSigninResponse = EnterpriseSigninResponses[keyof EnterpriseSigninResponses]
+
+export type EnterpriseWaitData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/enterprise/signin/wait"
+}
+
+export type EnterpriseWaitErrors = {
+  /**
+   * BadRequest | EnterpriseSigninError | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | EnterpriseSigninError | InvalidRequestError
+}
+
+export type EnterpriseWaitError = EnterpriseWaitErrors[keyof EnterpriseWaitErrors]
+
+export type EnterpriseWaitResponses = {
+  /**
+   * Status after the sign-in was approved
+   */
+  200: {
+    /**
+     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type EnterpriseWaitResponse = EnterpriseWaitResponses[keyof EnterpriseWaitResponses]
+
+export type EnterpriseSignoutData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/enterprise/signout"
+}
+
+export type EnterpriseSignoutErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type EnterpriseSignoutError = EnterpriseSignoutErrors[keyof EnterpriseSignoutErrors]
+
+export type EnterpriseSignoutResponses = {
+  /**
+   * Status after signing out
+   */
+  200: {
+    /**
+     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type EnterpriseSignoutResponse = EnterpriseSignoutResponses[keyof EnterpriseSignoutResponses]
 
 export type V2HealthGetData = {
   body?: never

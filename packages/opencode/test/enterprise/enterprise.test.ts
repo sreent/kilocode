@@ -289,6 +289,49 @@ describe("usage and budgets", () => {
   })
 })
 
+describe("sign-in", () => {
+  // What the IDEs drive through `kilo serve`, and `kilo enterprise login` in the terminal.
+  test("a device sign-in waits for the browser; a token signs in at once; signing out forgets both", async () => {
+    const dev = await cp.join("device@acme.com", "member")
+    // Device sign-in goes through the org's SSO; the browser leg is approved directly below.
+    await cp.store.sso.set(cp.owner.org.id, {
+      issuer: "https://idp.test",
+      client: "kilo",
+      secret: "unused",
+      scopes: "openid email",
+      enforce: false,
+      provision: false,
+    })
+    const enterprise = await client()
+    const attempt = <A, E>(effect: Effect.Effect<A, E>) => Effect.runPromise(effect)
+
+    const pending = await attempt(enterprise.signin.start({ url: cp.url, org: "acme" }))
+    expect(pending.code).toMatch(/^[A-Z]{4}-[A-Z]{4}$/)
+    expect(pending.link).toEndWith(`/device?code=${pending.code}`)
+    expect(await run(enterprise.signin.pending())).toMatchObject({ code: pending.code, org: "acme" })
+    await cp.store.device.decide(pending.code, "approved", dev.user.id)
+    expect(await attempt(enterprise.signin.finish())).toEqual({ org: "Acme", email: "device@acme.com", role: "member" })
+    expect((await run(enterprise.stored()))?.user.email).toBe("device@acme.com")
+    expect(await run(enterprise.signin.pending())).toBeUndefined()
+
+    const denied = await attempt(enterprise.signin.start({ url: cp.url, org: "acme" }))
+    await cp.store.device.decide(denied.code, "denied")
+    await expect(attempt(enterprise.signin.finish())).rejects.toThrow("Sign-in was denied.")
+
+    await run(enterprise.signout())
+    expect(await run(enterprise.stored())).toBeUndefined()
+    await expect(attempt(enterprise.signin.start())).rejects.toThrow("Give the control plane URL")
+    await expect(attempt(enterprise.signin.token({ url: cp.url, org: "acme", token: "ent_nope" }))).rejects.toThrow(
+      "rejected this token",
+    )
+    expect(await attempt(enterprise.signin.token({ url: cp.url, org: "acme", token: dev.token }))).toMatchObject({
+      email: "device@acme.com",
+    })
+    expect((await run(enterprise.status())).policy?.user.email).toBe("device@acme.com")
+    await cp.store.sso.remove(cp.owner.org.id)
+  }, 30_000)
+})
+
 describe("LLM gateway", () => {
   test("routed providers call the control plane with the enterprise token and are metered there", async () => {
     expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)

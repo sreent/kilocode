@@ -692,6 +692,18 @@ export const dict = {
 
   "profile.title": "プロフィール",
   "profile.notLoggedIn": "ログインしていません",
+  "profile.enterprise.title": "組織",
+  "profile.enterprise.signinTitle": "{{org}} にサインイン",
+  "profile.enterprise.signedIn": "{{email}}（{{role}}）としてサインイン中",
+  "profile.enterprise.policy": "ポリシーのバージョン {{version}}、{{time}} に更新",
+  "profile.enterprise.gateway": "{{providers}} へのモデル呼び出しは組織のゲートウェイを経由します。",
+  "profile.enterprise.managed":
+    "このデバイスの Kilo は {{org}} が管理しています。組織のアカウントでサインインしてください。",
+  "profile.enterprise.connect": "セルフホストの組織にサインイン",
+  "profile.enterprise.url": "サーバー URL",
+  "profile.enterprise.action.signin": "サインイン",
+  "profile.enterprise.action.signout": "サインアウト",
+  "profile.enterprise.error": "前回のポリシー更新に失敗しました: {{error}}",
   "profile.action.login": "Kilo Codeでログイン",
   "profile.balance.title": "残高",
   "profile.balance.refresh": "残高を更新",

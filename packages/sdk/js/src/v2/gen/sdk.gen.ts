@@ -77,6 +77,14 @@ import type {
   ConfigWarningsResponses,
   EnhancePromptEnhanceErrors,
   EnhancePromptEnhanceResponses,
+  EnterpriseSigninErrors,
+  EnterpriseSigninResponses,
+  EnterpriseSignoutErrors,
+  EnterpriseSignoutResponses,
+  EnterpriseStatusErrors,
+  EnterpriseStatusResponses,
+  EnterpriseWaitErrors,
+  EnterpriseWaitResponses,
   EventSubscribeResponse,
   EventSubscribeResponses,
   EventTuiCommandExecute2,
@@ -10057,6 +10065,139 @@ export class Memory extends HeyApiClient {
   }
 }
 
+export class Enterprise extends HeyApiClient {
+  /**
+   * Get organization status
+   *
+   * Sign-in, policy and blocking state of the self-hosted enterprise enrollment.
+   */
+  public status<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<EnterpriseStatusResponses, EnterpriseStatusErrors, ThrowOnError>({
+      url: "/kilo/enterprise/status",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Sign in to the organization
+   *
+   * Start a device sign-in and return its code and link, or sign in at once with an access token.
+   */
+  public signin<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      url?: string
+      org?: string
+      token?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "url" },
+            { in: "body", key: "org" },
+            { in: "body", key: "token" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<EnterpriseSigninResponses, EnterpriseSigninErrors, ThrowOnError>({
+      url: "/kilo/enterprise/signin",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Wait for the device sign-in
+   *
+   * Block until the waiting device sign-in is approved, denied or expires.
+   */
+  public wait<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<EnterpriseWaitResponses, EnterpriseWaitErrors, ThrowOnError>({
+      url: "/kilo/enterprise/signin/wait",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Sign out of the organization
+   *
+   * Revoke and forget this device's organization sign-in and cached policy.
+   */
+  public signout<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<EnterpriseSignoutResponses, EnterpriseSignoutErrors, ThrowOnError>({
+      url: "/kilo/enterprise/signout",
+      ...options,
+      ...params,
+    })
+  }
+}
+
 export class Health extends HeyApiClient {
   /**
    * Check server health
@@ -12346,6 +12487,11 @@ export class KiloClient extends HeyApiClient {
   private _memory?: Memory
   get memory(): Memory {
     return (this._memory ??= new Memory({ client: this.client }))
+  }
+
+  private _enterprise?: Enterprise
+  get enterprise(): Enterprise {
+    return (this._enterprise ??= new Enterprise({ client: this.client }))
   }
 
   private _v2?: V2

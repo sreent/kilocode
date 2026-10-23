@@ -11,6 +11,8 @@ import { generateQRCode } from "../../utils/qrcode"
 import type { DeviceAuthStatus } from "../../types/messages"
 
 interface DeviceAuthCardProps {
+  /** Defaults to signing in to Kilo Code. */
+  title?: string
   status: DeviceAuthStatus
   code?: string
   verificationUrl?: string
@@ -174,7 +176,7 @@ const DeviceAuthCard: Component<DeviceAuthCardProps> = (props) => {
               "text-align": "center",
             }}
           >
-            {language.t("deviceAuth.title")}
+            {props.title ?? language.t("deviceAuth.title")}
           </h3>
 
           {/* Step 1: URL */}

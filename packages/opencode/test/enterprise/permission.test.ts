@@ -39,6 +39,14 @@ const enrolled = Layer.succeed(
     save: () => Effect.void,
     forget: () => Effect.void,
     client: () => Effect.die("unused"),
+    signin: {
+      start: () => Effect.die("unused"),
+      finish: () => Effect.die("unused"),
+      pending: () => Effect.succeed(undefined),
+      token: () => Effect.die("unused"),
+      invite: () => Effect.die("unused"),
+    },
+    signout: () => Effect.void,
     usage: {
       push: () => Effect.void,
       pending: () => Effect.succeed(0),

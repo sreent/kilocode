@@ -1,65 +1,13 @@
 // kilocode_change - new file (enterprise)
 import type { Argv } from "yargs"
-import { Clock, Effect, Exit, Predicate } from "effect"
+import { Effect } from "effect"
 import { effectCmd, fail } from "@/cli/effect-cmd"
 import { cmd } from "@/cli/cmd/cmd"
 import { UI } from "@/cli/ui"
-import { DeviceError } from "@enterprise/protocol/errors"
+import { dollars } from "@enterprise/protocol/match"
 import { Enterprise } from "./enterprise"
 
 // Loaded lazily (see lazy-kilo-commands): only `kilo enterprise ...` pays for this module.
-
-const unreachable = (url: string) => (error: unknown) =>
-  fail(`Cannot reach ${url}: ${error instanceof Error ? error.message : String(error)}`)
-
-// RFC 8628 device authorization: the browser does SSO, the terminal polls for the token.
-const device = Effect.fn("Cli.enterprise.device")(function* (url: string, org: string) {
-  const enterprise = yield* Enterprise.Service
-  const signin = (yield* enterprise.client({ url }))["enterprise.signin"]
-  const start = yield* signin["device.start"]({ payload: { org } }).pipe(
-    Effect.catch((error) =>
-      Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "InvalidRequestError")
-        ? fail(error.message)
-        : unreachable(url)(error),
-    ),
-  )
-  UI.println(`Open ${UI.Style.TEXT_HIGHLIGHT}${start.verification_uri}${UI.Style.TEXT_NORMAL} and confirm this code:`)
-  UI.println(`\n    ${UI.Style.TEXT_HIGHLIGHT_BOLD}${start.user_code}${UI.Style.TEXT_NORMAL}\n`)
-  yield* Effect.tryPromise(async () => (await import("open")).default(start.verification_uri_complete)).pipe(
-    Effect.catch(() => Effect.sync(() => UI.println("Could not open a browser; open the URL above manually."))),
-  )
-  let interval = start.interval
-  const deadline = (yield* Clock.currentTimeMillis) + start.expires_in * 1000
-  while ((yield* Clock.currentTimeMillis) < deadline) {
-    yield* Effect.sleep(`${interval} seconds`)
-    const exit = yield* signin["device.token"]({ payload: { device_code: start.device_code } }).pipe(Effect.exit)
-    if (Exit.isSuccess(exit)) return exit.value.access_token
-    const error = exit.cause.reasons.find((reason) => reason._tag === "Fail")?.error
-    // Transient network errors are retried until the code expires.
-    if (!(error instanceof DeviceError)) continue
-    if (error.error === "authorization_pending") continue
-    if (error.error === "slow_down") {
-      interval += 5
-      continue
-    }
-    if (error.error === "access_denied") return yield* fail("Sign-in was denied.")
-    return yield* fail(`Sign-in failed: ${error.error}`)
-  }
-  return yield* fail("The code expired before sign-in completed. Run the command again.")
-})
-
-const accept = Effect.fn("Cli.enterprise.accept")(function* (url: string, invite: string) {
-  const enterprise = yield* Enterprise.Service
-  const signin = (yield* enterprise.client({ url }))["enterprise.signin"]
-  const accepted = yield* signin["invite.accept"]({ params: { token: invite }, payload: {} }).pipe(
-    Effect.catch((error) =>
-      Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "ForbiddenError")
-        ? fail(error.message)
-        : unreachable(url)(error),
-    ),
-  )
-  return accepted.token
-})
 
 const LoginCommand = effectCmd({
   command: "login",
@@ -73,32 +21,20 @@ const LoginCommand = effectCmd({
       .option("invite", { type: "string", describe: "accept an invite and sign in" }),
   handler: Effect.fn("Cli.enterprise.login")(function* (args) {
     const enterprise = yield* Enterprise.Service
-    const cfg = yield* enterprise.settings()
-    if (cfg?.source === "managed" && ((args.url && args.url !== cfg.url) || (args.org && args.org !== cfg.org)))
-      return yield* fail(`This device is managed by your organization and signs in to ${cfg.org} at ${cfg.url} only.`)
-    const url = (args.url ?? cfg?.url)?.replace(/\/$/, "")
-    const org = args.org ?? cfg?.org
-    if (!url || !org) return yield* fail("Pass --url and --org, or ask IT to deploy enterprise.json to this device.")
-    const token = args.token ?? (args.invite ? yield* accept(url, args.invite) : yield* device(url, org))
-    const account = (yield* enterprise.client({ url, token }))["enterprise.account"]
-    const me = yield* account["me.get"]().pipe(
-      Effect.catch((error) =>
-        Predicate.isTagged(error, "UnauthorizedError") || Predicate.isTagged(error, "ForbiddenError")
-          ? fail("The control plane rejected this token.")
-          : unreachable(url)(error),
-      ),
-    )
-    const target = me.orgs.find((item) => item.slug === org || item.id === org)
-    if (!target) return yield* fail(`${me.user.email} does not have access to ${org}.`)
-    yield* enterprise.save({
-      url,
-      org,
-      token,
-      user: { id: me.user.id, email: me.user.email },
-      saved: yield* Clock.currentTimeMillis,
-    })
-    yield* enterprise.refresh()
-    UI.println(`Signed in to ${target.name} as ${me.user.email} (${target.role}).`)
+    const input = { url: args.url, org: args.org }
+    const signed = yield* Effect.gen(function* () {
+      if (args.token) return yield* enterprise.signin.token({ ...input, token: args.token })
+      if (args.invite) return yield* enterprise.signin.invite({ ...input, invite: args.invite })
+      // RFC 8628 device authorization: the browser does SSO, the terminal waits for the approval.
+      const pending = yield* enterprise.signin.start(input)
+      UI.println(`Open ${UI.Style.TEXT_HIGHLIGHT}${pending.verification}${UI.Style.TEXT_NORMAL} and confirm this code:`)
+      UI.println(`\n    ${UI.Style.TEXT_HIGHLIGHT_BOLD}${pending.code}${UI.Style.TEXT_NORMAL}\n`)
+      yield* Effect.tryPromise(async () => (await import("open")).default(pending.link)).pipe(
+        Effect.catch(() => Effect.sync(() => UI.println("Could not open a browser; open the URL above manually."))),
+      )
+      return yield* enterprise.signin.finish()
+    }).pipe(Effect.catchTag("EnterpriseSigninError", (error) => fail(error.message)))
+    UI.println(`Signed in to ${signed.org} as ${signed.email} (${signed.role}).`)
   }),
 })
 
@@ -109,12 +45,7 @@ const LogoutCommand = effectCmd({
   handler: Effect.fn("Cli.enterprise.logout")(function* () {
     const enterprise = yield* Enterprise.Service
     const cfg = yield* enterprise.settings()
-    const login = yield* enterprise.stored()
-    if (login) {
-      const account = (yield* enterprise.client({ url: login.url, token: login.token }))["enterprise.account"]
-      yield* account.logout().pipe(Effect.timeout("10 seconds"), Effect.ignore)
-    }
-    yield* enterprise.forget()
+    yield* enterprise.signout()
     UI.println("Signed out.")
     if (process.env.KILO_ENTERPRISE_TOKEN) UI.println("Note: KILO_ENTERPRISE_TOKEN is still set in this environment.")
     if (cfg?.required) UI.println(`${cfg.org} requires sign-in: the agent stays blocked until you sign in again.`)
@@ -151,8 +82,7 @@ const StatusCommand = effectCmd({
         ? [`Policy:        version ${policy.version}, fetched ${new Date(info.fetched ?? 0).toLocaleString()}`]
         : []),
       ...(policy?.budget.limits ?? []).map(
-        (item) =>
-          `Budget:        ${item.scope} ${item.period}: $${item.spent.toFixed(2)} of $${item.amount.toFixed(2)}`,
+        (item) => `Budget:        ${item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
       ),
       ...(info.error ? [`Last error:    ${info.error}`] : []),
       ...(blocked ? [`Blocked:       ${blocked}`] : []),

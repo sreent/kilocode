@@ -704,6 +704,19 @@ export const dict = {
 
   "profile.title": "Perfil",
   "profile.notLoggedIn": "No conectado",
+  "profile.enterprise.title": "Organización",
+  "profile.enterprise.signinTitle": "Iniciar sesión en {{org}}",
+  "profile.enterprise.signedIn": "Sesión iniciada como {{email}} ({{role}})",
+  "profile.enterprise.policy": "Versión de la política {{version}}, actualizada {{time}}",
+  "profile.enterprise.gateway":
+    "Las llamadas a modelos de {{providers}} pasan por la puerta de enlace de tu organización.",
+  "profile.enterprise.managed":
+    "{{org}} administra Kilo en este dispositivo. Inicia sesión con la cuenta de tu organización.",
+  "profile.enterprise.connect": "Iniciar sesión en una organización autoalojada",
+  "profile.enterprise.url": "URL del servidor",
+  "profile.enterprise.action.signin": "Iniciar sesión",
+  "profile.enterprise.action.signout": "Cerrar sesión",
+  "profile.enterprise.error": "Falló la última actualización de la política: {{error}}",
   "profile.action.login": "Iniciar sesión con Kilo Code",
   "profile.balance.title": "Saldo",
   "profile.balance.refresh": "Actualizar saldo",

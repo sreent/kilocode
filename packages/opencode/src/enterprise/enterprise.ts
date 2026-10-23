@@ -19,9 +19,11 @@ import {
 } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/http"
 import { EnterpriseClient } from "@enterprise/protocol/client"
+import { DeviceError } from "@enterprise/protocol/errors"
 import { overBudget, refusal as mcpRefusal } from "@enterprise/protocol/match"
 import { Effective, UsageRecord } from "@enterprise/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
+import { Flag } from "@opencode-ai/core/flag/flag"
 import { Global } from "@opencode-ai/core/global"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { httpClient } from "@opencode-ai/core/effect/app-node-platform"
@@ -117,6 +119,24 @@ export type Target =
 
 export type UsageEntry = typeof UsageRecord.Type
 
+// Why a sign-in could not finish; the message is shown to the user as is.
+export class SigninError extends Schema.TaggedErrorClass<SigninError>()("EnterpriseSigninError", {
+  message: Schema.String,
+}) {}
+
+// A device sign-in waiting for the person to approve it in their browser.
+export type Pending = {
+  readonly url: string
+  readonly org: string
+  readonly code: string
+  // The page to open, and the same page with the code filled in.
+  readonly verification: string
+  readonly link: string
+  readonly expires: number
+}
+
+export type SignedIn = { readonly org: string; readonly email: string; readonly role: string }
+
 // Thrown from plugin hooks to refuse a request; the message is shown to the user.
 export class PolicyError extends Error {
   override name = "EnterprisePolicyError"
@@ -158,6 +178,30 @@ export interface Interface {
   readonly save: (login: Login) => Effect.Effect<void>
   readonly forget: () => Effect.Effect<void>
   readonly client: (input: { readonly url: string; readonly token?: string }) => Effect.Effect<EnterpriseClient.Client>
+  /**
+   * Sign-in for the terminal and the IDEs alike. A device sign-in (RFC 8628) is started, shown to
+   * the person, then finished once they approve it in the browser; a token from an admin or an
+   * invite signs in at once. Each verifies org access, saves the login and loads the policy.
+   */
+  readonly signin: {
+    /** Starts a device sign-in to the given, or configured, org. It replaces one already waiting. */
+    readonly start: (input?: { readonly url?: string; readonly org?: string }) => Effect.Effect<Pending, SigninError>
+    /** Waits for the waiting device sign-in to be approved, denied or to expire. */
+    readonly finish: () => Effect.Effect<SignedIn, SigninError>
+    readonly pending: () => Effect.Effect<Pending | undefined>
+    readonly token: (input: {
+      readonly url?: string
+      readonly org?: string
+      readonly token: string
+    }) => Effect.Effect<SignedIn, SigninError>
+    readonly invite: (input: {
+      readonly url?: string
+      readonly org?: string
+      readonly invite: string
+    }) => Effect.Effect<SignedIn, SigninError>
+  }
+  /** Revokes the stored login on the control plane, best effort, and forgets it and the cached policy. */
+  readonly signout: () => Effect.Effect<void>
   /** Per-LLM-call usage reporting. */
   readonly usage: {
     readonly push: (entry: UsageEntry) => Effect.Effect<void>
@@ -377,7 +421,10 @@ export const layer = Layer.effect(
       if (!policy) {
         if (!cfg.required) return undefined
         if (!cfg.token || state.denied)
-          return `Your organization (${cfg.org}) requires you to sign in. Run \`kilo enterprise login\`.`
+          return `Your organization (${cfg.org}) requires you to sign in. ${
+            // The IDEs sign in from their profile page; the terminal has a command for it.
+            Flag.KILO_CLIENT === "cli" ? "Run `kilo enterprise login`." : "Sign in from your Kilo profile."
+          }`
         return `Cannot load your organization's policy from ${cfg.url}${state.error ? ` (${state.error})` : ""}.`
       }
       return policy.budget.exceeded ? overBudget(policy) : undefined
@@ -505,6 +552,150 @@ export const layer = Layer.effect(
       yield* reset()
     })
 
+    // ---- sign-in -----------------------------------------------------------------------------
+
+    const unreachable = (url: string) => (error: unknown) =>
+      Effect.fail(
+        new SigninError({ message: `Cannot reach ${url}: ${error instanceof Error ? error.message : String(error)}` }),
+      )
+
+    // A managed device signs in to its managed org only; otherwise the caller or the stored setup decides.
+    const target = Effect.fn("Enterprise.signin.target")(function* (input?: { url?: string; org?: string }) {
+      const cfg = yield* settings()
+      if (
+        cfg?.source === "managed" &&
+        ((input?.url && input.url.replace(/\/$/, "") !== cfg.url) || (input?.org && input.org !== cfg.org))
+      )
+        return yield* new SigninError({
+          message: `This device is managed by your organization and signs in to ${cfg.org} at ${cfg.url} only.`,
+        })
+      const url = (input?.url ?? cfg?.url)?.trim().replace(/\/$/, "")
+      const org = (input?.org ?? cfg?.org)?.trim()
+      if (!url || !org)
+        return yield* new SigninError({ message: "Give the control plane URL and your organization to sign in." })
+      return { url, org }
+    })
+
+    // Checks the token reaches the org, then keeps it as this device's login.
+    const keep = Effect.fn("Enterprise.signin.keep")(function* (url: string, org: string, token: string) {
+      const account = (yield* client({ url, token }))["enterprise.account"]
+      const me = yield* account["me.get"]().pipe(
+        Effect.catch((error) =>
+          Predicate.isTagged(error, "UnauthorizedError") || Predicate.isTagged(error, "ForbiddenError")
+            ? Effect.fail(new SigninError({ message: "The control plane rejected this token." }))
+            : unreachable(url)(error),
+        ),
+      )
+      const access = me.orgs.find((item) => item.slug === org || item.id === org)
+      if (!access) return yield* new SigninError({ message: `${me.user.email} does not have access to ${org}.` })
+      yield* save({
+        url,
+        org,
+        token,
+        user: { id: me.user.id, email: me.user.email },
+        saved: yield* Clock.currentTimeMillis,
+      })
+      yield* refresh()
+      return { org: access.name, email: me.user.email, role: access.role } satisfies SignedIn
+    })
+
+    const device: { pending?: Pending & { secret: string; interval: number } } = {}
+
+    const start = Effect.fn("Enterprise.signin.start")(function* (input?: { url?: string; org?: string }) {
+      const { url, org } = yield* target(input)
+      const signin = (yield* client({ url }))["enterprise.signin"]
+      const started = yield* signin["device.start"]({ payload: { org } }).pipe(
+        Effect.catch((error) =>
+          Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "InvalidRequestError")
+            ? Effect.fail(new SigninError({ message: error.message }))
+            : unreachable(url)(error),
+        ),
+      )
+      const pending = {
+        url,
+        org,
+        code: started.user_code,
+        verification: started.verification_uri,
+        link: started.verification_uri_complete,
+        expires: (yield* Clock.currentTimeMillis) + started.expires_in * 1000,
+      }
+      device.pending = { ...pending, secret: started.device_code, interval: started.interval }
+      return pending satisfies Pending
+    })
+
+    const finish = Effect.fn("Enterprise.signin.finish")(function* () {
+      const pending = device.pending
+      if (!pending) return yield* new SigninError({ message: "No sign-in is waiting. Start one first." })
+      const signin = (yield* client({ url: pending.url }))["enterprise.signin"]
+      let interval = pending.interval
+      // A newer start replaces this sign-in; the one it replaced stops polling.
+      const current = () => device.pending?.secret === pending.secret
+      while (current() && (yield* Clock.currentTimeMillis) < pending.expires) {
+        yield* Effect.sleep(`${interval} seconds`)
+        const exit = yield* signin["device.token"]({ payload: { device_code: pending.secret } }).pipe(Effect.exit)
+        if (Exit.isSuccess(exit)) {
+          if (current()) device.pending = undefined
+          return yield* keep(pending.url, pending.org, exit.value.access_token)
+        }
+        const error = exit.cause.reasons.find((reason) => reason._tag === "Fail")?.error
+        // Transient network errors are retried until the code expires.
+        if (!(error instanceof DeviceError) || error.error === "authorization_pending") continue
+        if (error.error === "slow_down") {
+          interval += 5
+          continue
+        }
+        if (current()) device.pending = undefined
+        if (error.error === "access_denied") return yield* new SigninError({ message: "Sign-in was denied." })
+        return yield* new SigninError({ message: `Sign-in failed: ${error.error}` })
+      }
+      if (!current()) return yield* new SigninError({ message: "A newer sign-in replaced this one." })
+      device.pending = undefined
+      return yield* new SigninError({ message: "The code expired before sign-in completed. Start again." })
+    })
+
+    const pending = Effect.fn("Enterprise.signin.pending")(function* () {
+      const value = device.pending
+      if (!value || value.expires < (yield* Clock.currentTimeMillis)) return undefined
+      const { secret: _, interval: __, ...shown } = value
+      return shown satisfies Pending
+    })
+
+    const token = Effect.fn("Enterprise.signin.token")(function* (input: {
+      url?: string
+      org?: string
+      token: string
+    }) {
+      const { url, org } = yield* target(input)
+      return yield* keep(url, org, input.token)
+    })
+
+    const invite = Effect.fn("Enterprise.signin.invite")(function* (input: {
+      url?: string
+      org?: string
+      invite: string
+    }) {
+      const { url, org } = yield* target(input)
+      const signin = (yield* client({ url }))["enterprise.signin"]
+      const accepted = yield* signin["invite.accept"]({ params: { token: input.invite }, payload: {} }).pipe(
+        Effect.catch((error) =>
+          Predicate.isTagged(error, "NotFoundError") || Predicate.isTagged(error, "ForbiddenError")
+            ? Effect.fail(new SigninError({ message: error.message }))
+            : unreachable(url)(error),
+        ),
+      )
+      return yield* keep(url, org, accepted.token)
+    })
+
+    const signout = Effect.fn("Enterprise.signout")(function* () {
+      const login = yield* stored()
+      if (login) {
+        const account = (yield* client({ url: login.url, token: login.token }))["enterprise.account"]
+        yield* account.logout().pipe(Effect.timeout("10 seconds"), Effect.ignore)
+      }
+      device.pending = undefined
+      yield* forget()
+    })
+
     // ---- usage -------------------------------------------------------------------------------
 
     // Records are keyed by the step-finish part id, which the server de-duplicates, so resending
@@ -567,7 +758,7 @@ export const layer = Layer.effect(
       }
     })
 
-    const start = Effect.fn("Enterprise.usage.start")(function* () {
+    const begin = Effect.fn("Enterprise.usage.start")(function* () {
       if (reporting.loop) return
       yield* recover()
       reporting.loop = yield* flush().pipe(Effect.delay("15 seconds"), Effect.forever, Effect.forkIn(scope))
@@ -603,7 +794,9 @@ export const layer = Layer.effect(
       save,
       forget,
       client,
-      usage: { push, pending: () => Effect.sync(() => queue.length), flush, start, stop },
+      signin: { start, finish, pending, token, invite },
+      signout,
+      usage: { push, pending: () => Effect.sync(() => queue.length), flush, start: begin, stop },
     })
   }),
 )

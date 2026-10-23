@@ -129,6 +129,7 @@ import {
   handleRefreshProfile,
   type AuthContext,
 } from "./kilo-provider/handlers/auth"
+import { createEnterpriseRouter, isEnterpriseRequest } from "./kilo-provider/handlers/enterprise"
 import {
   handleRequestCloudSessions,
   handleRequestCloudSessionData,
@@ -430,6 +431,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private connectionState: "connecting" | "connected" | "disconnected" | "error" = "connecting"
   private connectionGeneration = 0
   private loginAttempt = 0
+  private readonly enterprise = createEnterpriseRouter(() => this.authCtx)
   private isWebviewReady = false
   private readonly extensionVersion =
     vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ?? "unknown"
@@ -1280,6 +1282,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       })
       if (intercepted === null) return
       message = intercepted
+      if (isEnterpriseRequest(message)) return this.enterprise(message)
 
       if (
         await routeEarlyMessage(message, {
@@ -1454,6 +1457,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         case "logout":
           await handleLogout(this.authCtx)
           break
+
         case "setOrganization":
           if (typeof message.organizationId === "string" || message.organizationId === null) {
             await handleSetOrganization(this.authCtx, message.organizationId)
