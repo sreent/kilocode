@@ -20,7 +20,13 @@ export function normalize(item: string) {
   return `${item}/*`
 }
 
-export function allows(policy: { readonly models: Effective["models"] }, provider: string, model: string) {
+export function allows(
+  policy: { readonly models: Effective["models"]; readonly gateway?: Effective["gateway"] },
+  provider: string,
+  model: string,
+) {
+  // An exclusive gateway admits only the providers it routes; any other would bypass its metering.
+  if (policy.gateway?.exclusive && !policy.gateway.providers.some((item) => item.id === provider)) return false
   const name = `${provider}/${model}`
   if (policy.models.deny.some((pattern) => Wildcard.match(name, pattern))) return false
   if (policy.models.allow === null) return true

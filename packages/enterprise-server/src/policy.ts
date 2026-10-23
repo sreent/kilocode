@@ -1,5 +1,10 @@
+import { Effect } from "effect"
 import { normalize, target } from "@enterprise/protocol/match"
-import type { BudgetStatus, Effective, Mode, ModelAccess, Policy } from "@enterprise/protocol/schema"
+import type { BudgetStatus, Effective, Mode, ModelAccess, Policy, Role } from "@enterprise/protocol/schema"
+import type { Org, Store } from "./store"
+
+// How long a client may use an effective policy before polling again (seconds).
+export const ttl = 300
 
 function unique(items: ReadonlyArray<string>) {
   return [...new Set(items)]
@@ -14,6 +19,7 @@ export function resolve(input: {
   groups: ReadonlyArray<{ name: string; models: ModelAccess | null }>
   modes: ReadonlyArray<Mode>
   budgets: ReadonlyArray<BudgetStatus>
+  gateway?: Effective["gateway"]["providers"]
 }): Omit<Effective, "org" | "user" | "ttl"> {
   const grants = [input.policy.models.default, ...input.groups.map((group) => group.models)].filter(
     (grant): grant is ModelAccess => grant != null,
@@ -49,5 +55,28 @@ export function resolve(input: {
     share: input.policy.share,
     telemetry: input.policy.telemetry,
     budget: { exceeded: input.budgets.some((budget) => budget.spent >= budget.amount), limits: input.budgets },
+    gateway: { exclusive: input.policy.gateway.exclusive, providers: input.gateway ?? [] },
   }
 }
+
+// The policy one member's clients enforce: what the policy endpoint serves and what the gateway applies.
+export const effective = Effect.fn("Policy.effective")(function* (
+  store: Store.Interface,
+  input: { readonly org: Org; readonly user: { readonly id: string; readonly email: string }; readonly role: Role },
+) {
+  const current = yield* store.policy.get(input.org.id)
+  const groups = yield* store.group.of(input.org.id, input.user.id)
+  return {
+    org: { id: input.org.id, slug: input.org.slug, name: input.org.name },
+    user: { id: input.user.id, email: input.user.email, role: input.role },
+    ttl,
+    ...resolve({
+      policy: current.policy,
+      version: current.version,
+      groups: groups.map((row) => ({ name: row.name, models: store.group.access(row) })),
+      modes: yield* store.mode.list(input.org.id),
+      budgets: yield* store.budget.status(input.org.id, input.user.id),
+      gateway: (yield* store.gateway.list(input.org.id)).map((row) => ({ id: row.id, kind: row.kind })),
+    }),
+  } satisfies Effective
+})

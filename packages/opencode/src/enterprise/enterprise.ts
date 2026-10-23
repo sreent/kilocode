@@ -458,6 +458,20 @@ export const layer = Layer.effect(
       }
       if (policy.share === "disabled") cfg.share = "disabled"
       if (!policy.telemetry.product) cfg.experimental = { ...cfg.experimental, openTelemetry: false }
+      // Gateway providers talk to the control plane, which holds the org's key and meters each
+      // call; the enterprise token stands in for the provider's API key.
+      const enrolled = yield* settings()
+      if (!enrolled?.token) return
+      for (const route of policy.gateway.providers) {
+        const current = cfg.provider?.[route.id]
+        cfg.provider = {
+          ...cfg.provider,
+          [route.id]: {
+            ...current,
+            options: { ...current?.options, baseURL: `${enrolled.url}/gateway/${route.id}`, apiKey: enrolled.token },
+          },
+        }
+      }
     })
 
     // Checked where sessions leave the machine, because the session-sync module reads its env

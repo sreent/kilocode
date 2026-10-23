@@ -5,7 +5,15 @@ import { Clock, Context, Effect, Layer, Schema } from "effect"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { isSqlError } from "effect/unstable/sql/SqlError"
 import { inherited } from "@enterprise/protocol/roles"
-import { Mode, ModelAccess, Policy, type BudgetStatus, type Role, type UsageBy } from "@enterprise/protocol/schema"
+import {
+  Mode,
+  ModelAccess,
+  Policy,
+  type BudgetStatus,
+  type GatewayKind,
+  type Role,
+  type UsageBy,
+} from "@enterprise/protocol/schema"
 import * as Crypto from "./crypto"
 import { Database } from "./db/database"
 import {
@@ -13,6 +21,7 @@ import {
   BudgetTable,
   DeviceTable,
   DomainTable,
+  GatewayProviderTable,
   GroupMemberTable,
   GroupTable,
   InviteTable,
@@ -33,6 +42,7 @@ export type Token = typeof TokenTable.$inferSelect
 export type Group = typeof GroupTable.$inferSelect
 export type Audit = typeof AuditTable.$inferSelect
 export type Sso = typeof SsoTable.$inferSelect
+export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
 
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
 export type Actor = { readonly id: string | null; readonly email: string }
@@ -758,6 +768,7 @@ const make = Effect.gen(function* () {
         read: number
         write: number
         cost: number
+        source?: "client" | "gateway"
       }>,
     ) {
       return yield* db.transaction(() =>
@@ -781,6 +792,7 @@ const make = Effect.gen(function* () {
                 cache_read: row.read,
                 cache_write: row.write,
                 cost: row.cost,
+                source: row.source ?? "client",
               })
               // Client-provided ids make resends idempotent.
               .onConflictDoNothing()
@@ -805,6 +817,7 @@ const make = Effect.gen(function* () {
         provider: sql`s.provider`,
         day: sql`strftime('%Y-%m-%d', s.at / 1000, 'unixepoch')`,
         project: sql`coalesce(s.project, '')`,
+        source: sql`s.source`,
       }[input.by]
       return yield* db.all<{
         key: string
@@ -827,7 +840,7 @@ const make = Effect.gen(function* () {
     rows: Effect.fn("Store.usage.rows")(function* (input: { org: string; from: number; to: number; user?: string }) {
       return yield* db.all<Record<string, string | number | null>>(sql`
         select s.id, s.at, u.email, s.session, s.project, s.provider, s.model, s.input, s.output, s.reasoning,
-          s.cache_read, s.cache_write, s.cost
+          s.cache_read, s.cache_write, s.cost, s.source
         from usage s join users u on u.id = s.user
         where ${window(input)} order by s.at`)
     }, Effect.orDie),
@@ -845,6 +858,46 @@ const make = Effect.gen(function* () {
         )
         .get()
       return Math.round((row?.n ?? 0) * 1e6) / 1e6
+    }, Effect.orDie),
+  }
+
+  const where = (orgID: string, id: string) => and(eq(GatewayProviderTable.org, orgID), eq(GatewayProviderTable.id, id))
+
+  const gateway = {
+    list: Effect.fn("Store.gateway.list")(function* (orgID: string) {
+      return yield* db
+        .select()
+        .from(GatewayProviderTable)
+        .where(eq(GatewayProviderTable.org, orgID))
+        .orderBy(asc(GatewayProviderTable.id))
+    }, Effect.orDie),
+    get: Effect.fn("Store.gateway.get")(function* (orgID: string, id: string) {
+      return yield* db.select().from(GatewayProviderTable).where(where(orgID, id)).get()
+    }, Effect.orDie),
+    // `secret` is already sealed.
+    set: Effect.fn("Store.gateway.set")(function* (
+      orgID: string,
+      id: string,
+      input: { kind: GatewayKind; base: string; secret: string; hint: string },
+    ) {
+      const time = yield* now
+      return yield* db
+        .insert(GatewayProviderTable)
+        .values({ org: orgID, id, ...input, created: time, updated: time })
+        .onConflictDoUpdate({
+          target: [GatewayProviderTable.org, GatewayProviderTable.id],
+          set: { ...input, updated: time },
+        })
+        .returning()
+        .get()
+    }, Effect.orDie),
+    remove: Effect.fn("Store.gateway.remove")(function* (orgID: string, id: string) {
+      const row = yield* db
+        .delete(GatewayProviderTable)
+        .where(where(orgID, id))
+        .returning({ id: GatewayProviderTable.id })
+        .get()
+      return row !== undefined
     }, Effect.orDie),
   }
 
@@ -911,6 +964,7 @@ const make = Effect.gen(function* () {
     mode,
     audit,
     usage,
+    gateway,
     budget,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.

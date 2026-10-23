@@ -136,6 +136,6 @@ export const layer = Layer.effect(
   }),
 )
 
-const httpClient = LayerNode.make({ service: HttpClient.HttpClient, layer: FetchHttpClient.layer, deps: [] })
+export const httpClient = LayerNode.make({ service: HttpClient.HttpClient, layer: FetchHttpClient.layer, deps: [] })
 
 export const node = LayerNode.make({ service: Service, layer, deps: [httpClient] })

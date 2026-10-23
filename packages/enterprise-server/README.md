@@ -17,8 +17,9 @@ It is part of this fork, not of upstream Kilo Code. Upstream's enterprise featur
 | Org agents | Custom modes delivered to clients as locked agents |
 | Guardrails | Org rules appended to every system prompt; session sharing, vendor session sync and product analytics off unless the org enables them |
 | Audit log | Every administrative and sign-in event, filterable by action, actor and date, cursor-paged, CSV export, configurable retention |
-| Usage | Per-LLM-call usage from clients (idempotent), breakdowns by user, model, provider, day and project, CSV export |
-| Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached |
+| LLM gateway | Routes chosen providers (Anthropic, OpenAI, OpenAI-compatible) through the server, which holds the org's API keys, enforces model policy and budgets on every call and meters usage from the responses |
+| Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
+| Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/enterprise-console`](../enterprise-console)), built like Kilo's own web console |
 
 ## Quick start
@@ -56,9 +57,10 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ENTERPRISE_PORT` | `8787` | Listen port |
 | `ENTERPRISE_HOST` | `0.0.0.0` | Listen address |
 | `ENTERPRISE_DB` | `./data/enterprise.db` | SQLite database file (WAL mode) |
-| `ENTERPRISE_SECRET` | unset | Key material for encrypting SSO client secrets at rest (AES-256-GCM). Required before SSO can be configured; keep it stable |
+| `ENTERPRISE_SECRET` | unset | Key material for encrypting SSO client secrets and gateway API keys at rest (AES-256-GCM). Required before SSO or the gateway can be configured; keep it stable |
 | `ENTERPRISE_TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so audit entries record `X-Forwarded-For` |
 | `ENTERPRISE_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
+| `ENTERPRISE_MODELS_URL` | `https://models.dev/api.json` | Model price catalog the gateway meters with, as a URL or a local file path in models.dev's format. Empty turns pricing off |
 | `ENTERPRISE_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`; logs are logfmt on stdout |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Also send logs and traces over OTLP (HTTP, JSON); `OTEL_EXPORTER_OTLP_HEADERS` adds headers |
 
@@ -106,6 +108,22 @@ Create a SCIM token under Identity → Single sign-on and SCIM, then point your 
 
 SCIM never rewrites the email or name of an account that another organization also depends on.
 
+## LLM gateway
+
+Client-side enforcement stops honest mistakes, but a person with an API key can always use it from some other tool. The gateway closes that gap for the providers it routes: the organization's key stays on the server, and people reach the provider only through it.
+
+1. Set `ENTERPRISE_SECRET`, then add providers under Governance → LLM gateway, or with `PUT /api/v1/orgs/{org}/gateway/providers/{id}` and `{ "kind": "anthropic", "base": "https://api.anthropic.com/v1", "key": "sk-ant-..." }`. The id is the client's provider id (`anthropic`, `openai`, `openrouter`, ...), and `base` includes the API version path.
+2. Signed-in clients pick the routes up with the policy. Each routed provider's requests go to `<server>/gateway/<id>/...` with the person's enterprise token as the API key; nobody needs, or sees, the provider key.
+3. Turn on **Only allow gateway providers** (`"gateway": { "exclusive": true }` in the policy) and clients refuse every other provider.
+
+| `kind` | Relayed endpoints | Metered from |
+|---|---|---|
+| `anthropic` | `POST /messages`, `POST /messages/count_tokens`, `GET /models` | `usage` in the message, or `message_start` and `message_delta` events |
+| `openai` | `POST /responses`, `POST /chat/completions`, `GET /models` | `usage` in the response, or the `response.completed` event |
+| `openai-compatible` | `POST /chat/completions`, `GET /models` | the final chunk's `usage`; the gateway adds `stream_options.include_usage` to streamed calls |
+
+On every call the gateway checks the token, membership and the member's effective model policy, refuses with `402` once a budget is spent, swaps in the org key and relays the response as it streams. Only content, version, beta and user-agent headers are relayed upstream; only content type, request ids, `retry-after` and rate-limit headers come back. Usage is recorded with `source: "gateway"` when the response ends, including when the client hangs up. It is priced from `ENTERPRISE_MODELS_URL` with the same arithmetic the CLI uses, or at the price the upstream reports, as OpenRouter does. Usage clients report for a routed provider is dropped, so nothing counts twice.
+
 ## Policy reference
 
 Edit the policy as JSON in the admin console (Governance → Policy; it is checked against the policy schema before it is sent) or with `PUT /api/v1/orgs/{org}/policy`. Every field is optional.
@@ -125,7 +143,8 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
   "permission": { "bash": { "rm -rf *": "deny", "git push *": "ask" }, "webfetch": "deny" },
   "instructions": "Never paste customer data or credentials into prompts.",
   "share": "disabled",
-  "telemetry": { "product": false }
+  "telemetry": { "product": false },
+  "gateway": { "exclusive": false }
 }
 ```
 
@@ -135,12 +154,13 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 - **MCP rules** match the server's target, its URL or its full command line, never its name, because users choose names freely.
 - **`permission`** uses the same format as the CLI's `permission` config. Deny rules become hard rules; allow and ask rules override user config but not a user's session approvals.
 - **`share`** controls session sharing and syncing sessions to the upstream vendor's cloud. **`telemetry.product`** controls the upstream product analytics. Both default to off.
+- **`gateway.exclusive`** makes clients refuse every provider the [LLM gateway](#llm-gateway) does not route.
 
 Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
 
 ## Audit events
 
-`budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
+`budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `gateway.provider_create`, `gateway.provider_remove`, `gateway.provider_update`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
 
 Each entry records time, action, actor (user and email snapshot), target, details (for example the role before and after, or the models added to the blocklist) and client IP.
 
@@ -162,6 +182,8 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 | `/api/v1/orgs/{org}/audit`, `/audit/export` | Audit log (`action`, `actor`, `from`, `to`, `before`, `limit`) and its CSV export |
 | `/api/v1/orgs/{org}/usage`, `/usage/export` | Usage ingestion and analytics |
 | `/api/v1/orgs/{org}/budgets` | Budgets |
+| `/api/v1/orgs/{org}/gateway`, `/gateway/providers/{id}` | LLM gateway providers (keys are write-only) |
+| `/gateway/{provider}/...` | The gateway itself; speaks each provider's own API, with an enterprise token as the API key |
 | `/api/v1/orgs/{org}/sso`, `/domains`, `/scim/tokens` | Identity configuration |
 | `/api/v1/orgs/{org}/suborgs` | Sub-organizations |
 | `/scim/v2/...` | SCIM 2.0 |
@@ -172,14 +194,15 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 - Bearer tokens are random 256-bit values, stored only as SHA-256 hashes, prefixed (`ent_`, `ents_`) so secret scanners can find leaked ones, revocable, and expiring (90 days for CLI logins, 8 hours for browser sessions).
 - **Every token is bound to the organization it was issued for**, and reaches only that org and its sub-orgs. An org's admins configure that org's identity provider, so an identity asserted through it must never carry into another org that happens to share the person. The test suite includes this attack.
 - Deactivating a user revokes all of their tokens at once. Suspended memberships grant nothing.
-- SSO client secrets are encrypted at rest. Invite and device codes are single-use, and device codes expire after 10 minutes.
+- SSO client secrets and gateway API keys are encrypted at rest; the API only ever returns a key's last four characters. The gateway relays only its providers' chat endpoints and never follows upstream redirects, so an org key cannot be used for anything else or sent to another host.
+- Invite and device codes are single-use, and device codes expire after 10 minutes.
 - The browser session cookie is `HttpOnly`, `Secure` on HTTPS, and `SameSite=Lax`. Every cookie-authenticated write must carry a same-origin `Origin` header.
 - The admin console is served with a strict Content Security Policy and renders all data as text.
 - CSV exports neutralise spreadsheet formulas.
 
 ## Limits of client-side enforcement
 
-The CLI enforces policy on the developer's machine. That stops honest mistakes and policy drift, but a user who controls their machine can always run some other tool with their own API key. Making model access, budgets and usage reporting tamper-proof means routing model traffic through a server the organization controls. That gateway is the top item on the roadmap in [FORK.md](../../FORK.md).
+The CLI enforces policy on the developer's machine. That stops honest mistakes and policy drift, but a user who controls their machine can always run some other tool with their own API key. For providers routed through the [LLM gateway](#llm-gateway), model access, budgets and usage metering hold on the server instead: people never hold the key. What the gateway cannot control is a provider account someone pays for themselves; block that provider in `models.blocked` and, if you need it enforced on the network, at your egress proxy.
 
 ## Development
 

@@ -8,6 +8,9 @@ import {
   Budget,
   Domain,
   Effective,
+  Gateway,
+  GatewayProvider,
+  GatewayProviderInput,
   Group,
   GroupName,
   Hostname,
@@ -21,6 +24,7 @@ import {
   Org,
   Policy,
   PolicyState,
+  ProviderID,
   Role,
   ScimToken,
   Slug,
@@ -409,6 +413,33 @@ export const IdentityGroup = HttpApiGroup.make("enterprise.identity")
       success: HttpApiSchema.NoContent,
       error: failures,
     }).annotate(Requires, "scim.write"),
+  )
+  .middleware(OrgScope)
+  .middleware(Authorization)
+
+// The org's upstream providers for the LLM gateway. Keys are write-only; responses carry a hint.
+export const GatewayGroup = HttpApiGroup.make("enterprise.gateway")
+  .add(
+    HttpApiEndpoint.get("gateway.get", "/api/v1/orgs/:org/gateway", {
+      params: org,
+      success: Gateway,
+      error: failures,
+    }).annotate(Requires, "gateway.read"),
+  )
+  .add(
+    HttpApiEndpoint.put("gateway.set", "/api/v1/orgs/:org/gateway/providers/:id", {
+      params: { ...org, id: ProviderID },
+      payload: GatewayProviderInput,
+      success: GatewayProvider,
+      error: failures,
+    }).annotate(Requires, "gateway.write"),
+  )
+  .add(
+    HttpApiEndpoint.delete("gateway.remove", "/api/v1/orgs/:org/gateway/providers/:id", {
+      params: { ...org, id: Schema.String },
+      success: HttpApiSchema.NoContent,
+      error: failures,
+    }).annotate(Requires, "gateway.write"),
   )
   .middleware(OrgScope)
   .middleware(Authorization)

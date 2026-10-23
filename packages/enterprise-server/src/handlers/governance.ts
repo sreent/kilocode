@@ -5,14 +5,11 @@ import { Api } from "@enterprise/protocol/api"
 import { ConflictError, InvalidRequestError, NotFoundError } from "@enterprise/protocol/errors"
 import { Caller, Membership } from "@enterprise/protocol/middleware"
 import * as Crypto from "../crypto"
-import { resolve } from "../policy"
+import { effective } from "../policy"
 import { ServerConfig } from "../config"
 import { RequestContext } from "../request"
 import { Store } from "../store"
 import { changed, delta } from "./shared"
-
-// How long a client may use an effective policy before polling again (seconds).
-const ttl = 300
 
 export const GovernanceHandler = HttpApiBuilder.group(Api, "enterprise.governance", (handlers) =>
   Effect.gen(function* () {
@@ -54,24 +51,11 @@ export const GovernanceHandler = HttpApiBuilder.group(Api, "enterprise.governanc
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
           const caller = yield* Caller
-          const current = yield* store.policy.get(scope.org.id)
-          const groups = yield* store.group.of(scope.org.id, caller.user.id)
-          const effective = {
-            org: { id: scope.org.id, slug: scope.org.slug, name: scope.org.name },
-            user: { id: caller.user.id, email: caller.user.email, role: scope.role },
-            ttl,
-            ...resolve({
-              policy: current.policy,
-              version: current.version,
-              groups: groups.map((row) => ({ name: row.name, models: store.group.access(row) })),
-              modes: yield* store.mode.list(scope.org.id),
-              budgets: yield* store.budget.status(scope.org.id, caller.user.id),
-            }),
-          }
-          const etag = `"${Crypto.hash(JSON.stringify(effective)).slice(0, 32)}"`
+          const policy = yield* effective(store, { org: scope.org, user: caller.user, role: scope.role })
+          const etag = `"${Crypto.hash(JSON.stringify(policy)).slice(0, 32)}"`
           yield* headers({ etag, "cache-control": "private, no-cache" })
           if (ctx.headers["if-none-match"] === etag) return undefined
-          return { ...effective, etag }
+          return { ...policy, etag }
         }),
       )
       .handle(

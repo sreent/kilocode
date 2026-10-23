@@ -12,6 +12,7 @@ import { Page, Splash } from "./components/page"
 import { Shell } from "./components/shell"
 import { Audit } from "./routes/audit"
 import { Budgets } from "./routes/budgets"
+import { Gateway } from "./routes/gateway"
 import { Groups } from "./routes/groups"
 import { Members } from "./routes/members"
 import { Modes } from "./routes/modes"
@@ -94,6 +95,7 @@ render(
         <Route path="/policy" component={requires("policy.read", Policy)} />
         <Route path="/modes" component={Modes} />
         <Route path="/budgets" component={requires("usage.read", Budgets)} />
+        <Route path="/gateway" component={requires("gateway.read", Gateway)} />
         <Route path="/usage" component={Usage} />
         <Route path="/audit" component={requires("audit.read", Audit)} />
         <Route path="/security" component={requires("sso.write", Security)} />

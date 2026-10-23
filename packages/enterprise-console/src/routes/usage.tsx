@@ -17,7 +17,10 @@ const heading: Record<By, string> = {
   provider: "Provider",
   day: "Day",
   project: "Project",
+  source: "Source",
 }
+// Who measured the usage: the gateway as it relayed the call, or the client after it.
+const sources: Record<string, string> = { gateway: "LLM gateway", client: "Reported by clients" }
 const dimensions = UsageBy.literals.map((value) => ({ value, label: heading[value] }))
 
 export function Usage() {
@@ -56,7 +59,7 @@ export function Usage() {
       title="Usage"
       description={
         scope.can("usage.read")
-          ? "Requests, tokens and spend reported by every client in the organization."
+          ? "Requests, tokens and spend across the organization, metered by the gateway or reported by clients."
           : "Your own requests, tokens and spend in this organization."
       }
       actions={
@@ -95,7 +98,11 @@ export function Usage() {
                 rows={data().rows}
                 empty="No usage reported in this window."
                 columns={[
-                  { label: heading[data().by], cell: (row) => row.key || <span class="muted">—</span> },
+                  {
+                    label: heading[data().by],
+                    cell: (row) =>
+                      (data().by === "source" ? sources[row.key] : row.key) || <span class="muted">—</span>,
+                  },
                   { label: "Requests", align: "end", cell: (row) => count(row.requests) },
                   { label: "People", align: "end", cell: (row) => count(row.users) },
                   { label: "Input tokens", align: "end", cell: (row) => count(row.input) },

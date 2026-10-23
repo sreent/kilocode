@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core"
-import type { ModelAccess, Policy, Role } from "@enterprise/protocol/schema"
+import type { GatewayKind, ModelAccess, Policy, Role } from "@enterprise/protocol/schema"
 
 const roles = sql`('owner', 'admin', 'member', 'billing_manager')`
 
@@ -242,6 +242,8 @@ export const UsageTable = sqliteTable(
     cache_read: integer().notNull().default(0),
     cache_write: integer().notNull().default(0),
     cost: real().notNull().default(0),
+    // "client": reported by a client after the call. "gateway": metered by the gateway as it relayed the call.
+    source: text().$type<"client" | "gateway">().notNull().default("client"),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.id] }),
@@ -265,5 +267,28 @@ export const BudgetTable = sqliteTable(
     primaryKey({ columns: [table.org, table.scope, table.target, table.period] }),
     check("budgets_scope", sql`${table.scope} in ('org', 'member', 'user')`),
     check("budgets_period", sql`${table.period} in ('day', 'month')`),
+  ],
+)
+
+// Upstream providers the LLM gateway relays to, with the org's API key for each.
+export const GatewayProviderTable = sqliteTable(
+  "gateway_providers",
+  {
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    // The client provider id, which is also the gateway path segment.
+    id: text().notNull(),
+    kind: text().$type<GatewayKind>().notNull(),
+    base: text().notNull(),
+    // Sealed with ENTERPRISE_SECRET (AES-256-GCM); never stored in clear text.
+    secret: text().notNull(),
+    hint: text().notNull(),
+    created: integer().notNull(),
+    updated: integer().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.org, table.id] }),
+    check("gateway_providers_kind", sql`${table.kind} in ('anthropic', 'openai', 'openai-compatible')`),
   ],
 )

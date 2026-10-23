@@ -35,6 +35,7 @@ const usageColumns = [
   "cache_read",
   "cache_write",
   "cost",
+  "source",
 ]
 
 export const InsightHandler = HttpApiBuilder.group(Api, "enterprise.insight", (handlers) =>
@@ -89,23 +90,27 @@ export const InsightHandler = HttpApiBuilder.group(Api, "enterprise.insight", (h
           const caller = yield* Caller
           // Never trust a client clock to push spend outside the current budget window.
           const limit = (yield* Clock.currentTimeMillis) + day
+          // The gateway meters its providers' calls itself; a client's own report of them would count twice.
+          const routed = new Set((yield* store.gateway.list(scope.org.id)).map((row) => row.id))
           const accepted = yield* store.usage.record(
             scope.org.id,
             caller.user.id,
-            ctx.payload.records.map((row) => ({
-              id: row.id,
-              at: Math.min(row.at, limit),
-              session: row.session,
-              project: row.project,
-              provider: row.provider,
-              model: row.model,
-              input: row.tokens.input,
-              output: row.tokens.output,
-              reasoning: row.tokens.reasoning,
-              read: row.tokens.cache.read,
-              write: row.tokens.cache.write,
-              cost: row.cost,
-            })),
+            ctx.payload.records
+              .filter((row) => !routed.has(row.provider))
+              .map((row) => ({
+                id: row.id,
+                at: Math.min(row.at, limit),
+                session: row.session,
+                project: row.project,
+                provider: row.provider,
+                model: row.model,
+                input: row.tokens.input,
+                output: row.tokens.output,
+                reasoning: row.tokens.reasoning,
+                read: row.tokens.cache.read,
+                write: row.tokens.cache.write,
+                cost: row.cost,
+              })),
           )
           return { accepted }
         }),

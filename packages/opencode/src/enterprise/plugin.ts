@@ -12,12 +12,17 @@ import { Enterprise } from "./enterprise"
 export function EnterprisePlugin(enterprise: Enterprise.Interface) {
   const run = <A>(effect: Effect.Effect<A>) => Effect.runPromise(effect)
 
-  return async function EnterprisePlugin(_input: PluginInput): Promise<Hooks> {
+  return async function EnterprisePlugin(context: PluginInput): Promise<Hooks> {
     if (!(await run(enterprise.settings()))) return {}
     await run(Effect.all([enterprise.ready(), enterprise.usage.start()]))
 
     // Step-finish parts carry per-call tokens and cost but not the model; remember it per message.
     const messages = new Map<string, { provider: string; model: string; root: string }>()
+    // The gateway meters calls to the providers it routes; reporting them too would count them twice.
+    const routed = (provider: string) =>
+      run(enterprise.current()).then(
+        (policy) => policy?.gateway.providers.some((item) => item.id === provider) === true,
+      )
 
     return {
       "chat.params": async (input) => {
@@ -33,6 +38,12 @@ export function EnterprisePlugin(enterprise: Enterprise.Interface) {
           }),
         )
         if (reason) throw new Enterprise.PolicyError(reason)
+      },
+      // Lets the gateway attribute its metered usage to the session and project, like client reports.
+      "chat.headers": async (input, output) => {
+        if (!(await routed(input.model.providerID))) return
+        output.headers["x-enterprise-session"] = input.sessionID
+        output.headers["x-enterprise-project"] = path.basename(context.worktree || context.directory)
       },
       "experimental.chat.system.transform": async (_input, output) => {
         const text = await run(enterprise.instructions())
@@ -52,6 +63,7 @@ export function EnterprisePlugin(enterprise: Enterprise.Interface) {
         if (event.type !== "message.part.updated" || event.properties.part.type !== "step-finish") return
         const part = event.properties.part
         const meta = messages.get(part.messageID)
+        if (meta && (await routed(meta.provider))) return
         await run(
           enterprise.usage.push({
             id: part.id,

@@ -1,13 +1,14 @@
 export * as App from "./app"
 
 import { Effect, Layer, Schedule } from "effect"
-import { HttpRouter, HttpServer } from "effect/unstable/http"
+import { HttpClient, HttpRouter, HttpServer } from "effect/unstable/http"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { Api } from "@enterprise/protocol/api"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { ServerConfig } from "./config"
 import { Database } from "./db/database"
 import { AccountHandler } from "./handlers/account"
+import { GatewayHandler } from "./handlers/gateway"
 import { GovernanceHandler } from "./handlers/governance"
 import { IdentityHandler } from "./handlers/identity"
 import { InsightHandler } from "./handlers/insight"
@@ -18,15 +19,25 @@ import { ScimHandler } from "./handlers/scim"
 import { authorizationLayer, orgScopeLayer, scimAuthorizationLayer } from "./middleware/authorization"
 import { errorLayer, headersLayer } from "./middleware/error"
 import { schemaErrorLayer } from "./middleware/schema-error"
-import { Oidc } from "./oidc"
+import { httpClient, Oidc } from "./oidc"
+import { Pricing } from "./pricing"
 import { ConsoleAssets, consoleRoutes, node as consoleAssets } from "./routes/console"
 import { deviceRoutes } from "./routes/device"
+import { gatewayRoutes } from "./routes/gateway"
 import { ssoRoutes } from "./routes/sso"
 import { Store } from "./store"
 
 // Application services. Tests and embedders replace nodes (an in-memory database, fixed config)
 // with LayerNode.compile replacements, the same way core's server does.
-export const services = LayerNode.group([ServerConfig.node, Database.node, Store.node, Oidc.node, consoleAssets])
+export const services = LayerNode.group([
+  ServerConfig.node,
+  Database.node,
+  Store.node,
+  Oidc.node,
+  Pricing.node,
+  httpClient,
+  consoleAssets,
+])
 
 const handlers = Layer.mergeAll(
   HealthHandler,
@@ -37,12 +48,14 @@ const handlers = Layer.mergeAll(
   GovernanceHandler,
   InsightHandler,
   IdentityHandler,
+  GatewayHandler,
   ScimHandler,
 )
 
 // Route tree:
 // - apiRoutes: the typed contract from @enterprise/protocol, with its declared middleware.
 // - deviceRoutes, ssoRoutes: the browser legs of sign-in, which answer with pages and redirects.
+// - gatewayRoutes: the LLM gateway, which speaks each provider's own API rather than ours.
 // - consoleRoutes: the admin console and a JSON 404 for everything else.
 const apiRoutes = HttpApiBuilder.layer(Api, { openapiPath: "/api/v1/openapi.json" }).pipe(
   Layer.provide(handlers),
@@ -50,19 +63,31 @@ const apiRoutes = HttpApiBuilder.layer(Api, { openapiPath: "/api/v1/openapi.json
 )
 
 export function routes<E>(
-  application: Layer.Layer<ServerConfig.Service | Database.Service | Store.Service | Oidc.Service | ConsoleAssets, E>,
+  application: Layer.Layer<
+    | ServerConfig.Service
+    | Database.Service
+    | Store.Service
+    | Oidc.Service
+    | Pricing.Service
+    | HttpClient.HttpClient
+    | ConsoleAssets,
+    E
+  >,
 ) {
-  return Layer.mergeAll(apiRoutes, deviceRoutes, ssoRoutes, consoleRoutes).pipe(
+  return Layer.mergeAll(apiRoutes, deviceRoutes, ssoRoutes, gatewayRoutes, consoleRoutes).pipe(
     Layer.provide([errorLayer, headersLayer]),
     Layer.provide(application),
   )
 }
 
-// Device codes, abandoned SSO logins and audit history past retention, swept hourly.
+// Device codes, abandoned SSO logins and audit history past retention, swept hourly. Model prices
+// are loaded at startup and refreshed daily, so gateway calls rarely wait for the catalog.
 export const housekeeping = Layer.effectDiscard(
   Effect.gen(function* () {
     const store = yield* Store.Service
     const config = yield* ServerConfig.Service
+    const pricing = yield* Pricing.Service
+    yield* Effect.forkScoped(pricing.refresh().pipe(Effect.repeat(Schedule.spaced("1 day"))))
     const sweep = store
       .sweep(config.retention)
       .pipe(

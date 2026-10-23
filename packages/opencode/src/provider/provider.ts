@@ -1700,6 +1700,10 @@ const layer = Layer.effect(
           if (!plugin.auth) continue
           const providerID = ProviderV2.ID.make(plugin.auth.provider)
           if (!isProviderAllowed(providerID)) continue // kilocode_change - honor enabled_providers
+          // kilocode_change start - enterprise: a provider the org gateway routes never uses a personal
+          // login, whose fetch would bypass the gateway
+          if (policy?.gateway.providers.some((item) => item.id === providerID)) continue
+          // kilocode_change end
 
           // kilocode_change start - the catalog entry is absent when the provider is filtered out
           const entry = database[plugin.auth.provider]

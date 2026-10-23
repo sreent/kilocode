@@ -2,4 +2,4 @@
 "@kilocode/cli": minor
 ---
 
-Add a self-hosted enterprise mode: `kilo enterprise login` connects the CLI to an organization's control plane, which then enforces the organization's model access, MCP, permission, sharing and budget policy and receives usage reports.
+Add a self-hosted enterprise mode: `kilo enterprise login` connects the CLI to an organization's control plane, which then enforces the organization's model access, MCP, permission, sharing and budget policy, receives usage reports, and can route chosen providers through its LLM gateway so people never hold the provider keys.

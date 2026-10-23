@@ -289,6 +289,80 @@ describe("usage and budgets", () => {
   })
 })
 
+describe("LLM gateway", () => {
+  test("routed providers call the control plane with the enterprise token and are metered there", async () => {
+    expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
+    const route = { kind: "openai-compatible", base: "https://openrouter.ai/api/v1", key: "sk-or-org-key-0123456789" }
+    expect((await cp.admin("PUT", "/gateway/providers/openrouter", route)).status).toBe(200)
+    try {
+      const dev = await cp.join("gateway@acme.com", "member")
+      signin(dev.token)
+      const enterprise = await client()
+      const cfg: Config.Info = { provider: { openrouter: { options: { apiKey: "sk-or-personal", timeout: 5000 } } } }
+      await run(enterprise.overlay(cfg))
+      expect(cfg.provider?.openrouter?.options).toEqual({
+        apiKey: dev.token,
+        baseURL: `${cp.url}/gateway/openrouter`,
+        timeout: 5000,
+      })
+
+      const hooks = await EnterprisePlugin(enterprise)({ worktree: "/work/api", directory: "/work/api" } as never)
+      const headers = async (providerID: string) => {
+        const output = { headers: {} as Record<string, string> }
+        await hooks["chat.headers"]!({ sessionID: "ses_9", model: { providerID, id: "m" } } as never, output)
+        return output.headers
+      }
+      expect(await headers("openrouter")).toEqual({ "x-enterprise-session": "ses_9", "x-enterprise-project": "api" })
+      expect(await headers("anthropic")).toEqual({})
+
+      // The gateway meters these calls itself, so the client does not report them as well.
+      await hooks.event!({
+        event: {
+          type: "message.updated",
+          properties: {
+            info: {
+              id: "msg_gw",
+              sessionID: "ses_9",
+              role: "assistant",
+              providerID: "openrouter",
+              modelID: "anthropic/claude-sonnet-4",
+              path: { cwd: "/work/api", root: "/work/api" },
+            },
+          },
+        },
+      } as never)
+      await hooks.event!({
+        event: {
+          type: "message.part.updated",
+          properties: {
+            part: {
+              id: "prt_gw",
+              sessionID: "ses_9",
+              messageID: "msg_gw",
+              type: "step-finish",
+              reason: "stop",
+              cost: 0.5,
+              tokens: { input: 100, output: 20, reasoning: 0, cache: { read: 0, write: 0 } },
+            },
+          },
+        },
+      } as never)
+      expect(await run(enterprise.usage.pending())).toBe(0)
+
+      // An exclusive gateway refuses every provider it does not route.
+      expect((await cp.admin("PUT", "/policy", { gateway: { exclusive: true } })).status).toBe(200)
+      await run(enterprise.refresh())
+      const params = (providerID: string, id: string) =>
+        hooks["chat.params"]!({ model: { providerID, id } } as never, {} as never)
+      await expect(params("anthropic", "claude-sonnet-4")).rejects.toThrow("not allowed by your organization's policy")
+      await expect(params("openrouter", "anthropic/claude-sonnet-4")).resolves.toBeUndefined()
+    } finally {
+      await cp.admin("DELETE", "/gateway/providers/openrouter")
+      await cp.admin("PUT", "/policy", {})
+    }
+  })
+})
+
 describe("resilience", () => {
   test("a cached policy keeps applying while the control plane is unreachable", async () => {
     const remote = await plane()

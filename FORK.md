@@ -85,13 +85,14 @@ The enterprise layer uses the same stack and conventions as the rest of Kilo, so
 | Org rules | System prompt of every request | |
 | Budgets | Before every request | Spend refreshes after each usage upload |
 | Usage | Each LLM call (step) | Batched every 15 s, spooled to disk when offline, de-duplicated by the server |
+| Gateway providers | Last config layer | Their base URL becomes `<server>/gateway/<id>` and their API key the enterprise token; with `gateway.exclusive`, every other provider is refused |
 
 The policy is fetched at startup (waiting at most 5 s), refreshed every 5 minutes with an ETag, and cached on disk.
 
 - **Offline:** a cached policy keeps applying for up to 7 days. After that it's treated as missing, so cutting off the control plane can't pin a lenient old policy.
 - **Revoked tokens and suspended members:** the policy is dropped immediately rather than kept stale.
 
-Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. Tamper-proof enforcement needs the gateway in the roadmap below.
+Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. For providers routed through the control plane's [LLM gateway](packages/enterprise-server/README.md#llm-gateway), the server enforces model access and budgets on every call and meters usage itself, because only the server holds the provider keys.
 
 ### Client configuration
 
@@ -141,7 +142,7 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 
 ## Roadmap
 
-1. **Enterprise LLM gateway.** An OpenAI- and Anthropic-compatible proxy in the control plane that holds the provider keys (BYOK), enforces model access and budgets server-side, and records usage itself. Clients receive only org tokens, so enforcement no longer depends on the developer's machine. This is how Kilo's hosted enterprise plan enforces model restrictions.
+1. **LLM gateway, next steps.** The gateway relays Anthropic, OpenAI and OpenAI-compatible APIs today. Next: Bedrock, Vertex and Azure OpenAI upstreams, per-org price overrides for negotiated rates, rate limits, and request logging for audits.
 2. **IDE surfaces.** Show the org, sign-in state and blocked reasons in the VS Code and JetBrains UIs, with a sign-in button. Today they appear as session errors and through `kilo enterprise status`.
 3. **Rebranding and distribution** (see above).
 4. **SAML 2.0** and IdP-initiated sign-in. OIDC covers Okta, Entra ID, Google and most others, but some organizations require SAML.

@@ -151,6 +151,10 @@ export const Policy = Schema.Struct({
     // Product analytics sent to the upstream vendor. Off unless an org opts in.
     product: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  gateway: Schema.Struct({
+    // Only providers routed through the gateway may be used; clients refuse every other provider.
+    exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Policy = typeof Policy.Type
 
@@ -226,7 +230,8 @@ export const UsageRecord = Schema.Struct({
 })
 export type UsageRecord = typeof UsageRecord.Type
 
-export const UsageBy = Schema.Literals(["user", "model", "provider", "day", "project"])
+// "source" separates usage the gateway metered from usage that clients reported.
+export const UsageBy = Schema.Literals(["user", "model", "provider", "day", "project", "source"])
 export type UsageBy = typeof UsageBy.Type
 
 export const UsageRow = Schema.Struct({
@@ -307,6 +312,45 @@ export const ScimToken = Schema.Struct({ id: Schema.String, token: Schema.String
 
 export const Suborg = Schema.Struct({ ...Org.fields, members: Count, spent: Count })
 
+// ---- LLM gateway --------------------------------------------------------------------------
+
+// The API an upstream speaks. It decides which endpoints the gateway forwards and how it reads
+// token usage from responses.
+export const GatewayKind = Schema.Literals(["anthropic", "openai", "openai-compatible"])
+export type GatewayKind = typeof GatewayKind.Type
+
+// A client provider id ("anthropic", "openrouter"): clients send that provider's requests here.
+export const ProviderID = Schema.String.check(
+  Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
+)
+
+export const GatewayProvider = Schema.Struct({
+  id: Schema.String,
+  kind: GatewayKind,
+  // Upstream base URL, including the API version path (https://api.anthropic.com/v1).
+  base: Schema.String,
+  // The key's last characters, so admins can tell keys apart. The key itself is write-only.
+  hint: Schema.String,
+  created: Time,
+  updated: Time,
+})
+
+export const GatewayProviderInput = Schema.Struct({
+  kind: GatewayKind,
+  base: Schema.String.check(Schema.isPattern(/^https?:\/\/[^\s?#]+$/, { message: "must be an http(s) URL" })),
+  // Required for a new provider; omit it to keep the current key.
+  key: Schema.optional(Text.check(Schema.isMaxLength(4096))),
+})
+
+export const Gateway = Schema.Struct({
+  // Clients reach provider `id` at `${url}/${id}`.
+  url: Schema.String,
+  providers: Schema.Array(GatewayProvider),
+})
+
+// What a client needs to route a provider through the gateway.
+export const GatewayRoute = Schema.Struct({ id: Schema.String, kind: GatewayKind })
+
 // ---- device login (RFC 8628) --------------------------------------------------------------
 
 export const DeviceStart = Schema.Struct({
@@ -346,5 +390,11 @@ export const Effective = Schema.Struct({
   share: Schema.Literals(["allowed", "disabled"]),
   telemetry: Schema.Struct({ product: Schema.Boolean }),
   budget: Schema.Struct({ exceeded: Schema.Boolean, limits: Schema.Array(BudgetStatus) }),
+  // Providers whose requests go through the control plane, which holds their keys and meters
+  // usage itself. Defaults keep policies cached by older clients decodable.
+  gateway: Schema.Struct({
+    exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+    providers: list(GatewayRoute),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Effective = typeof Effective.Type

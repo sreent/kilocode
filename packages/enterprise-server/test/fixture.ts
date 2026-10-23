@@ -9,11 +9,23 @@ import { App } from "../src/app"
 import { bootstrap } from "../src/bootstrap"
 import { ServerConfig } from "../src/config"
 import { Database } from "../src/db/database"
+import { Pricing } from "../src/pricing"
 import { RequestContext } from "../src/request"
 import { ConsoleAssets, node as consoleAssets } from "../src/routes/console"
 import { Store } from "../src/store"
 
 export const base = "http://localhost:8787"
+
+// Model prices the gateway tests are metered with, in models.dev's shape (USD per million tokens).
+export const prices = {
+  anthropic: {
+    models: {
+      "claude-sonnet-4": { cost: { input: 3, output: 15, cache_read: 0.3, cache_write: 3.75 } },
+    },
+  },
+  openai: { models: { "gpt-5": { cost: { input: 1.25, output: 10, cache_read: 0.125 } } } },
+  together: { models: { "llama-4": { cost: { input: 0.2, output: 0.6 } } } },
+}
 
 // The store with every Effect-returning function turned into a Promise, for test setup and assertions.
 type Promised<T> = {
@@ -58,6 +70,7 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
     proxy: false,
     retention: undefined,
     txt: () => Effect.succeed([]),
+    models: undefined,
     ...overrides,
   }
   // One memo map for the web handler and the test runtime, so both see the same in-memory database.
@@ -66,6 +79,7 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}) {
     [Database.node, Database.layerFromPath(":memory:")],
     [ServerConfig.node, ServerConfig.Service.configLayer(config)],
     [consoleAssets, ConsoleAssets.fromDirectory(assets)],
+    [Pricing.node, Pricing.Service.fromCatalog(prices)],
   ])
   const runtime = ManagedRuntime.make(services, { memoMap })
   // Expected rejections log warnings; keep test output to real problems.

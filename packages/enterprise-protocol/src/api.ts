@@ -1,6 +1,6 @@
 import { HttpApi, OpenApi } from "effect/unstable/httpapi"
 import { AccountGroup } from "./groups/account"
-import { GovernanceGroup, IdentityGroup, InsightGroup, OrgGroup, PeopleGroup } from "./groups/org"
+import { GatewayGroup, GovernanceGroup, IdentityGroup, InsightGroup, OrgGroup, PeopleGroup } from "./groups/org"
 import { HealthGroup, SigninGroup } from "./groups/public"
 import { ScimGroup } from "./groups/scim"
 import { SchemaErrorMiddleware } from "./middleware"
@@ -16,12 +16,14 @@ export const Api = HttpApi.make("enterprise")
   .add(GovernanceGroup)
   .add(InsightGroup)
   .add(IdentityGroup)
+  .add(GatewayGroup)
   .add(ScimGroup)
   .annotateMerge(
     OpenApi.annotations({
       title: "Enterprise control plane",
       version: "0.2.0",
-      description: "Organizations, single sign-on, SCIM provisioning, policy, audit and usage for Kilo clients.",
+      description:
+        "Organizations, single sign-on, SCIM provisioning, policy, audit, usage and the LLM gateway for Kilo clients.",
     }),
   )
   .middleware(SchemaErrorMiddleware)

@@ -57,11 +57,20 @@ const layer = Layer.mergeAll(App.routes(services), App.housekeeping.pipe(Layer.p
 )
 const { handler, dispose } = App.webHandler(layer, { logger: true })
 
+// Gateway calls carry whole conversations, images included, up to the providers' own 32 MB limit;
+// the control plane's API stays at 2 MB.
+const limit = 2 * 1024 * 1024
+const tooLarge = () =>
+  Response.json({ _tag: "InvalidRequestError", message: "request body is too large" }, { status: 413 })
+
 const server = Bun.serve({
   port: listen.port,
   hostname: listen.host,
-  maxRequestBodySize: 2 * 1024 * 1024,
+  maxRequestBodySize: 32 * 1024 * 1024,
   fetch(request, server) {
+    // A model can think, or stream, for minutes without a byte on the wire; Bun's idle timeout is 10s.
+    if (new URL(request.url).pathname.startsWith("/gateway/")) server.timeout(request, 0)
+    else if (Number(request.headers.get("content-length") ?? 0) > limit) return tooLarge()
     return handler(request, Context.make(RequestContext.Peer, server.requestIP(request)?.address ?? ""))
   },
 })

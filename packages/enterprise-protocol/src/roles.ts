@@ -27,6 +27,9 @@ export const capabilities = {
   "token.write": ["owner", "admin"],
   "suborg.read": managers,
   "suborg.write": ["owner", "admin"],
+  // Gateway providers hold the org's upstream API keys.
+  "gateway.read": ["owner", "admin"],
+  "gateway.write": ["owner"],
 } satisfies Record<string, Role[]>
 
 export type Capability = keyof typeof capabilities

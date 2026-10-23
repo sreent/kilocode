@@ -17,6 +17,8 @@ export interface Info {
   readonly retention: number | undefined
   // DNS TXT lookup used for domain verification; injectable for tests.
   readonly txt: (name: string) => Effect.Effect<ReadonlyArray<ReadonlyArray<string>>>
+  // Model catalog the gateway prices calls from (models.dev format); undefined prices every call at 0.
+  readonly models: string | undefined
 }
 
 export class Service extends Context.Service<Service, Info>()("@enterprise/ServerConfig") {
@@ -47,6 +49,8 @@ export const layer = Layer.effect(
       proxy: Config.boolean("ENTERPRISE_TRUST_PROXY").pipe(Config.withDefault(false)),
       // 0 (or anything non-positive) keeps audit history forever.
       retention: Config.int("ENTERPRISE_AUDIT_RETENTION_DAYS").pipe(Config.withDefault(365)),
+      // Set it empty to turn pricing off, e.g. on servers without internet access.
+      models: Config.string("ENTERPRISE_MODELS_URL").pipe(Config.withDefault("https://models.dev/api.json")),
     })
     return Service.of({
       base: Option.getOrElse(env.base, () => `http://localhost:${env.port}`).replace(/\/$/, ""),
@@ -54,6 +58,7 @@ export const layer = Layer.effect(
       proxy: env.proxy,
       retention: env.retention > 0 ? env.retention * day : undefined,
       txt,
+      models: env.models.trim() || undefined,
     })
   }),
 )
