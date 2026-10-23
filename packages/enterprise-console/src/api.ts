@@ -16,8 +16,10 @@ export const token = {
 
 export type Client = EnterpriseClient.Client
 
+// The token only changes across page loads (signing in or out reloads the page), so one client
+// per load is enough.
 const runtime = ManagedRuntime.make(FetchHttpClient.layer)
-let client: Promise<Client> | undefined
+const client = runtime.runPromise(EnterpriseClient.make({ url: location.origin, token: token.get() }))
 
 export class ApiError extends Error {
   constructor(
@@ -37,7 +39,7 @@ function explain(error: unknown) {
 }
 
 export async function call<A, E>(request: (api: Client) => Effect.Effect<A, E>): Promise<A> {
-  const api = await (client ??= runtime.runPromise(EnterpriseClient.make({ url: location.origin, token: token.get() })))
+  const api = await client
   const exit = await Effect.runPromiseExit(request(api))
   if (Exit.isSuccess(exit)) return exit.value
   throw explain(Cause.squash(exit.cause))
