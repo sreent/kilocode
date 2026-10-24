@@ -91,6 +91,22 @@ type Nodefs = {
 }
 type Module = Parameters<NodeFS["init"]>[1]
 
+// Postgres syncs directories too, after it creates or renames files in them. Windows refuses:
+// flushing needs a handle open for writing, which a directory can't have. Postgres's own Windows
+// build skips directories, so a refusal is skipped here too; any other error still reaches Postgres.
+const directory = (target: string) => {
+  try {
+    const fd = fs.openSync(target, "r")
+    try {
+      fs.fsyncSync(fd)
+    } finally {
+      fs.closeSync(fd)
+    }
+  } catch (error) {
+    if (!["EPERM", "EACCES", "EISDIR"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error
+  }
+}
+
 class Durable extends NodeFS {
   override async init(pg: PGlite, opts: Module) {
     const result = await super.init(pg, opts)
@@ -98,10 +114,8 @@ class Durable extends NodeFS {
       const nodefs = mod.FS.filesystems.NODEFS as unknown as Nodefs
       nodefs.stream_ops.fsync = (stream) =>
         nodefs.tryFSOperation(() => {
-          // Postgres syncs directories too, after it creates or renames files in them.
-          const fd = stream.nfd ?? fs.openSync(nodefs.realPath(stream.node), "r")
-          fs.fsyncSync(fd)
-          if (stream.nfd == null) fs.closeSync(fd)
+          if (stream.nfd == null) directory(nodefs.realPath(stream.node))
+          else fs.fsyncSync(stream.nfd)
           return 0
         })
     }

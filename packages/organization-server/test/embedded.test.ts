@@ -38,6 +38,28 @@ test("an embedded database directory is open in one place at a time, and keeps i
   expect(n).toBe(1)
 }, 60_000)
 
+test("where directories can't be synced, as on Windows, the database still opens again", async () => {
+  const dir = path.join(root, "windows")
+  const original = fs.fsyncSync
+  // Windows refuses to flush a directory: it can only be opened read-only, and flushing needs write.
+  const sync = spyOn(fs, "fsyncSync").mockImplementation((fd) => {
+    if (fs.fstatSync(fd).isDirectory())
+      throw Object.assign(new Error("EPERM: operation not permitted, fsync"), { code: "EPERM" })
+    return original(fd)
+  })
+  try {
+    await Effect.runPromise(Effect.scoped(open(dir).pipe(Effect.flatMap((db) => db.db.execute(insert)))))
+    const [row] = await Effect.runPromise(
+      Effect.scoped(
+        open(dir).pipe(Effect.flatMap((db) => db.db.execute<{ n: number }>(sql`select count(*)::int as n from orgs`))),
+      ),
+    )
+    expect(row?.n).toBe(1)
+  } finally {
+    sync.mockRestore()
+  }
+}, 60_000)
+
 test("a commit to an embedded database is on disk when it returns", async () => {
   const sync = spyOn(fs, "fsyncSync")
   await Effect.runPromise(
