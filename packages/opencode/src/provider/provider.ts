@@ -53,8 +53,8 @@ import * as ModelsRefresh from "@/kilocode/provider/models-refresh"
 import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions } from "@/kilocode/provider/cloud-auth"
 // kilocode_change end
 import { ProviderError } from "./error"
-import { Enterprise } from "@/enterprise" // kilocode_change - enterprise
-import { allows } from "@enterprise/protocol/match" // kilocode_change - enterprise
+import { Organization } from "@/organization" // kilocode_change - organization
+import { allows } from "@organization/protocol/match" // kilocode_change - organization
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -1464,13 +1464,13 @@ const layer = Layer.effect(
     const plugin = yield* Plugin.Service
     const modelsDevSvc = yield* ModelsDev.Service
     const runtimeFlags = yield* RuntimeFlags.Service
-    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
+    const organization = yield* Organization.Service // kilocode_change - organization
 
     const state = yield* InstanceState.make<State>(() =>
       Effect.gen(function* () {
         const bridge = yield* EffectBridge.make()
         const cfg = yield* config.get()
-        const policy = yield* enterprise.current() // kilocode_change - enterprise: org model access, read once per load
+        const policy = yield* organization.current() // kilocode_change - organization: org model access, read once per load
         const modelsDev = yield* modelsDevSvc.get()
         const catalog = mapValues(modelsDev, fromModelsDevProvider)
         const database = mapValues(catalog, toPublicInfo)
@@ -1700,6 +1700,10 @@ const layer = Layer.effect(
           if (!plugin.auth) continue
           const providerID = ProviderV2.ID.make(plugin.auth.provider)
           if (!isProviderAllowed(providerID)) continue // kilocode_change - honor enabled_providers
+          // kilocode_change start - organization: a provider the org gateway routes never uses a personal
+          // login, whose fetch would bypass the gateway
+          if (policy?.gateway.providers.some((item) => item.id === providerID)) continue
+          // kilocode_change end
 
           // kilocode_change start - the catalog entry is absent when the provider is filtered out
           const entry = database[plugin.auth.provider]
@@ -1804,7 +1808,7 @@ const layer = Layer.effect(
               (configProvider?.whitelist && !configProvider.whitelist.includes(modelID))
             )
               delete provider.models[modelID]
-            if (policy && !allows(policy, providerID, modelID)) delete provider.models[modelID] // kilocode_change - enterprise
+            if (policy && !allows(policy, providerID, modelID)) delete provider.models[modelID] // kilocode_change - organization
 
             if (model.variants === undefined) {
               model.variants = mapValues(ProviderTransform.variants(model), (v) => v)
@@ -2225,7 +2229,7 @@ export function parseModel(model: string) {
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  // kilocode_change start - enterprise
+  // kilocode_change start - organization
   deps: [
     FSUtil.node,
     Config.node,
@@ -2234,7 +2238,7 @@ export const node = LayerNode.make({
     Plugin.node,
     ModelsDev.node,
     RuntimeFlags.node,
-    Enterprise.node,
+    Organization.node,
   ],
   // kilocode_change end
 })

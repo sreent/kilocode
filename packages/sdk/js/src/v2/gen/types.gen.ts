@@ -4845,6 +4845,11 @@ export type MemoryApiServerError = {
   }
 }
 
+export type OrganizationSigninError = {
+  name: "OrganizationSigninError"
+  message: string
+}
+
 export type UnauthorizedError = {
   _tag: "UnauthorizedError"
   message: string
@@ -19676,6 +19681,306 @@ export type MemoryPurgeResponses = {
 }
 
 export type MemoryPurgeResponse = MemoryPurgeResponses[keyof MemoryPurgeResponses]
+
+export type OrgStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/org/status"
+}
+
+export type OrgStatusErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type OrgStatusError = OrgStatusErrors[keyof OrgStatusErrors]
+
+export type OrgStatusResponses = {
+  /**
+   * Organization status
+   */
+  200: {
+    /**
+     * False when no organization.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type OrgStatusResponse = OrgStatusResponses[keyof OrgStatusResponses]
+
+export type OrgSigninData = {
+  body?: {
+    url?: string
+    org?: string
+    token?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/org/signin"
+}
+
+export type OrgSigninErrors = {
+  /**
+   * BadRequest | OrganizationSigninError | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | OrganizationSigninError | InvalidRequestError
+}
+
+export type OrgSigninError = OrgSigninErrors[keyof OrgSigninErrors]
+
+export type OrgSigninResponses = {
+  /**
+   * Status, with the waiting sign-in, or signed in when a token was given
+   */
+  200: {
+    /**
+     * False when no organization.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type OrgSigninResponse = OrgSigninResponses[keyof OrgSigninResponses]
+
+export type OrgWaitData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/org/signin/wait"
+}
+
+export type OrgWaitErrors = {
+  /**
+   * BadRequest | OrganizationSigninError | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | OrganizationSigninError | InvalidRequestError
+}
+
+export type OrgWaitError = OrgWaitErrors[keyof OrgWaitErrors]
+
+export type OrgWaitResponses = {
+  /**
+   * Status after the sign-in was approved
+   */
+  200: {
+    /**
+     * False when no organization.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type OrgWaitResponse = OrgWaitResponses[keyof OrgWaitResponses]
+
+export type OrgSignoutData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/org/signout"
+}
+
+export type OrgSignoutErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+}
+
+export type OrgSignoutError = OrgSignoutErrors[keyof OrgSignoutErrors]
+
+export type OrgSignoutResponses = {
+  /**
+   * Status after signing out
+   */
+  200: {
+    /**
+     * False when no organization.json, environment variables or stored sign-in enroll this device
+     */
+    enabled: boolean
+    source?: "managed" | "env" | "login"
+    url?: string
+    org?: {
+      slug: string
+      name?: string
+    }
+    /**
+     * The agent may not run until the person signs in
+     */
+    required: boolean
+    user?: {
+      email: string
+      role: string
+    }
+    policy?: {
+      version: number
+      fetched: number
+    }
+    blocked?: string
+    error?: string
+    /**
+     * Providers routed through the org's LLM gateway
+     */
+    gateway: Array<string>
+    signin?: {
+      url: string
+      org: string
+      /**
+       * Code the person confirms in the browser
+       */
+      code: string
+      /**
+       * Page where the code is confirmed
+       */
+      verification: string
+      /**
+       * The same page with the code filled in
+       */
+      link: string
+      expires: number
+    }
+  }
+}
+
+export type OrgSignoutResponse = OrgSignoutResponses[keyof OrgSignoutResponses]
 
 export type V2HealthGetData = {
   body?: never

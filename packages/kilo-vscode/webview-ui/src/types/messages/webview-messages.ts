@@ -219,6 +219,25 @@ export interface CancelLoginRequest {
   type: "cancelLogin"
 }
 
+// Self-hosted organization sign-in, driven through the CLI.
+export interface RequestOrgStatusRequest {
+  type: "requestOrgStatus"
+}
+
+export interface OrgSigninRequest {
+  type: "orgSignin"
+  url?: string
+  org?: string
+}
+
+export interface OrgCancelRequest {
+  type: "orgCancel"
+}
+
+export interface OrgSignoutRequest {
+  type: "orgSignout"
+}
+
 export interface SetOrganizationRequest {
   type: "setOrganization"
   organizationId: string | null
@@ -1787,6 +1806,10 @@ export type WebviewMessage =
   | OpenFileRequest
   | ValidateFilesRequest
   | CancelLoginRequest
+  | RequestOrgStatusRequest
+  | OrgSigninRequest
+  | OrgCancelRequest
+  | OrgSignoutRequest
   | SetOrganizationRequest
   | WebviewReadyRequest
   | WebviewFocusChangedRequest

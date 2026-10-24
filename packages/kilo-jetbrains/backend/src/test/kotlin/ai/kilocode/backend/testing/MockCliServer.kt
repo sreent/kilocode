@@ -116,6 +116,15 @@ class MockCliServer : AutoCloseable {
     @Volatile var lastMarketplaceInstallBody: String? = null
     @Volatile var lastMarketplaceRemoveBody: String? = null
 
+    // Organization routes; a null status answers 404 like a CLI without organization support.
+    @Volatile var orgStatus: String? = null
+    @Volatile var orgSignin = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var orgSigninStatus = 200
+    @Volatile var orgWait = """{"enabled":true,"required":false,"gateway":[]}"""
+    @Volatile var orgWaitStatus = 200
+    @Volatile var orgSignout = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var lastOrgSigninBody: String? = null
+
     // Project-scoped REST responses
     @Volatile var providers = """{"all":[],"default":{},"connected":[],"failed":[]}"""
     @Volatile var providerAuth = "{}"
@@ -475,6 +484,16 @@ class MockCliServer : AutoCloseable {
                     lastMarketplaceRemoveBody = body
                     respond(output, marketplaceRemoveStatus, marketplaceRemoveResult)
                 }
+                bare == "/kilo/org/status" && method == "GET" -> {
+                    val status = orgStatus
+                    if (status == null) respond(output, 404, """{"error":"Not found"}""") else respond(output, 200, status)
+                }
+                bare == "/kilo/org/signin" && method == "POST" -> {
+                    lastOrgSigninBody = body
+                    respond(output, orgSigninStatus, orgSignin)
+                }
+                bare == "/kilo/org/signin/wait" && method == "POST" -> respond(output, orgWaitStatus, orgWait)
+                bare == "/kilo/org/signout" && method == "POST" -> respond(output, 200, orgSignout)
                 bare.matches(Regex("/kilocode/session/ses_[^/]+/board")) && method == "GET" -> {
                     lastSessionBoardPath = path
                     respond(output, sessionBoardStatus, sessionBoard)

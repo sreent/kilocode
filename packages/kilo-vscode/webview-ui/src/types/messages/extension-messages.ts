@@ -1,4 +1,9 @@
-import type { ProviderAuthAuthorization, ProviderAuthMethod, ProviderFailure } from "@kilocode/sdk/v2/client"
+import type {
+  OrgStatusResponse,
+  ProviderAuthAuthorization,
+  ProviderAuthMethod,
+  ProviderFailure,
+} from "@kilocode/sdk/v2/client"
 import type { DiffSourceCapabilities, DiffSourceDescriptor } from "../../../../src/diff/sources/types"
 import type { PRComment, PRReactionContent } from "../../../agent-manager/pr/pr-types"
 import type { PartBatch, PartRemove, PartUpdate } from "../../../../src/shared/stream-messages"
@@ -464,6 +469,19 @@ export interface DeviceAuthFailedMessage {
 
 export interface DeviceAuthCancelledMessage {
   type: "deviceAuthCancelled"
+}
+
+// Self-hosted organization state, as `kilo serve` reports it.
+export type OrgStatus = OrgStatusResponse
+
+export interface OrgStatusMessage {
+  type: "orgStatus"
+  status: OrgStatus
+}
+
+export interface OrgSigninFailedMessage {
+  type: "orgSigninFailed"
+  error: string
 }
 
 export interface NavigateMessage {
@@ -1852,6 +1870,8 @@ export type ExtensionMessage =
   | DeviceAuthCompleteMessage
   | DeviceAuthFailedMessage
   | DeviceAuthCancelledMessage
+  | OrgStatusMessage
+  | OrgSigninFailedMessage
   | NavigateMessage
   | AgentManagerSettingsLoadedMessage
   | AgentManagerSettingsBranchesLoadedMessage

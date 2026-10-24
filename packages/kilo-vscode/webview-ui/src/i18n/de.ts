@@ -709,6 +709,18 @@ export const dict = {
 
   "profile.title": "Profil",
   "profile.notLoggedIn": "Nicht angemeldet",
+  "profile.organization.title": "Organisation",
+  "profile.organization.signinTitle": "Bei {{org}} anmelden",
+  "profile.organization.signedIn": "Angemeldet als {{email}} ({{role}})",
+  "profile.organization.policy": "Richtlinienversion {{version}}, aktualisiert {{time}}",
+  "profile.organization.gateway": "Modellaufrufe an {{providers}} laufen über das Gateway Ihrer Organisation.",
+  "profile.organization.managed":
+    "{{org}} verwaltet Kilo auf diesem Gerät. Melden Sie sich mit Ihrem Organisationskonto an.",
+  "profile.organization.connect": "Bei einer selbst gehosteten Organisation anmelden",
+  "profile.organization.url": "Server-URL",
+  "profile.organization.action.signin": "Anmelden",
+  "profile.organization.action.signout": "Abmelden",
+  "profile.organization.error": "Letzte Aktualisierung der Richtlinie fehlgeschlagen: {{error}}",
   "profile.action.login": "Mit Kilo Code anmelden",
   "profile.balance.title": "Guthaben",
   "profile.balance.refresh": "Guthaben aktualisieren",

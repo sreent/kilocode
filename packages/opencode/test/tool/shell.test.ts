@@ -440,7 +440,7 @@ describe("tool.shell permissions", () => {
                 expect(
                   yield* fail(
                     {
-                      command: 'Get-Content "C:../outside.txt"',
+                      command: `Get-Content "${tmp.slice(0, 2)}../outside.txt"`, // kilocode_change - the temp directory's own drive, which CI may keep off C:
                     },
                     capture(requests, err),
                   ),

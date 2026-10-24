@@ -1,7 +1,7 @@
 import { Account } from "@/account/account"
 import { Auth } from "@/auth"
 import { Config } from "@/config/config"
-import { Enterprise } from "@/enterprise/enterprise" // kilocode_change - enterprise
+import { Organization } from "@/organization/organization" // kilocode_change - organization
 import { makeRuntime } from "@/effect/run-service"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { Effect, Layer, Option } from "effect"
@@ -11,7 +11,7 @@ const account = Layer.mock(Account.Service)({
 })
 const config = makeRuntime(Config.Service, AppNodeBuilder.build(Config.node, [[Account.node, account]]))
 const auth = makeRuntime(Auth.Service, Auth.defaultLayer)
-const enterpriseRuntime = makeRuntime(Enterprise.Service, AppNodeBuilder.build(Enterprise.node)) // kilocode_change - enterprise
+const organizationRuntime = makeRuntime(Organization.Service, AppNodeBuilder.build(Organization.node)) // kilocode_change - organization
 
 export namespace KiloCliBootstrapRuntime {
   export function getGlobal() {
@@ -26,13 +26,13 @@ export namespace KiloCliBootstrapRuntime {
     return auth.runPromise((service) => service.set("kilo", info))
   }
 
-  // kilocode_change start - enterprise
-  export function enterprise() {
-    return enterpriseRuntime.runPromise((service) => service.bootstrap())
+  // kilocode_change start - organization
+  export function organization() {
+    return organizationRuntime.runPromise((service) => service.bootstrap())
   }
   // kilocode_change end
 
   export async function dispose() {
-    await Promise.all([config.dispose(), auth.dispose(), enterpriseRuntime.dispose()]) // kilocode_change - enterprise
+    await Promise.all([config.dispose(), auth.dispose(), organizationRuntime.dispose()]) // kilocode_change - organization
   }
 }

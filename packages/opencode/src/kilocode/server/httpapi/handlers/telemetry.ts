@@ -3,11 +3,11 @@ import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { Telemetry } from "@kilocode/kilo-telemetry"
 import { InstanceHttpApi } from "@/server/routes/instance/httpapi/api"
 import { TelemetryCapturePayload, TelemetrySetEnabledPayload } from "../groups/telemetry"
-import { Enterprise } from "@/enterprise/enterprise" // kilocode_change - enterprise
+import { Organization } from "@/organization/organization" // kilocode_change - organization
 
 export const telemetryHandlers = HttpApiBuilder.group(InstanceHttpApi, "telemetry", (handlers) =>
   Effect.gen(function* () {
-    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
+    const organization = yield* Organization.Service // kilocode_change - organization
     const capture = Effect.fn("TelemetryHttpApi.capture")(function* (ctx: {
       payload: typeof TelemetryCapturePayload.Type
     }) {
@@ -21,8 +21,8 @@ export const telemetryHandlers = HttpApiBuilder.group(InstanceHttpApi, "telemetr
     const setEnabled = Effect.fn("TelemetryHttpApi.setEnabled")(function* (ctx: {
       payload: typeof TelemetrySetEnabledPayload.Type
     }) {
-      const allowed = yield* enterprise.telemetry() // kilocode_change - enterprise
-      yield* Effect.sync(() => Telemetry.setEnabled(ctx.payload.enabled && allowed)) // kilocode_change - enterprise
+      const allowed = yield* organization.telemetry() // kilocode_change - organization
+      yield* Effect.sync(() => Telemetry.setEnabled(ctx.payload.enabled && allowed)) // kilocode_change - organization
       return true
     })
 

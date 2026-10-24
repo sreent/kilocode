@@ -1,0 +1,1027 @@
+/*
+ * App styles for the admin console. kilo-web-ui provides the tokens, components and the console
+ * shell; the page-level rules below mirror Kilo's web console (packages/kilo-console/src/styles),
+ * which keeps its app styles outside the shared library.
+ */
+
+/* ---- base (kilo-console base.css) ------------------------------------------------------- */
+
+:root {
+  font-family: var(--font-family-sans);
+  background: var(--background-base);
+  color: var(--text-base);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--surface-brand-base) 18%, transparent),
+      transparent 28rem
+    ),
+    var(--background-base);
+}
+
+.kilo-console .header-mark-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+.kilo-console input,
+.kilo-console select,
+.kilo-console textarea {
+  width: 100%;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  background: var(--input-base);
+  color: var(--text-strong);
+  font: inherit;
+  padding: 0.65rem 0.75rem;
+}
+
+.kilo-console textarea {
+  min-height: 10rem;
+  resize: vertical;
+}
+
+.kilo-console select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%23a1a1aa' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.kilo-console select option {
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+
+.kilo-console select option:checked {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.kilo-console input:focus,
+.kilo-console select:focus,
+.kilo-console textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--border-focus) 35%, transparent);
+  border-color: var(--border-focus);
+}
+
+.kilo-console input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  min-height: 1rem;
+  flex: 0 0 auto;
+  accent-color: var(--primary);
+  padding: 0;
+}
+
+.kilo-console .empty,
+.kilo-console .muted {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.kilo-console .mono {
+  font-family: var(--font-family-mono);
+  font-feature-settings: "calt" 0;
+}
+
+.kilo-console .wrap {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.kilo-console .nowrap {
+  white-space: nowrap;
+}
+
+.kilo-console .sr-only {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.kilo-console .link {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong-base);
+  text-underline-offset: 0.2em;
+}
+
+.kilo-console .link:hover {
+  text-decoration-color: var(--primary);
+}
+
+.kilo-console [data-component="button"].danger:not(:disabled) {
+  color: var(--destructive);
+}
+
+.kilo-console [data-component="button"].danger:not(:disabled):hover {
+  background: color-mix(in oklab, var(--destructive) 12%, transparent);
+}
+
+/* ---- header and rail ------------------------------------------------------------------- */
+
+.kilo-console .header-account {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.kilo-console .header-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilo-console button.rail-action {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.kilo-console .favorite-project.managed {
+  border-style: dashed;
+}
+
+/* ---- settings pages (kilo-console config.css) ----------------------------------------- */
+
+.kilo-console .config-page {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.kilo-console .config-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0 0 1.25rem;
+}
+
+.kilo-console .config-page-header h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.kilo-console .config-page-header p {
+  max-width: 42rem;
+  margin: 0.75rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.kilo-console .config-page-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.kilo-console .config-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 3rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 0.75rem;
+}
+
+.kilo-console .config-toolbar-controls {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.kilo-console .config-toolbar-controls > .ui-field {
+  flex: 0 1 12rem;
+  min-width: min(10rem, 100%);
+}
+
+.kilo-console .config-toolbar-controls > .ui-field.grow {
+  flex: 1 1 16rem;
+}
+
+.kilo-console .config-toolbar-controls input,
+.kilo-console .config-toolbar-controls select {
+  height: 2.35rem;
+  min-height: 2.35rem;
+  line-height: 1.2;
+}
+
+.kilo-console .config-toolbar-controls [data-component="button"] {
+  height: 2.35rem;
+}
+
+/* ---- cards and forms (kilo-console cli-ui.css) ---------------------------------------- */
+
+.kilo-console .ui-card {
+  gap: 0;
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.kilo-console .ui-card-header,
+.kilo-console .ui-card-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0.875rem;
+}
+
+.kilo-console .ui-card-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+}
+
+.kilo-console .ui-card-header h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-card-header p {
+  max-width: 42rem;
+  margin: 0.125rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.kilo-console .ui-card-body,
+.kilo-console .ui-form {
+  padding: 0.75rem;
+}
+
+.kilo-console .ui-card-body > .ui-form {
+  padding: 0;
+}
+
+.kilo-console .ui-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.625rem;
+}
+
+.kilo-console .ui-field,
+.kilo-console .ui-toggle {
+  display: grid;
+  gap: 0.375rem;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--card) 72%, transparent);
+  padding: 0.625rem;
+}
+
+.kilo-console .ui-field > span,
+.kilo-console .ui-toggle strong {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-field small,
+.kilo-console .ui-toggle small {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-toggle strong,
+.kilo-console .ui-toggle small {
+  display: block;
+}
+
+.kilo-console .ui-field input,
+.kilo-console .ui-field select {
+  height: 2rem;
+  min-height: 2rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding-block: 0;
+}
+
+.kilo-console .ui-field textarea {
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-field.invalid input,
+.kilo-console .ui-field.invalid textarea,
+.kilo-console .ui-field.invalid select {
+  border-color: var(--destructive);
+}
+
+.kilo-console .ui-field small.field-error,
+.kilo-console .field-error {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.kilo-console .ui-toggle {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.kilo-console .ui-toggle:disabled,
+.kilo-console .ui-field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.kilo-console .ui-toggle:hover:not(:disabled),
+.kilo-console .ui-toggle:focus-visible,
+.kilo-console .ui-toggle.selected {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  outline: 0;
+}
+
+/* Plain labelled controls where a field tile would be too heavy: toolbars and one-line forms. */
+.kilo-console .ui-field.bare,
+.kilo-console .config-toolbar-controls > .ui-field,
+.kilo-console .inline-form > .ui-field,
+.kilo-console .budget-row > .ui-field,
+.kilo-console td .ui-field {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.kilo-console .config-toolbar-controls > .ui-field > span,
+.kilo-console .inline-form > .ui-field > span,
+.kilo-console .budget-row > .ui-field > span {
+  color: var(--text-weaker);
+  font-size: var(--font-size-small);
+  font-weight: 400;
+}
+
+.kilo-console .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.kilo-console .inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.kilo-console .inline-form.padded {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+.kilo-console .inline-form > .ui-field {
+  flex: 0 1 12rem;
+}
+
+.kilo-console .inline-form > .ui-field.grow {
+  flex: 1 1 16rem;
+}
+
+.kilo-console .inline-form [data-component="button"] {
+  height: 2rem;
+}
+
+.kilo-console .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+.kilo-console .split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.kilo-console .split > .ui-form {
+  padding: 0;
+}
+
+.kilo-console .checklist {
+  display: grid;
+  gap: 0.125rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.kilo-console .check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-weak);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.35rem;
+}
+
+.kilo-console .check:hover {
+  background: var(--surface-raised-base);
+  color: var(--text-strong);
+}
+
+.kilo-console .check span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilo-console .json-editor textarea,
+.kilo-console .mono-field textarea {
+  font-family: var(--font-family-mono);
+  font-feature-settings: "calt" 0;
+}
+
+.kilo-console .json-editor textarea {
+  min-height: 24rem;
+}
+
+.kilo-console .truncate {
+  display: inline-block;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.kilo-console .stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.kilo-console .title-with-tag {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ---- metrics and bars (kilo-console overview.css) ------------------------------------- */
+
+.kilo-console .metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem;
+}
+
+.kilo-console .metric {
+  gap: 0;
+  min-height: 4.5rem;
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.kilo-console .metric span {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.kilo-console .metric strong {
+  min-width: 0;
+  margin-top: 0.375rem;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilo-console .metric small {
+  margin-top: 0.125rem;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilo-console .bars {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.kilo-console .bar-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr) 5rem;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.kilo-console .bar-label {
+  overflow: hidden;
+  color: var(--foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilo-console .bar-track {
+  position: relative;
+  display: block;
+  height: 0.375rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.kilo-console .bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.kilo-console .bar-value {
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+.kilo-console .cost {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ---- tables ------------------------------------------------------------------------------ */
+
+.kilo-console .table-wrap {
+  overflow-x: auto;
+}
+
+.kilo-console [data-slot="table"] {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.kilo-console [data-slot="table-head"] {
+  border-bottom: 1px solid var(--border);
+  color: var(--text-weaker);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.5rem 0.875rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.kilo-console [data-slot="table-cell"] {
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  color: var(--foreground);
+  padding: 0.5rem 0.875rem;
+  vertical-align: middle;
+}
+
+.kilo-console [data-slot="table-row"]:last-child [data-slot="table-cell"] {
+  border-bottom: 0;
+}
+
+.kilo-console [data-slot="table-body"] [data-slot="table-row"]:hover [data-slot="table-cell"] {
+  background: color-mix(in oklab, var(--muted) 45%, transparent);
+}
+
+.kilo-console [data-slot="table-head"][data-align="end"],
+.kilo-console [data-slot="table-cell"][data-align="end"] {
+  text-align: right;
+}
+
+.kilo-console .ui-card-body .table-wrap {
+  margin: -0.75rem;
+}
+
+.kilo-console .table-empty {
+  color: var(--muted-foreground);
+  padding: 1.25rem 0.875rem;
+  text-align: center;
+}
+
+.kilo-console .row-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.kilo-console .person {
+  display: grid;
+  min-width: 0;
+}
+
+.kilo-console .person small {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.kilo-console td select {
+  min-width: 8rem;
+  height: 1.75rem;
+  min-height: 1.75rem;
+  border-radius: var(--radius-md);
+  background-position: right 0.5rem center;
+  font-size: 0.75rem;
+  padding-block: 0;
+  padding-left: 0.5rem;
+}
+
+.kilo-console .details {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+}
+
+.kilo-console .details div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.kilo-console .details dt {
+  color: var(--muted-foreground);
+}
+
+.kilo-console .details dd {
+  margin: 0;
+}
+
+.kilo-console .load-more {
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- budgets ------------------------------------------------------------------------------ */
+
+.kilo-console .budgets {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.kilo-console .budget-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1.2fr) minmax(10rem, 1.4fr) minmax(8rem, 1fr) minmax(7rem, 0.8fr) auto;
+  gap: 0.5rem;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--card) 72%, transparent);
+  padding: 0.625rem;
+}
+
+/* ---- secrets, copy fields, code ------------------------------------------------------------ */
+
+.kilo-console .copyable {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.kilo-console .copyable.block {
+  align-items: start;
+}
+
+.kilo-console .code-block {
+  max-height: 32rem;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--input-base);
+  color: var(--foreground);
+  font-family: var(--font-family-mono);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  padding: 0.625rem 0.75rem;
+  white-space: pre;
+}
+
+.kilo-console .secret {
+  gap: 0.5rem;
+}
+
+.kilo-console .secret-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.kilo-console .secret-head strong {
+  display: block;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.kilo-console .secret-head span {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.kilo-console .secret .ui-field {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+/* ---- notices, confirmation, loading (kilo-console dialogs.css, loading.css) --------------- */
+
+.kilo-console .notice {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  max-width: 64rem;
+  margin: 0 auto 0.85rem;
+}
+
+.kilo-console .notice [data-component="banner"] {
+  align-items: center;
+  box-shadow: 0 0.75rem 2rem color-mix(in srgb, black 25%, transparent);
+}
+
+.kilo-console .confirm-scrim {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, black 62%, transparent);
+  padding: 1rem;
+}
+
+.kilo-console .confirm-dialog {
+  width: min(28rem, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border-weak-base);
+  border-radius: var(--radius-lg);
+  background: var(--background-stronger);
+  box-shadow: 0 2rem 5rem color-mix(in srgb, black 35%, transparent);
+}
+
+.kilo-console .confirm-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.kilo-console .confirm-icon {
+  display: grid;
+  place-items: center;
+  color: var(--destructive);
+}
+
+.kilo-console .confirm-icon [data-component="icon"] {
+  width: 3rem;
+  height: 3rem;
+}
+
+.kilo-console .confirm-body h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+
+.kilo-console .confirm-body p {
+  margin: 0.5rem 0 0;
+  color: var(--text-weak);
+  font-size: 0.75rem;
+  line-height: 1.625;
+}
+
+.kilo-console .confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-weak-base);
+  background: color-mix(in srgb, var(--background-base) 65%, transparent);
+  padding: 1rem;
+}
+
+.console-loading {
+  display: grid;
+  place-items: center;
+  background: var(--background);
+}
+
+.console-loading-fullscreen {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.console-loading-logo {
+  display: block;
+  width: min(13rem, 31vw);
+  height: auto;
+  aspect-ratio: 1;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.kilo-console .inline-loading {
+  display: flex;
+  justify-content: center;
+  color: var(--muted-foreground);
+  padding: 1.5rem;
+}
+
+/* ---- sign-in ------------------------------------------------------------------------------- */
+
+.kilo-console.signin {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: transparent;
+  padding: 1.5rem;
+}
+
+.kilo-console .signin-card {
+  width: min(24rem, 100%);
+  gap: 0;
+}
+
+.kilo-console .signin-head {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  padding: 1.75rem 1.25rem 1.25rem;
+  text-align: center;
+}
+
+.kilo-console .signin-head h1 {
+  margin: 0.5rem 0 0;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.kilo-console .signin-head p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.kilo-console .signin .ui-form {
+  padding: 1rem 1.25rem;
+}
+
+.kilo-console .signin .ui-field {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.kilo-console .divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  color: var(--text-weaker);
+  font-size: 0.6875rem;
+  padding: 0 1.25rem;
+}
+
+.kilo-console .divider::before,
+.kilo-console .divider::after {
+  height: 1px;
+  background: var(--border);
+  content: "";
+}
+
+.kilo-console .signin-reason {
+  margin: 0;
+  border-top: 1px solid var(--border);
+  color: var(--destructive);
+  font-size: 0.75rem;
+  padding: 0.75rem 1.25rem;
+}
+
+/* ---- responsive (kilo-console responsive.css) --------------------------------------------- */
+
+@media (max-width: 980px) {
+  .kilo-console .config-page-header,
+  .kilo-console .grid-2,
+  .kilo-console .split {
+    grid-template-columns: 1fr;
+  }
+
+  .kilo-console .config-page-actions,
+  .kilo-console .ui-card-header {
+    justify-content: flex-start;
+  }
+
+  .kilo-console .ui-card-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .kilo-console .confirm-body {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .kilo-console .budget-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .kilo-console .header-email {
+    display: none;
+  }
+
+  .kilo-console .bar-row {
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+  }
+
+  .kilo-console .bar-row .bar-track {
+    display: none;
+  }
+
+  .kilo-console .budget-row {
+    grid-template-columns: 1fr;
+  }
+}
