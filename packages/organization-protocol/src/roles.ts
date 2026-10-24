@@ -23,6 +23,8 @@ export const capabilities = {
   "audit.stream": ["owner", "admin"],
   "usage.read": managers,
   "budget.write": ["owner", "billing_manager"],
+  // Scheduled reports send usage and spend to a webhook outside the server.
+  "report.write": managers,
   "sso.write": ["owner", "admin"],
   "domain.write": ["owner", "admin"],
   "scim.write": ["owner", "admin"],

@@ -5,5 +5,6 @@ export const migrations = (
     import("./migration/20261023172159_init"),
     import("./migration/20261024125439_gateway"),
     import("./migration/20261024141728_spend"),
+    import("./migration/20261024142807_reports"),
   ])
 ).map((module) => module.default) satisfies DatabaseMigration.Migration[]

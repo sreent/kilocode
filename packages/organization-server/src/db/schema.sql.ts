@@ -447,3 +447,33 @@ export const StreamTable = pgTable(
   },
   (table) => [index("audit_streams_org").on(table.org)],
 )
+
+// Summaries of an org's AI use, posted to a webhook after each week or month.
+export const ReportTable = pgTable(
+  "reports",
+  {
+    id: text().primaryKey(),
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    cadence: text().$type<"weekly" | "monthly">().notNull(),
+    format: text().$type<"text" | "json">().notNull(),
+    url: text().notNull(),
+    // The signing secret, sealed with ORGANIZATION_SECRET.
+    secret: text().notNull(),
+    enabled: boolean().notNull().default(true),
+    // When the next report is due, and until when a delivery in progress holds it.
+    next: bigint({ mode: "number" }).notNull(),
+    lease: bigint({ mode: "number" }),
+    sent: bigint({ mode: "number" }),
+    error: text(),
+    created: bigint({ mode: "number" }).notNull(),
+  },
+  (table) => [
+    index("reports_org").on(table.org),
+    index("reports_next").on(table.next),
+    check("reports_cadence", sql`${table.cadence} in ('weekly', 'monthly')`),
+    check("reports_format", sql`${table.format} in ('text', 'json')`),
+  ],
+)

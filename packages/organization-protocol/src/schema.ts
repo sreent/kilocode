@@ -431,6 +431,115 @@ export function instant(value: string | undefined, fallback: number) {
   return /^\d+$/.test(value) ? Number(value) : Date.parse(value)
 }
 
+// ---- analytics ------------------------------------------------------------------------------
+
+// Days, weeks starting on Monday, and months, all in UTC.
+export const Interval = Schema.Literals(["day", "week", "month"])
+export type Interval = typeof Interval.Type
+
+export const ActivityPoint = Schema.Struct({
+  start: Time,
+  // People who made a request in the interval, and those whose first request ever was in it.
+  active: Count,
+  new: Count,
+  sessions: Count,
+  requests: Count,
+  cost: Count,
+})
+
+export const Adoption = Schema.Struct({
+  from: Time,
+  to: Time,
+  interval: Interval,
+  // Members with an active membership now, and the seats they hold.
+  members: Count,
+  seats: Seats,
+  // People who made a request in the range, and what they did.
+  active: Count,
+  new: Count,
+  sessions: Count,
+  requests: Count,
+  cost: Count,
+  series: Schema.Array(ActivityPoint),
+  // Members who made no request in the range, and when they last made one; null for never.
+  idle: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      email: Schema.String,
+      name: Schema.NullOr(Schema.String),
+      last: Schema.NullOr(Time),
+    }),
+  ),
+})
+
+// What a comparison sets side by side: the org's groups, the org and its sub-organizations, or models.
+export const CompareBy = Schema.Literals(["group", "suborg", "model"])
+export type CompareBy = typeof CompareBy.Type
+
+export const Activity = Schema.Struct({ active: Count, requests: Count, cost: Count, tokens: Count })
+export type Activity = typeof Activity.Type
+
+export const Comparison = Schema.Struct({
+  by: CompareBy,
+  from: Time,
+  to: Time,
+  // The range of the same length just before, to compare with.
+  previous: Schema.Struct({ from: Time, to: Time }),
+  rows: Schema.Array(
+    Schema.Struct({
+      key: Schema.String,
+      // The group or organization; null for a model.
+      id: Schema.NullOr(Schema.String),
+      // The people it covers now; null for a model.
+      members: Schema.NullOr(Count),
+      current: Activity,
+      previous: Activity,
+    }),
+  ),
+})
+
+// Summaries of an organization's AI use posted to a webhook after each week (Monday to Sunday) or
+// month, in UTC. "text" posts { "text": ... }, which Slack, Mattermost and Google Chat incoming
+// webhooks show as a message; "json" posts the whole summary.
+export const ReportCadence = Schema.Literals(["weekly", "monthly"])
+export const ReportFormat = Schema.Literals(["text", "json"])
+
+const ReportName = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100))
+const WebhookUrl = Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/, { message: "must be an http(s) URL" }))
+
+export const Report = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  cadence: ReportCadence,
+  format: ReportFormat,
+  url: Schema.String,
+  enabled: Schema.Boolean,
+  // When the next one is due, the last one went out, and why the last attempt failed, if it did.
+  next: Time,
+  sent: Schema.NullOr(Time),
+  error: Schema.NullOr(Schema.String),
+  created: Time,
+})
+
+export const ReportInput = Schema.Struct({
+  name: ReportName,
+  cadence: ReportCadence,
+  format: ReportFormat.pipe(Schema.withDecodingDefault(Effect.succeed("text" as const))),
+  url: WebhookUrl,
+  enabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+})
+
+export const ReportPatch = Schema.Struct({
+  name: Schema.optional(ReportName),
+  cadence: Schema.optional(ReportCadence),
+  format: Schema.optional(ReportFormat),
+  url: Schema.optional(WebhookUrl),
+  enabled: Schema.optional(Schema.Boolean),
+})
+
+// A new report's signing secret, shown once: deliveries carry x-org-signature like audit streams.
+export const ReportCreated = Schema.Struct({ report: Report, secret: Schema.String })
+
 // ---- identity: SSO, domains, SCIM tokens --------------------------------------------------
 
 export const SsoProtocol = Schema.Literals(["oidc", "saml"])

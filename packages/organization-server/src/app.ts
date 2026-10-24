@@ -25,6 +25,7 @@ import { ConsoleAssets, consoleRoutes, node as consoleAssets } from "./routes/co
 import { deviceRoutes } from "./routes/device"
 import { gatewayRoutes } from "./routes/gateway"
 import { ssoRoutes } from "./routes/sso"
+import { Reports } from "./reports"
 import { Store } from "./store"
 import { Streams } from "./streams"
 
@@ -37,6 +38,7 @@ export const services = LayerNode.group([
   Oidc.node,
   Pricing.node,
   Streams.node,
+  Reports.node,
   httpClient,
   consoleAssets,
 ])
@@ -72,6 +74,7 @@ export function routes<E>(
     | Oidc.Service
     | Pricing.Service
     | Streams.Service
+    | Reports.Service
     | HttpClient.HttpClient
     | ConsoleAssets,
     E
@@ -85,15 +88,17 @@ export function routes<E>(
 
 // Device codes, abandoned SSO logins and audit history past retention, swept hourly. Model prices
 // are loaded at startup and refreshed daily, so gateway calls rarely wait for the catalog. Audit
-// streams are delivered every few seconds.
+// streams are delivered every few seconds, and due reports looked for every few minutes.
 export const housekeeping = Layer.effectDiscard(
   Effect.gen(function* () {
     const store = yield* Store.Service
     const config = yield* ServerConfig.Service
     const pricing = yield* Pricing.Service
     const streams = yield* Streams.Service
+    const reports = yield* Reports.Service
     yield* Effect.forkScoped(pricing.refresh().pipe(Effect.repeat(Schedule.spaced("1 day"))))
     yield* Effect.forkScoped(streams.run().pipe(Effect.repeat(Schedule.spaced("5 seconds"))))
+    yield* Effect.forkScoped(reports.run().pipe(Effect.repeat(Schedule.spaced("5 minutes"))))
     const sweep = store
       .sweep(config.retention)
       .pipe(

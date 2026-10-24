@@ -22,6 +22,7 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 | Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
 | Data policy | Refuses providers that may train on the org's data, keep it, or process it outside chosen regions, judged by the terms admins record for each provider. OpenRouter-compatible providers get the filters as routing preferences on every request |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
+| Analytics | Adoption by day, week or month (active and new people, sessions, requests, spend), members who don't use Kilo, and groups, sub-organizations and models compared with the period before; weekly or monthly reports posted to a webhook, such as a Slack channel |
 | Budgets | Daily or monthly limits for the whole organization (its sub-organizations included), each person, one person, a group's combined spend, and a sub-organization's allowance; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
 | Deployment | One binary or container with Postgres embedded, or any number of replicas behind a load balancer on a shared PostgreSQL server ([storage and high availability](#storage-and-high-availability)) |
@@ -307,9 +308,20 @@ Under Insight → Audit streaming (or `POST /api/v1/orgs/{org}/audit/streams`), 
 
 Events are delivered in order and at least once, so receivers can use the event `id` to drop the rare duplicate. A failing destination is retried with backoff, from 5 seconds up to every 5 minutes, and resumes exactly where it stopped. Its error shows on the stream until it recovers, and pausing a stream keeps its place. "Send test" sends a synthetic `audit.stream_test` event (id `0`) without affecting delivery. With several servers, one at a time delivers each stream (see [high availability](#storage-and-high-availability)).
 
+## Analytics and reports
+
+Insight → Analytics shows adoption and comparisons; the same figures come from the API, for dashboards and BI tools. Owners, admins and billing managers can read them, with a token issued for them (`POST /api/v1/orgs/{org}/members/{user}/tokens`).
+
+- `GET /api/v1/orgs/{org}/analytics/adoption?from=2026-09-01&to=2026-10-01&interval=week`: members, seats, people who made a request in the range, those whose first request ever was in it, sessions, requests and spend, interval by interval (`day`, `week` from Monday or `month`, in UTC; chosen from the range when omitted), and the members who made no request, with when they last did.
+- `GET /api/v1/orgs/{org}/analytics/compare?by=group&from=...&to=...`: each group (`group`), the organization and each sub-organization (`suborg`), or each model (`model`), with people, requests, tokens and spend in the range and in the range of the same length before it.
+
+`from` and `to` take dates or epoch milliseconds, and default to the last 30 days.
+
+**Scheduled reports** (Insight → Scheduled reports, or `/api/v1/orgs/{org}/reports`) post a summary an hour after each week (Monday to Sunday) or month ends, in UTC: spend and how it moved on the period before, requests, how many members used Kilo and how many for the first time, and the top five models and spenders. `"format": "text"` posts `{ "text": ... }`, which Slack, Mattermost and Google Chat incoming webhooks show as a message; `"format": "json"` posts the whole summary. Deliveries are signed like audit stream webhooks with a secret shown once at creation, never follow redirects, and are retried every 15 minutes until they succeed or the next period's report replaces them. `POST /api/v1/orgs/{org}/reports/{id}/send` sends the last whole period's report now.
+
 ## Audit events
 
-`audit.stream_create`, `audit.stream_remove`, `audit.stream_update`, `budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `gateway.provider_create`, `gateway.provider_remove`, `gateway.provider_update`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
+`audit.stream_create`, `audit.stream_remove`, `audit.stream_update`, `budget.update`, `custom_mode.create`, `custom_mode.delete`, `custom_mode.update`, `domain.create`, `gateway.provider_create`, `gateway.provider_remove`, `gateway.provider_update`, `group.create`, `group.delete`, `group.update`, `member.add`, `member.change_role`, `member.remove`, `organization.create`, `organization.settings_change`, `policy.update`, `price.update`, `report.create`, `report.delete`, `report.update`, `scim.group_create`, `scim.group_delete`, `scim.group_update`, `scim.token_create`, `scim.token_revoke`, `scim.user_activate`, `scim.user_create`, `scim.user_deactivate`, `scim.user_delete`, `scim.user_update`, `sso.auto_provision`, `sso.remove`, `sso.remove_domain`, `sso.set_domain`, `sso.update`, `token.create`, `token.revoke`, `user.accept_invite`, `user.login`, `user.logout`, `user.revoke_invite`, `user.send_invite`.
 
 Each entry records time, action, actor (user and email snapshot), target, details (for example the role before and after, or the models added to the blocklist) and client IP.
 
@@ -330,7 +342,9 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 | `/api/v1/orgs/{org}/modes` | Org-managed agents |
 | `/api/v1/orgs/{org}/audit`, `/audit/export` | Audit log (`action`, `actor`, `from`, `to`, `before`, `limit`) and its CSV export |
 | `/api/v1/orgs/{org}/audit/streams`, `/audit/streams/{id}`, `/audit/streams/{id}/test` | Audit streams (webhook and syslog destinations) |
-| `/api/v1/orgs/{org}/usage`, `/usage/export` | Usage ingestion and analytics |
+| `/api/v1/orgs/{org}/usage`, `/usage/export` | Usage ingestion, breakdowns and CSV export |
+| `/api/v1/orgs/{org}/analytics/adoption`, `/analytics/compare` | [Analytics](#analytics-and-reports) |
+| `/api/v1/orgs/{org}/reports`, `/reports/{id}`, `/reports/{id}/send` | Scheduled reports |
 | `/api/v1/orgs/{org}/budgets` | Budgets |
 | `/api/v1/orgs/{org}/gateway`, `/gateway/providers/{id}` | LLM gateway providers (keys are write-only) |
 | `/gateway/{provider}/...` | The gateway itself; speaks each provider's own API, with an organization token as the API key |

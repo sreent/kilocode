@@ -5,12 +5,14 @@ import { Api } from "@organization/protocol/api"
 import { InvalidRequestError, NotFoundError } from "@organization/protocol/errors"
 import { Caller, Membership } from "@organization/protocol/middleware"
 import { can } from "@organization/protocol/roles"
-import { instant, type StreamTarget } from "@organization/protocol/schema"
+import { instant, type Activity, type Interval, type StreamTarget } from "@organization/protocol/schema"
+import { Analytics } from "../analytics"
 import * as Crypto from "../crypto"
 import { ServerConfig } from "../config"
 import { charge } from "../pricing"
 import { RequestContext } from "../request"
-import { Store, type Stream } from "../store"
+import { Reports } from "../reports"
+import { Store, type Report, type Stream } from "../store"
 import { Streams } from "../streams"
 import { changed, csv } from "./shared"
 
@@ -28,6 +30,24 @@ const stream = (row: Stream & { pending: number }) => ({
   failing: row.failing,
   created: row.created,
 })
+
+const report = (row: Report) => ({
+  id: row.id,
+  name: row.name,
+  cadence: row.cadence,
+  format: row.format,
+  url: row.url,
+  enabled: row.enabled,
+  next: row.next,
+  sent: row.sent,
+  error: row.error,
+  created: row.created,
+})
+
+const none: Activity = { active: 0, requests: 0, cost: 0, tokens: 0 }
+
+// Charts stay legible: past this many intervals, a longer interval has to be asked for.
+const intervals = 1000
 
 // Collector URLs often carry their token in the path, so audit entries name only the host.
 const destination = (target: StreamTarget) =>
@@ -66,6 +86,7 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
     const store = yield* Store.Service
     const config = yield* ServerConfig.Service
     const streams = yield* Streams.Service
+    const reports = yield* Reports.Service
     const audit = RequestContext.auditor(store, config)
 
     // Webhook signing secrets and extra headers are sealed at rest, like SSO and gateway secrets.
@@ -73,7 +94,7 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
       config.secret
         ? Crypto.seal(config.secret, value)
         : Effect.fail(
-            new InvalidRequestError({ message: "set ORGANIZATION_SECRET on the server before adding webhook streams" }),
+            new InvalidRequestError({ message: "set ORGANIZATION_SECRET on the server before adding webhooks" }),
           )
     const sealHeaders = (headers: Record<string, string> | undefined) =>
       headers && Object.keys(headers).length > 0 ? seal(JSON.stringify(headers)) : Effect.succeed(null)
@@ -269,6 +290,148 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
             rows.map((row) => ({ ...row, at: new Date(Number(row.at)).toISOString() })),
             usageColumns,
           )
+        }),
+      )
+      .handle(
+        "analytics.adoption",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const window = yield* range(ctx.query)
+          const span = window.to - window.from
+          const interval: Interval =
+            ctx.query.interval ?? (span > 180 * day ? "month" : span > 45 * day ? "week" : "day")
+          const starts = Analytics.buckets(interval, window.from, window.to)
+          if (starts.length > intervals)
+            return yield* new InvalidRequestError({
+              message: `that is ${starts.length} ${interval}s; ask for a shorter range or a longer interval`,
+            })
+          const org = scope.org.id
+          const points = new Map(
+            (yield* store.analytics.series({ org, interval, ...window })).map((row) => [row.start, row]),
+          )
+          const totals = yield* store.analytics.totals({ org, ...window })
+          const seats = yield* store.seats.usage(org)
+          return {
+            ...window,
+            interval,
+            members: yield* store.analytics.members(org),
+            seats: { limit: seats.limit, used: seats.used },
+            ...totals,
+            series: starts.map(
+              (start) => points.get(start) ?? { start, active: 0, new: 0, sessions: 0, requests: 0, cost: 0 },
+            ),
+            idle: yield* store.analytics.idle({ org, ...window }),
+          }
+        }),
+      )
+      .handle(
+        "analytics.compare",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const window = yield* range(ctx.query)
+          const previous = { from: window.from - (window.to - window.from), to: window.from }
+          const input = { org: scope.org.id, by: ctx.query.by }
+          const now = yield* store.analytics.compare({ ...input, ...window })
+          const then = yield* store.analytics.compare({ ...input, ...previous })
+          const key = (row: { id: string | null; key: string }) => row.id ?? row.key
+          const earlier = new Map(then.map((row) => [key(row), row]))
+          const later = new Map(now.map((row) => [key(row), row]))
+          const activity = (row: Activity | undefined) =>
+            row ? { active: row.active, requests: row.requests, cost: row.cost, tokens: row.tokens } : none
+          // Rows from either range: a model nobody uses any more still shows what it used to cost.
+          const rows = [...now, ...then.filter((row) => !later.has(key(row)))].map((row) => ({
+            key: row.key,
+            id: row.id,
+            members: later.get(key(row))?.members ?? row.members,
+            current: activity(later.get(key(row))),
+            previous: activity(earlier.get(key(row))),
+          }))
+          return {
+            by: ctx.query.by,
+            ...window,
+            previous,
+            rows: rows.toSorted(
+              (a, b) =>
+                b.current.cost - a.current.cost || b.previous.cost - a.previous.cost || a.key.localeCompare(b.key),
+            ),
+          }
+        }),
+      )
+      .handle(
+        "reports.list",
+        Effect.fn(function* () {
+          return { reports: (yield* store.report.list((yield* Membership).org.id)).map(report) }
+        }),
+      )
+      .handle(
+        "reports.create",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const input = ctx.payload
+          const secret = Crypto.secret(32)
+          const row = yield* store.report.create(scope.org.id, {
+            name: input.name,
+            cadence: input.cadence,
+            format: input.format,
+            url: input.url,
+            secret: yield* seal(secret),
+            enabled: input.enabled,
+            next: Reports.due(input.cadence, yield* Clock.currentTimeMillis),
+          })
+          yield* audit("report.create", row.id, {
+            name: row.name,
+            cadence: row.cadence,
+            destination: new URL(row.url).host,
+          })
+          return { report: report(row), secret }
+        }),
+      )
+      .handle(
+        "reports.update",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.report.get(scope.org.id, ctx.params.id)
+          if (!current) return yield* new NotFoundError({ message: "report not found" })
+          const patch = ctx.payload
+          const cadence = patch.cadence ?? current.cadence
+          const row = yield* store.report.update(scope.org.id, current.id, {
+            ...(patch.name !== undefined && { name: patch.name }),
+            ...(patch.format !== undefined && { format: patch.format }),
+            ...(patch.url !== undefined && { url: patch.url }),
+            ...(patch.enabled !== undefined && { enabled: patch.enabled }),
+            // A new cadence, or a report turned back on, starts from the next period.
+            ...((cadence !== current.cadence || (patch.enabled && !current.enabled)) && {
+              next: Reports.due(cadence, yield* Clock.currentTimeMillis),
+            }),
+            ...(patch.cadence !== undefined && { cadence: patch.cadence }),
+            ...(patch.url !== undefined && { error: null }),
+          })
+          yield* audit("report.update", current.id, {
+            name: row!.name,
+            changed: changed(report(current), report(row!)),
+            destination: new URL(row!.url).host,
+          })
+          return report(row!)
+        }),
+      )
+      .handle(
+        "reports.remove",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.report.get(scope.org.id, ctx.params.id)
+          if (!current) return yield* new NotFoundError({ message: "report not found" })
+          yield* store.report.remove(scope.org.id, current.id)
+          yield* audit("report.delete", current.id, { name: current.name })
+          return HttpApiSchema.NoContent.make()
+        }),
+      )
+      .handle(
+        "reports.send",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const current = yield* store.report.get(scope.org.id, ctx.params.id)
+          if (!current) return yield* new NotFoundError({ message: "report not found" })
+          return yield* reports.send(scope.org, current)
         }),
       )
   }),

@@ -13,9 +13,11 @@ import {
   type Budget,
   type BudgetSpend,
   type BudgetStatus,
+  type CompareBy,
   type GatewayAuth,
   type GatewayKind,
   type GatewayModel,
+  type Interval,
   type Price,
   type Role,
   type StreamTarget,
@@ -41,6 +43,7 @@ import {
   OrgTable,
   PolicyTable,
   PriceTable,
+  ReportTable,
   SsoTable,
   StreamTable,
   TokenTable,
@@ -75,6 +78,7 @@ export type Sso = (OidcConnection | SamlConnection) & { readonly org: string; re
 export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
 export type GatewayCall = typeof GatewayCallTable.$inferSelect
 export type PriceRule = typeof PriceTable.$inferSelect
+export type Report = typeof ReportTable.$inferSelect
 export type Stream = typeof StreamTable.$inferSelect
 
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
@@ -1278,6 +1282,160 @@ const make = Effect.gen(function* () {
       .orderBy(asc(BudgetTable.scope), asc(BudgetTable.target), asc(BudgetTable.period))
   }, Effect.orDie)
 
+  // Adoption and comparisons. Activity counts people who made a request, and what they spent.
+  const activity = sql`count(distinct s.user)::float8 as active, count(s.id)::float8 as requests,
+    coalesce(round(sum(s.cost)::numeric, 6), 0)::float8 as cost,
+    coalesce(sum(s.input + s.output + s.reasoning + s.cache_read + s.cache_write), 0)::float8 as tokens`
+  type Row = { id: string | null; key: string; active: number; requests: number; cost: number; tokens: number }
+  const analytics = {
+    // Interval by interval, for the intervals that had any requests.
+    series: Effect.fn("Store.analytics.series")(function* (input: {
+      org: string
+      from: number
+      to: number
+      interval: Interval
+    }) {
+      const bucket = sql`date_trunc(${input.interval}, to_timestamp(s.at / 1000.0) at time zone 'UTC')`
+      return yield* db.execute<{
+        start: number
+        active: number
+        new: number
+        sessions: number
+        requests: number
+        cost: number
+      }>(sql`
+        with first as (select u.user, min(u.at) as at from usage u where u.org = ${input.org} group by u.user)
+        select (extract(epoch from ${bucket}) * 1000)::float8 as start, count(distinct s.user)::float8 as active,
+          count(distinct s.user) filter (
+            where date_trunc(${input.interval}, to_timestamp(f.at / 1000.0) at time zone 'UTC') = ${bucket}
+          )::float8 as new,
+          count(distinct s.session)::float8 as sessions, count(*)::float8 as requests,
+          round(sum(s.cost)::numeric, 6)::float8 as cost
+        from usage s join first f on f.user = s.user
+        where s.org = ${input.org} and s.at >= ${input.from} and s.at < ${input.to}
+        group by 1 order by 1`)
+    }, Effect.orDie),
+    totals: Effect.fn("Store.analytics.totals")(function* (input: { org: string; from: number; to: number }) {
+      const row = (yield* db.execute<{
+        active: number
+        new: number
+        sessions: number
+        requests: number
+        cost: number
+      }>(sql`
+        with first as (select u.user, min(u.at) as at from usage u where u.org = ${input.org} group by u.user)
+        select count(distinct s.user)::float8 as active,
+          count(distinct s.user) filter (where f.at >= ${input.from})::float8 as new,
+          count(distinct s.session)::float8 as sessions, count(*)::float8 as requests,
+          coalesce(round(sum(s.cost)::numeric, 6), 0)::float8 as cost
+        from usage s join first f on f.user = s.user
+        where s.org = ${input.org} and s.at >= ${input.from} and s.at < ${input.to}`))[0]
+      return row ?? { active: 0, new: 0, sessions: 0, requests: 0, cost: 0 }
+    }, Effect.orDie),
+    // Members with an active membership who made no request in the range, and when they last did.
+    idle: Effect.fn("Store.analytics.idle")(function* (input: { org: string; from: number; to: number }) {
+      return yield* db.execute<{ id: string; email: string; name: string | null; last: number | null }>(sql`
+        select u.id, u.email, u.name, (select max(x.at) from usage x where x.org = m.org and x.user = m.user)::float8 as last
+        from members m join users u on u.id = m.user
+        where m.org = ${input.org} and m.suspended is null and u.active
+          and not exists (
+            select 1 from usage x where x.org = m.org and x.user = m.user and x.at >= ${input.from} and x.at < ${input.to}
+          )
+        order by last nulls first, u.email`)
+    }, Effect.orDie),
+    members: Effect.fn("Store.analytics.members")(function* (orgID: string) {
+      return yield* db.$count(MemberTable, and(eq(MemberTable.org, orgID), isNull(MemberTable.suspended)))
+    }, Effect.orDie),
+    // Activity per group, per org of the org's tree, or per model, with the people each covers.
+    compare: Effect.fn("Store.analytics.compare")(function* (input: {
+      org: string
+      by: CompareBy
+      from: number
+      to: number
+    }) {
+      const range = sql`s.at >= ${input.from} and s.at < ${input.to}`
+      if (input.by === "model")
+        return (yield* db.execute<Row>(sql`
+          select null as id, s.provider || '/' || s.model as key, ${activity}
+          from usage s where s.org = ${input.org} and ${range} group by 2`)).map((row) => ({ ...row, members: null }))
+      if (input.by === "group")
+        return yield* db.execute<Row & { members: number }>(sql`
+          select g.id, g.name as key, ${activity},
+            (select count(*) from group_members gm join members m on m.user = gm.user and m.org = g.org
+              where gm.grp = g.id and m.suspended is null)::float8 as members
+          from org_groups g
+          left join group_members gm on gm.grp = g.id
+          left join usage s on s.user = gm.user and s.org = g.org and ${range}
+          where g.org = ${input.org} group by g.id, g.name`)
+      return yield* db.execute<Row & { members: number }>(sql`
+        select o.id, o.name as key, ${activity},
+          (select count(*) from members m where m.org = o.id and m.suspended is null)::float8 as members
+        from orgs o left join usage s on s.org = o.id and ${range}
+        where o.id = ${input.org} or o.parent = ${input.org} group by o.id, o.name`)
+    }, Effect.orDie),
+  }
+
+  const report = {
+    list: Effect.fn("Store.report.list")(function* (orgID: string) {
+      return yield* db.select().from(ReportTable).where(eq(ReportTable.org, orgID)).orderBy(asc(ReportTable.name))
+    }, Effect.orDie),
+    get: Effect.fn("Store.report.get")(function* (orgID: string, id: string) {
+      return (yield* db
+        .select()
+        .from(ReportTable)
+        .where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+        .limit(1))[0]
+    }, Effect.orDie),
+    create: Effect.fn("Store.report.create")(function* (
+      orgID: string,
+      input: Pick<Report, "name" | "cadence" | "format" | "url" | "secret" | "enabled" | "next">,
+    ) {
+      return (yield* db
+        .insert(ReportTable)
+        .values({ id: Crypto.id("rpt"), org: orgID, ...input, created: yield* now })
+        .returning())[0]!
+    }, Effect.orDie),
+    update: Effect.fn("Store.report.update")(function* (
+      orgID: string,
+      id: string,
+      patch: Partial<Pick<Report, "name" | "cadence" | "format" | "url" | "enabled" | "next" | "error">>,
+    ) {
+      return (yield* db
+        .update(ReportTable)
+        .set(patch)
+        .where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+        .returning())[0]
+    }, Effect.orDie),
+    remove: Effect.fn("Store.report.remove")(function* (orgID: string, id: string) {
+      yield* db.delete(ReportTable).where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+    }, Effect.orDie),
+    // Atomic, so of several replicas racing for a due report exactly one sends it.
+    claim: Effect.fn("Store.report.claim")(function* (ttl: number) {
+      const time = yield* now
+      return yield* db
+        .update(ReportTable)
+        .set({ lease: time + ttl })
+        .where(
+          and(
+            eq(ReportTable.enabled, true),
+            lte(ReportTable.next, time),
+            or(isNull(ReportTable.lease), lt(ReportTable.lease, time)),
+          ),
+        )
+        .returning()
+    }, Effect.orDie),
+    sent: Effect.fn("Store.report.sent")(function* (id: string, next: number) {
+      yield* db
+        .update(ReportTable)
+        .set({ sent: yield* now, next, error: null, lease: null })
+        .where(eq(ReportTable.id, id))
+    }, Effect.orDie),
+    // Keeps the report due, held back until `retry`.
+    failed: Effect.fn("Store.report.failed")(function* (id: string, error: string, retry: number) {
+      yield* db.update(ReportTable).set({ error, lease: retry }).where(eq(ReportTable.id, id))
+    }, Effect.orDie),
+  }
+
   // An org with its sub-orgs: what an "org" budget covers.
   const tree = Effect.fn("Store.org.tree")(function* (orgID: string) {
     const children = yield* db.select({ id: OrgTable.id }).from(OrgTable).where(eq(OrgTable.parent, orgID))
@@ -1455,6 +1613,8 @@ const make = Effect.gen(function* () {
     stream,
     budget,
     seats,
+    analytics,
+    report,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.
     transaction: <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
