@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import java.io.File
@@ -28,7 +29,7 @@ class KiloCliConfigPathTest {
 
         val path = KiloCliConfigPath.resolve(mapOf("XDG_CONFIG_HOME" to xdg.absolutePath))
 
-        assertEquals(File(xdg, "kilo").absoluteFile, path.absoluteFile)
+        assertEquals(File(xdg, Brand.COMMAND).absoluteFile, path.absoluteFile)
     }
 
     @Test
@@ -37,7 +38,7 @@ class KiloCliConfigPathTest {
 
         val path = KiloCliConfigPath.resolve(mapOf("HOME" to home.absolutePath))
 
-        assertEquals(File(File(home, ".config"), "kilo").absoluteFile, path.absoluteFile)
+        assertEquals(File(File(home, ".config"), Brand.COMMAND).absoluteFile, path.absoluteFile)
     }
 
     @Test
@@ -51,7 +52,7 @@ class KiloCliConfigPathTest {
             ),
         )
 
-        assertEquals(File(File(home, ".config"), "kilo").absoluteFile, path.absoluteFile)
+        assertEquals(File(File(home, ".config"), Brand.COMMAND).absoluteFile, path.absoluteFile)
     }
 
     @Test
@@ -66,7 +67,7 @@ class KiloCliConfigPathTest {
             ),
         )
 
-        assertEquals(File(File(home, ".config"), "kilo").absoluteFile, path.absoluteFile)
+        assertEquals(File(File(home, ".config"), Brand.COMMAND).absoluteFile, path.absoluteFile)
     }
 
     @Test
@@ -75,6 +76,6 @@ class KiloCliConfigPathTest {
 
         val path = KiloCliConfigPath.legacySettingsFile(mapOf("HOME" to home.absolutePath))
 
-        assertEquals(File(File(File(home, ".config"), "kilo"), "legacy-settings.json").absoluteFile, path.absoluteFile)
+        assertEquals(File(File(File(home, ".config"), Brand.COMMAND), "legacy-settings.json").absoluteFile, path.absoluteFile)
     }
 }

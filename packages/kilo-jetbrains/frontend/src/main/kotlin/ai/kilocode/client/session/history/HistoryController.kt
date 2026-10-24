@@ -29,6 +29,8 @@ class HistoryController(
     private val gitUrlProvider: () -> String? = { resolveGitRemoteUrl(workspace.directory) },
     private val telemetry: (String, Map<String, String>) -> Unit = { event, props -> Telemetry.send(event, props) },
     private val io: CoroutineDispatcher = Dispatchers.IO,
+    /** Whether to load the Kilo account's cloud sessions; TU Code has no Kilo account. */
+    private val cloudSessions: Boolean = true,
 ) {
     companion object {
         const val CLOUD_LIMIT = 50
@@ -82,7 +84,7 @@ class HistoryController(
 
     fun reload() {
         reloadLocal()
-        reloadCloud()
+        if (cloudSessions) reloadCloud()
     }
 
     internal fun activity() = sessions.activitySnapshot()

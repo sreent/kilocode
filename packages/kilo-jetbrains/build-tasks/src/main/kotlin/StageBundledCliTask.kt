@@ -27,7 +27,8 @@ abstract class StageBundledCliTask : DefaultTask() {
     companion object {
         private val DIGEST = Regex("^sha256:[a-f0-9]{64}$")
         private val JSON = Json { ignoreUnknownKeys = true }
-        private const val API = "https://api.github.com/repos/Kilo-Org/kilocode/releases/tags"
+        // The CLI's releases in the brand's repository, whose archives are named after its command.
+        private val API = "${Brand.REPOSITORY.replace("https://github.com/", "https://api.github.com/repos/")}/releases/tags"
         private val PLATFORMS = listOf(
             "darwin-arm64",
             "darwin-x64",
@@ -56,7 +57,7 @@ abstract class StageBundledCliTask : DefaultTask() {
         val assets = assets(ver)
         val files = PLATFORMS.associateWith { platform ->
             val ext = ext(platform)
-            val name = "kilo-$platform.$ext"
+            val name = "${Brand.COMMAND}-$platform.$ext"
             val digest = assets[name] ?: throw GradleException("Kilo CLI release $ver did not include $name")
             val file = cacheDir.dir(ver).map { it.dir(platform).file(name) }.get().asFile
             fetch(ver, platform, name, digest, file)
@@ -109,7 +110,7 @@ abstract class StageBundledCliTask : DefaultTask() {
     private fun fetch(ver: String, platform: String, name: String, digest: String, file: File) {
         if (file.isFile && sum(file) == digest) return
         file.parentFile.mkdirs()
-        val url = "https://github.com/Kilo-Org/kilocode/releases/download/v$ver/$name"
+        val url = "${Brand.REPOSITORY}/releases/download/v$ver/$name"
         logger.lifecycle("Downloading pinned Kilo CLI $platform from $url")
         val conn = connect(url)
         try {

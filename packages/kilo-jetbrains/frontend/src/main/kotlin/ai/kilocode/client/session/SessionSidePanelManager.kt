@@ -109,9 +109,10 @@ class SessionSidePanelManager(
             app = service<KiloAppService>().state,
             open = this::openSession,
             deleted = this::removeSession,
+            cloudSessions = false,
         )
         Disposer.register(this) { cs.cancel() }
-        return HistoryPanel(this, controller, nav = this::back, manager = this, timers = timers).component
+        return HistoryPanel(this, controller, nav = this::back, manager = this, timers = timers, cloudSessions = false).component
     }
 
     @RequiresEdt

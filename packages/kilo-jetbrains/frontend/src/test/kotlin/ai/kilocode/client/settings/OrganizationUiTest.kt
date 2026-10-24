@@ -120,7 +120,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
         edt {
             assertEquals(OrgMode.ENROLLED, panel.mode)
             val t = text(panel)
-            assertTrue(t, t.contains("Acme manages Kilo on this device."))
+            assertTrue(t, t.contains("Acme manages TU Code on this device."))
             panel.signinBtn.doClick()
         }
         waitFor(OrgMode.PENDING)

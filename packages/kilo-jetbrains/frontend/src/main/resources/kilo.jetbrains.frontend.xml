@@ -66,13 +66,7 @@
                 bundle="messages.KiloBundle"
                 key="settings.providers.displayName"/>
 
-        <applicationConfigurable
-                parentId="ai.kilocode.jetbrains.settings"
-                id="ai.kilocode.jetbrains.settings.marketplace"
-                groupWeight="2"
-                instance="ai.kilocode.client.settings.marketplace.MarketplaceConfigurable"
-                bundle="messages.KiloBundle"
-                key="settings.marketplace.displayName"/>
+        <!-- TU Code: no Marketplace page, because the marketplace is Kilo's service. -->
 
         <applicationConfigurable
                 parentId="ai.kilocode.jetbrains.settings"
@@ -257,7 +251,6 @@
             <reference ref="Kilo.OpenSettings"/>
             <separator/>
             <reference ref="Kilo.OpenUserProfileSettings"/>
-            <reference ref="Kilo.OpenMarketplaceSettings"/>
             <separator/>
             <reference ref="Kilo.OpenConfigGroup"/>
             <separator/>
@@ -521,8 +514,7 @@
             <reference ref="$Copy"/>
             <separator/>
             <reference ref="Kilo.Session.CopyId"/>
-            <reference ref="Kilo.Session.CopyShareLink"/>
-            <reference ref="Kilo.Session.Share"/>
+            <!-- TU Code: no Kilo.Session.CopyShareLink or Kilo.Session.Share, because sharing publishes the session to Kilo's service. -->
             <separator/>
             <reference ref="Kilo.StopSession"/>
         </group>
@@ -547,8 +539,7 @@
             <reference ref="Kilo.CliGroup"/>
             <separator/>
             <reference ref="Kilo.Session.CopyId"/>
-            <reference ref="Kilo.Session.CopyShareLink"/>
-            <reference ref="Kilo.Session.Share"/>
+            <!-- TU Code: no sharing, as in the context menu above. -->
         </group>
     </actions>
 </idea-plugin>

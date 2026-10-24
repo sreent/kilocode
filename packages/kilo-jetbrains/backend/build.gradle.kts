@@ -65,14 +65,13 @@ val generateOpenApiSpec = tasks.register<GenerateOpenApiSpecTask>("generateOpenA
     description = "Generate CLI OpenAPI spec into the build directory"
     cliVersion.set(pinnedCliVersion)
     repo.set(repoCli)
-    repoRoot.set(repoRootDir)
+    repoSpec.set(rootProject.layout.projectDirectory.file("../sdk/openapi.json"))
     token.set(
         providers.environmentVariable("GH_TOKEN")
             .orElse(providers.environmentVariable("GITHUB_TOKEN"))
     )
     cacheDir.set(layout.buildDirectory.dir("cli-cache"))
     spec.set(rawSpec)
-    bunPath.set(bunPathProvider)
 }
 
 val buildRepoCli = tasks.register<Exec>("buildRepoCli") {

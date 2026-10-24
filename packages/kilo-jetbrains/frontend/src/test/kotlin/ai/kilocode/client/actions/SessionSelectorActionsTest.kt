@@ -28,7 +28,7 @@ class SessionSelectorActionsTest : BasePlatformTestCase() {
 
         assertEquals("code", ctx.mode.selectedForTest()?.id)
         assertEquals("Cycle Mode", action.templatePresentation.text)
-        assertEquals("Switch to the next Kilo mode", action.templatePresentation.description)
+        assertEquals("Switch to the next TU Code mode", action.templatePresentation.description)
     }
 
     fun `test cycle mode action disabled with a single mode`() {

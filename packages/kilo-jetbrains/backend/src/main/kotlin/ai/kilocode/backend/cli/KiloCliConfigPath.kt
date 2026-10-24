@@ -1,9 +1,10 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import java.io.File
 
 internal object KiloCliConfigPath {
-    private const val APP = "kilo"
+    private const val APP = Brand.COMMAND
 
     fun resolve(env: Map<String, String>): File {
         env["KILO_CONFIG_DIR"]?.takeIf { it.isNotBlank() }?.let { return File(it) }

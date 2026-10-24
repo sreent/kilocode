@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import ai.kilocode.log.KiloLog
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -18,7 +19,7 @@ object KiloRepoCli {
 
     suspend fun extract(force: Boolean): File = extract(
         force = force,
-        root = File(PathManager.getSystemPath(), "kilo/repo-cli/${KiloProps.cliVersion()}"),
+        root = File(PathManager.getSystemPath(), "${Brand.COMMAND}/repo-cli/${KiloProps.cliVersion()}"),
         cleanup = true,
         source = {
             KiloRepoCli::class.java.classLoader.getResourceAsStream(ARCHIVE)
@@ -113,7 +114,7 @@ object KiloRepoCli {
         }
         target.parentFile.mkdirs()
         target.outputStream().use(copy)
-        if (!SystemInfo.isWindows && (target.name == "kilo" || target.name == "bwrap")) {
+        if (!SystemInfo.isWindows && (target.name == Brand.COMMAND || target.name == "bwrap")) {
             target.setExecutable(true)
         }
     }

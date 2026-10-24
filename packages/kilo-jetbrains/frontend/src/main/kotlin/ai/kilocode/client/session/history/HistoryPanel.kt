@@ -64,6 +64,8 @@ class HistoryPanel(
     private val nav: () -> Unit = {},
     private val manager: SessionManager? = null,
     private val timers: UiTimerSource = UiTimers,
+    /** Whether to show the Kilo account's cloud sessions; TU Code has no Kilo account. */
+    private val cloudSessions: Boolean = true,
 ) : BorderLayoutPanel(), Disposable, DataProvider {
     private val localSearch = search(controller.local)
     private val cloudSearch = search(controller.cloud)
@@ -96,7 +98,7 @@ class HistoryPanel(
         presentation.setTabsPosition(JBTabsPosition.top)
         presentation.showBorder = false
         addTab(localInfo).setPreferredFocusableComponent(localSearch.textEditor)
-        addTab(cloudInfo).setPreferredFocusableComponent(cloudSearch.textEditor)
+        if (cloudSessions) addTab(cloudInfo).setPreferredFocusableComponent(cloudSearch.textEditor)
         addListener(object : TabsListener {
             override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
                 sync()

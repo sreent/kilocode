@@ -1,5 +1,6 @@
 package ai.kilocode.client.session.ui.empty
 
+import ai.kilocode.Brand
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.ui.UiStyle
 import ai.kilocode.client.ui.layout.HAlign
@@ -86,7 +87,7 @@ internal class EmptySessionFeedback(
                 cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
                 addMouseListener(object : MouseAdapter() {
                     override fun mouseClicked(e: MouseEvent) {
-                        open(KILO_URL)
+                        open(HOME_URL)
                     }
                 })
             }
@@ -98,12 +99,6 @@ internal class EmptySessionFeedback(
                 .next(ActionButton(KiloBundle.message("feedback.dialog.github"), AllIcons.Vcs.Vendors.Github) {
                     open(GITHUB_ISSUES_URL)
                 }.align(HAlign.CENTER, VAlign.CENTER))
-                .next(ActionButton(KiloBundle.message("feedback.dialog.discord"), DISCORD_ICON) {
-                    open(DISCORD_URL)
-                }.align(HAlign.CENTER, VAlign.CENTER))
-                .next(ActionButton(KiloBundle.message("feedback.dialog.support"), AllIcons.Actions.Help) {
-                    open(SUPPORT_URL)
-                }.align(HAlign.CENTER, VAlign.CENTER))
 
             return Stack.vertical(gap = UiStyle.Gap.lg())
                 .fill(UiStyle.Gap.sm())
@@ -114,7 +109,7 @@ internal class EmptySessionFeedback(
                 .fill(UiStyle.Gap.xs())
         }
 
-        fun urls() = listOf(GITHUB_ISSUES_URL, DISCORD_URL, SUPPORT_URL)
+        fun urls() = listOf(GITHUB_ISSUES_URL)
 
         private fun messageHtml() = XmlStringUtil.wrapInHtml(
             "<div style='text-align:center'>${XmlStringUtil.escapeString(KiloBundle.message("feedback.dialog.message"))}</div>"
@@ -124,10 +119,8 @@ internal class EmptySessionFeedback(
             XmlStringUtil.escapeString(KiloBundle.message("feedback.button"))
         )
 
-        private const val KILO_URL = "https://kilocode.ai"
-        private const val GITHUB_ISSUES_URL = "https://github.com/Kilo-Org/kilocode/issues/new/choose"
-        private const val DISCORD_URL = "https://kilo.ai/discord"
-        private const val SUPPORT_URL = "https://kilo.ai/support"
-        private val DISCORD_ICON = IconLoader.getIcon("/icons/discord.svg", EmptySessionPanel::class.java)
+        // TU Code's repository and its issues; Kilo's Discord and support desk are Kilo's.
+        private const val HOME_URL = Brand.REPOSITORY
+        private const val GITHUB_ISSUES_URL = "${Brand.REPOSITORY}/issues"
     }
 }

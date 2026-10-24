@@ -188,7 +188,7 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         val panel = panel()
 
         assertEquals(
-            "Kilo Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
+            "TU Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
             panel.explanationText(),
         )
     }
@@ -378,11 +378,7 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         val buttons = UIUtil.uiTraverser(content).filter(JButton::class.java).toList()
 
         assertEquals(
-            listOf(
-                KiloBundle.message("feedback.dialog.github"),
-                KiloBundle.message("feedback.dialog.discord"),
-                KiloBundle.message("feedback.dialog.support"),
-            ),
+            listOf(KiloBundle.message("feedback.dialog.github")),
             buttons.map { it.text },
         )
 
@@ -391,14 +387,14 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         assertEquals(panel.feedbackUrls(), opened)
     }
 
-    fun `test feedback discord action has icon`() {
+    fun `test feedback github action has icon`() {
         val panel = panel()
         val content = panel.feedbackContent()
-        val discord = UIUtil.uiTraverser(content)
+        val github = UIUtil.uiTraverser(content)
             .filter(JButton::class.java)
-            .first { it.text == KiloBundle.message("feedback.dialog.discord") }
+            .first { it.text == KiloBundle.message("feedback.dialog.github") }
 
-        assertNotNull(discord.icon)
+        assertNotNull(github.icon)
     }
 
     fun `test renderer aligns title center and time east`() {

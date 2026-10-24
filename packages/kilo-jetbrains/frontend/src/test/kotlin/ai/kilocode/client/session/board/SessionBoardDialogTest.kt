@@ -358,7 +358,7 @@ class SessionBoardDialogTest : BasePlatformTestCase() {
 
         edt {
             assertSame(d.scroll, d.preferredFocusedComponent)
-            assertEquals("Kilo Swarm", d.scroll.accessibleContext.accessibleName)
+            assertEquals("TU Code Swarm", d.scroll.accessibleContext.accessibleName)
             assertTrue(d.scroll.isFocusable)
         }
     }
@@ -367,21 +367,21 @@ class SessionBoardDialogTest : BasePlatformTestCase() {
         rpc.board = board(messages = emptyList(), hasMore = false)
         val d = open(sessionTitle = "Locate session status logic")
 
-        edt { assertEquals("Kilo Swarm \u2014 Locate session status logic", d.title) }
+        edt { assertEquals("TU Code Swarm \u2014 Locate session status logic", d.title) }
     }
 
     fun `test window title falls back to the product name without a session title`() {
         rpc.board = board(messages = emptyList(), hasMore = false)
         val d = open(sessionTitle = null)
 
-        edt { assertEquals("Kilo Swarm", d.title) }
+        edt { assertEquals("TU Code Swarm", d.title) }
     }
 
     fun `test window title falls back when the session title is blank`() {
         rpc.board = board(messages = emptyList(), hasMore = false)
         val d = open(sessionTitle = "   ")
 
-        edt { assertEquals("Kilo Swarm", d.title) }
+        edt { assertEquals("TU Code Swarm", d.title) }
     }
 
     fun `test banner starts collapsed with the short explanation only`() {

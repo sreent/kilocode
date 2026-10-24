@@ -2,6 +2,7 @@
 
 package ai.kilocode.backend.rpc
 
+import ai.kilocode.Brand
 import ai.kilocode.backend.app.KiloBackendAppService
 import ai.kilocode.backend.cli.KiloClaudeCompatSettings
 import ai.kilocode.backend.cli.KiloCliDataParser
@@ -430,7 +431,7 @@ class KiloAgentBehaviorRpcApiImpl(private val backend: KiloBackendAppService? = 
     }
 
     private fun urlCached(path: Path): Boolean {
-        return cacheRoots().any { root -> path.startsWith(root.resolve("kilo").resolve("skills").normalize()) }
+        return cacheRoots().any { root -> path.startsWith(root.resolve(Brand.COMMAND).resolve("skills").normalize()) }
     }
 
     private fun cacheRoots(): Set<Path> = buildSet {

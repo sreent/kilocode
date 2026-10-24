@@ -60,8 +60,6 @@ class SessionContextMenuActionsTest : SessionUiTestBase() {
                 "\$Copy",
                 "---",
                 "Kilo.Session.CopyId",
-                "Kilo.Session.CopyShareLink",
-                "Kilo.Session.Share",
                 "---",
                 "Kilo.StopSession",
             ),
@@ -95,8 +93,6 @@ class SessionContextMenuActionsTest : SessionUiTestBase() {
                 "Kilo.CliGroup",
                 "---",
                 "Kilo.Session.CopyId",
-                "Kilo.Session.CopyShareLink",
-                "Kilo.Session.Share",
             ),
             menuChildren("Kilo.Session.PromptMenu"),
         )

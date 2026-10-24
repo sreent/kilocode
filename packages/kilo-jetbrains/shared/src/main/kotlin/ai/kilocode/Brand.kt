@@ -5,6 +5,7 @@ object Brand {
     const val NAME = "TU Code"
     const val COMMAND = "tucode"
     const val CLI = "@tucode/cli"
+    const val PLUGIN_ID = "com.tucode.jetbrains"
     const val REPOSITORY = "https://github.com/sreent/kilocode"
     const val DOCS = "https://github.com/sreent/kilocode/blob/main/packages/kilo-docs/pages"
 }

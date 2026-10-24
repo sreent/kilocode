@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import ai.kilocode.backend.testing.TestLog
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
@@ -46,7 +47,7 @@ class KiloCliDownloaderTest {
             assertEquals(File(File(dir, "1.2.3"), KiloCliPlatform.current()).absolutePath, cli.parentFile.parentFile.absolutePath)
             assertEquals("#!/bin/sh\n", cli.readText())
             assertTrue(File(cli.parentFile, "kilo-sandbox-mutation-worker.js").isFile)
-            assertEquals("/release/v1.2.3/kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
+            assertEquals("/release/v1.2.3/${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
             assertEquals(CliDownload(0, "1.2.3", KiloCliPlatform.current()), seen.first())
             assertTrue(seen.any { it.percent == 100 && it.version == "1.2.3" && it.platform == KiloCliPlatform.current() })
             assertTrue(
@@ -113,7 +114,7 @@ class KiloCliDownloaderTest {
 
             assertTrue(cli.isFile)
             assertEquals("/api/v1.2.3", server.takeRequest().path)
-            assertEquals("/release/v1.2.3/kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
+            assertEquals("/release/v1.2.3/${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
             assertEquals(2, server.requestCount)
         }
     }
@@ -140,7 +141,7 @@ class KiloCliDownloaderTest {
                 "WARN: Ignoring malformed bundled Kilo CLI checksum for ${KiloCliPlatform.current()}: not-a-digest"
             )
             assertEquals("/api/v1.2.3", server.takeRequest().path)
-            assertEquals("/release/v1.2.3/kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
+            assertEquals("/release/v1.2.3/${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
             assertEquals(2, server.requestCount)
         }
     }
@@ -164,7 +165,7 @@ class KiloCliDownloaderTest {
 
             assertTrue(cli.isFile)
             assertFalse(File(dir, "0.0.1").exists())
-            val archived = File(cli.parentFile.parentFile, "kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}")
+            val archived = File(cli.parentFile.parentFile, "${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}")
             assertFalse(archived.exists())
         }
     }
@@ -264,7 +265,7 @@ class KiloCliDownloaderTest {
             }
 
             assertContains(ex.message.orEmpty(), "digest mismatch")
-            assertEquals("/release/v1.2.3/kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
+            assertEquals("/release/v1.2.3/${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}", server.takeRequest().path)
             assertEquals(1, server.requestCount)
             assertFalse(File(File(File(dir, "1.2.3"), KiloCliPlatform.current()), ".complete").exists())
         }
@@ -288,7 +289,7 @@ class KiloCliDownloaderTest {
                     digests = emptyMap(),
                 ).resolve("1.2.3")
             }
-            val name = "kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}"
+            val name = "${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}"
             assertContains(ex.message.orEmpty(), "has no asset named $name")
             assertContains(ex.message.orEmpty(), "other.zip")
             assertTrue(log.messages.any { it.contains("has no asset named $name") })
@@ -300,7 +301,7 @@ class KiloCliDownloaderTest {
         MockWebServer().use { server ->
             server.enqueue(
                 MockResponse().setResponseCode(200).setBody(
-                    """{"assets":[{"name":"kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}"}]}"""
+                    """{"assets":[{"name":"${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}"}]}"""
                 )
             )
             val log = TestLog()
@@ -390,7 +391,7 @@ class KiloCliDownloaderTest {
     private fun digests(bytes: ByteArray) = mapOf(KiloCliPlatform.current() to "sha256:${sha256(bytes)}")
 
     private fun metadata(digest: String) = MockResponse().setResponseCode(200).setBody(
-        """{"assets":[{"name":"kilo-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}","digest":"$digest"}]}"""
+        """{"assets":[{"name":"${Brand.COMMAND}-${KiloCliPlatform.current()}.${KiloCliPlatform.archive()}","digest":"$digest"}]}"""
     )
 
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
