@@ -78,6 +78,7 @@ The organization features use the same stack and conventions as the rest of Kilo
 |---|---|---|
 | Sign-in required | Before every LLM request | Set by a managed `organization.json`; users can't remove it without admin rights on their machine |
 | Model access | Model list at load time, and again before every request | A request to a newly blocked model is refused even before the list refreshes |
+| Data policy | Same as model access | Providers whose recorded terms fall short of the org's filters (training, retention, regions) are refused with the reason; OpenRouter-compatible providers get the filters as routing preferences on every request |
 | MCP allow/block | Every MCP connection | Matched on the server URL or command line, not its name |
 | Tool permission denies | Hard ruleset, plus the config layer | No saved approval, session rule or "allow everything" mode overrides them |
 | Org agents, org MCP servers, sharing, analytics | Last config layer | Org agents are marked `source: organization` |
@@ -92,7 +93,7 @@ The policy is fetched at startup (waiting at most 5 s), refreshed every 5 minute
 - **Offline:** a cached policy keeps applying for up to 7 days. After that it's treated as missing, so cutting off the organization server can't pin a lenient old policy.
 - **Revoked tokens and suspended members:** the policy is dropped immediately rather than kept stale.
 
-Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. For providers routed through the organization server's [LLM gateway](packages/organization-server/README.md#llm-gateway), the server enforces model access, budgets and rate limits on every call, meters usage itself and logs each call, because only the server holds the provider credentials. The gateway reaches Anthropic, OpenAI, Azure OpenAI, any OpenAI-compatible server or gateway (LiteLLM among them), and Claude on Amazon Bedrock and Google Vertex AI.
+Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. For providers routed through the organization server's [LLM gateway](packages/organization-server/README.md#llm-gateway), the server enforces model access, the data policy, budgets and rate limits on every call, meters usage itself and logs each call, because only the server holds the provider credentials. The gateway reaches Anthropic, OpenAI, Azure OpenAI, any OpenAI-compatible server or gateway (LiteLLM among them), and Claude on Amazon Bedrock and Google Vertex AI.
 
 ### Client configuration
 
@@ -156,4 +157,3 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 4. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
 5. **Live policy reload** of the model list in running clients, without a restart.
 6. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
-7. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.

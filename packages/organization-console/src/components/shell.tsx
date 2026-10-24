@@ -28,6 +28,7 @@ const groups: ReadonlyArray<Group> = [
     label: "Governance",
     items: [
       { path: "/policy", label: "Policy", requires: "policy.read" },
+      { path: "/data", label: "Data policy", requires: "policy.read" },
       { path: "/modes", label: "Modes" },
       { path: "/budgets", label: "Budgets", requires: "usage.read" },
       { path: "/gateway", label: "LLM gateway", requires: "gateway.read" },

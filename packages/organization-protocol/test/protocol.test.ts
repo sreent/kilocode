@@ -2,8 +2,20 @@ import { describe, expect, test } from "bun:test"
 import { Schema } from "effect"
 import { OpenApi } from "effect/unstable/httpapi"
 import { Api } from "../src/api"
-import { allows, dollars, normalize, overBudget, refusal, target } from "../src/match"
 import {
+  allows,
+  dollars,
+  filtering,
+  normalize,
+  overBudget,
+  preferences,
+  refusal,
+  shortfall,
+  target,
+  withheld,
+} from "../src/match"
+import {
+  DataTerms,
   defaultAuth,
   Effective,
   gatewayApi,
@@ -23,7 +35,23 @@ describe("schemas", () => {
       share: "disabled",
       telemetry: { product: false },
       gateway: { exclusive: false, limits: {}, log: { bodies: false, retention: 30 } },
+      data: { training: "allowed", retention: "any", regions: [], providers: {} },
     })
+  })
+
+  test("data terms default to no routing and reject unknown region codes", () => {
+    const decode = Schema.decodeUnknownSync(DataTerms)
+    expect(decode({ training: false, retention: 0, regions: ["eu"] })).toEqual({
+      training: false,
+      retention: 0,
+      regions: ["eu"],
+      routing: false,
+    })
+    expect(() => decode({ training: false, retention: 0, regions: ["EU West"] })).toThrow(/region code/)
+    expect(() => decode({ training: false, retention: -1 })).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(Policy)({ data: { providers: { "Not An Id": { training: false, retention: 0 } } } }),
+    ).toThrow(/provider id/)
   })
 
   test("an effective policy without a gateway, as cached by older clients, still decodes", () => {
@@ -42,7 +70,16 @@ describe("schemas", () => {
       telemetry: { product: false },
       budget: { exceeded: false, limits: [] },
     }
-    expect(Schema.decodeUnknownSync(Effective)(cached).gateway).toEqual({ exclusive: false, providers: [] })
+    const decoded = Schema.decodeUnknownSync(Effective)(cached)
+    expect(decoded.gateway).toEqual({ exclusive: false, providers: [] })
+    expect(decoded.data).toEqual({
+      training: "allowed",
+      retention: "any",
+      regions: [],
+      providers: null,
+      reasons: {},
+      routing: [],
+    })
   })
 
   test("gateway upstreams must be plain http(s) base URLs", () => {
@@ -188,6 +225,63 @@ describe("matching", () => {
     expect(overBudget(limits(0.005, 0.00846))).toContain("budget of $0.0050 has been reached ($0.0085 spent)")
     expect(overBudget(limits(0, 0))).toContain("budget of $0.00 has been reached ($0.00 spent)")
     expect([0.25, 0.0995, 0.00004].map(dollars)).toEqual(["$0.25", "$0.10", "<$0.0001"])
+  })
+
+  test("the data policy admits providers by their recorded terms", () => {
+    const strict = { training: "denied" as const, retention: "zero" as const, regions: ["eu", "uk"] }
+    const terms = (input: Partial<DataTerms> = {}): DataTerms => ({
+      training: false,
+      retention: 0,
+      regions: ["eu"],
+      routing: false,
+      ...input,
+    })
+    expect(filtering({ training: "allowed", retention: "any", regions: [] })).toBe(false)
+    expect(filtering({ training: "allowed", retention: "any", regions: ["eu"] })).toBe(true)
+    expect(shortfall(strict, terms())).toBeUndefined()
+    expect(shortfall(strict, terms({ training: true }))).toBe("it may train models on your data")
+    expect(shortfall(strict, terms({ retention: 1 }))).toBe("it keeps data for 1 day")
+    expect(shortfall(strict, terms({ retention: 30, regions: ["us", "eu"] }))).toBe(
+      "it keeps data for 30 days; it processes data in us",
+    )
+    expect(shortfall(strict, terms({ regions: [] }))).toBe("where it processes data isn't on record")
+    // Without filters nothing falls short, whatever the terms.
+    expect(
+      shortfall({ training: "allowed", retention: "any", regions: [] }, terms({ training: true, retention: 30 })),
+    ).toBeUndefined()
+  })
+
+  test("providers outside the data policy are refused with the reason", () => {
+    const data = {
+      training: "denied" as const,
+      retention: "zero" as const,
+      regions: [],
+      providers: ["anthropic", "openrouter"],
+      reasons: { openai: "it keeps data for 30 days" },
+      routing: ["openrouter"],
+    }
+    const open = { models: { allow: null, deny: [] }, data }
+    expect(allows(open, "anthropic", "claude-sonnet-4")).toBe(true)
+    expect(allows(open, "openai", "gpt-5")).toBe(false)
+    expect(allows(open, "mistral", "codestral")).toBe(false)
+    expect(withheld(open, "anthropic")).toBeUndefined()
+    expect(withheld(open, "openai")).toBe(
+      "Your organization's data policy doesn't allow openai: it keeps data for 30 days.",
+    )
+    expect(withheld(open, "mistral")).toBe(
+      "Your organization's data policy doesn't allow mistral: its data terms aren't on record.",
+    )
+    expect(withheld({ data: { ...data, providers: null } }, "mistral")).toBeUndefined()
+  })
+
+  test("routed providers carry the data policy as OpenRouter preferences", () => {
+    const data = { training: "denied" as const, retention: "zero" as const, routing: ["openrouter"] }
+    expect(preferences({ data }, "openrouter")).toEqual({ data_collection: "deny", zdr: true })
+    expect(preferences({ data: { ...data, retention: "any" } }, "openrouter")).toEqual({ data_collection: "deny" })
+    expect(preferences({ data: { ...data, training: "allowed" } }, "openrouter")).toEqual({ zdr: true })
+    expect(preferences({ data: { ...data, training: "allowed", retention: "any" } }, "openrouter")).toBeUndefined()
+    expect(preferences({ data }, "anthropic")).toBeUndefined()
+    expect(preferences({}, "openrouter")).toBeUndefined()
   })
 
   test("bare providers normalize to provider wildcards", () => {

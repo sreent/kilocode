@@ -81,6 +81,15 @@ const StatusCommand = effectCmd({
       ...(policy
         ? [`Policy:        version ${policy.version}, fetched ${new Date(info.fetched ?? 0).toLocaleString()}`]
         : []),
+      ...(policy?.data.providers
+        ? [
+            `Data policy:   ${[
+              ...(policy.data.training === "denied" ? ["no training"] : []),
+              ...(policy.data.retention === "zero" ? ["zero retention"] : []),
+              ...(policy.data.regions.length ? [`processed in ${policy.data.regions.join(", ")}`] : []),
+            ].join(", ")}; allows ${policy.data.providers.join(", ") || "no provider yet"}`,
+          ]
+        : []),
       ...(policy?.budget.limits ?? []).map(
         (item) => `Budget:        ${item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
       ),

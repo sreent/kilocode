@@ -806,6 +806,12 @@ body {
   font-weight: 400;
 }
 
+.kilo-console .edit-row > .row-note {
+  grid-column: 1 / -1;
+  color: var(--text-weaker);
+  font-size: var(--font-size-small);
+}
+
 .kilo-console .row-actions.start {
   justify-content: flex-start;
 }

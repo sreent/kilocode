@@ -2,7 +2,7 @@
 import path from "path"
 import { Effect } from "effect"
 import type { Hooks, PluginInput } from "@kilocode/plugin"
-import { allows } from "@organization/protocol/match"
+import { allows, preferences, withheld } from "@organization/protocol/match"
 import { Organization } from "./organization"
 
 // Internal plugin that applies the org policy at request time. Unlike other internal plugins it
@@ -25,19 +25,32 @@ export function OrganizationPlugin(organization: Organization.Interface) {
       )
 
     return {
-      "chat.params": async (input) => {
-        const reason = await run(
+      "chat.params": async (input, output) => {
+        const verdict = await run(
           Effect.gen(function* () {
             yield* organization.ready()
             const blocked = yield* organization.blocked()
-            if (blocked) return blocked
+            if (blocked) return { reason: blocked }
             const policy = yield* organization.current()
-            if (policy && !allows(policy, input.model.providerID, input.model.id))
-              return `The model ${input.model.providerID}/${input.model.id} is not allowed by your organization's policy.`
-            return undefined
+            if (!policy) return {}
+            const provider = input.model.providerID
+            const reason =
+              withheld(policy, provider) ??
+              (allows(policy, provider, input.model.id)
+                ? undefined
+                : `The model ${provider}/${input.model.id} is not allowed by your organization's policy.`)
+            return { reason, routing: preferences(policy, provider) }
           }),
         )
-        if (reason) throw new Organization.PolicyError(reason)
+        if (verdict.reason) throw new Organization.PolicyError(verdict.reason)
+        // OpenRouter-compatible SDKs send this as the request's provider routing preferences.
+        if (verdict.routing) {
+          const current = output.options.provider
+          output.options.provider = {
+            ...(current && typeof current === "object" && !Array.isArray(current) ? current : {}),
+            ...verdict.routing,
+          }
+        }
       },
       // Lets the gateway attribute its metered usage to the session and project, like client reports.
       "chat.headers": async (input, output) => {

@@ -13,6 +13,7 @@ import { Shell } from "./components/shell"
 import { Audit } from "./routes/audit"
 import { Budgets } from "./routes/budgets"
 import { Calls } from "./routes/calls"
+import { Data } from "./routes/data"
 import { Gateway } from "./routes/gateway"
 import { Groups } from "./routes/groups"
 import { Members } from "./routes/members"
@@ -95,6 +96,7 @@ render(
         <Route path="/members" component={requires("member.read", Members)} />
         <Route path="/groups" component={Groups} />
         <Route path="/policy" component={requires("policy.read", Policy)} />
+        <Route path="/data" component={requires("policy.read", Data)} />
         <Route path="/modes" component={Modes} />
         <Route path="/budgets" component={requires("usage.read", Budgets)} />
         <Route path="/gateway" component={requires("gateway.read", Gateway)} />

@@ -1,5 +1,5 @@
 import { Wildcard } from "@opencode-ai/core/util/wildcard"
-import type { Effective } from "./schema"
+import type { DataPolicy, DataTerms, Effective } from "./schema"
 
 // How a client interprets an effective policy. Shared so every client applies the same rules,
 // with the same wildcard semantics as the CLI's own permission patterns.
@@ -21,16 +21,67 @@ export function normalize(item: string) {
 }
 
 export function allows(
-  policy: { readonly models: Effective["models"]; readonly gateway?: Effective["gateway"] },
+  policy: {
+    readonly models: Effective["models"]
+    readonly gateway?: Effective["gateway"]
+    readonly data?: Pick<Effective["data"], "providers">
+  },
   provider: string,
   model: string,
 ) {
   // An exclusive gateway admits only the providers it routes; any other would bypass its metering.
   if (policy.gateway?.exclusive && !policy.gateway.providers.some((item) => item.id === provider)) return false
+  if (policy.data?.providers && !policy.data.providers.includes(provider)) return false
   const name = `${provider}/${model}`
   if (policy.models.deny.some((pattern) => Wildcard.match(name, pattern))) return false
   if (policy.models.allow === null) return true
   return policy.models.allow.some((pattern) => Wildcard.match(name, pattern))
+}
+
+// Whether the data policy filters providers at all.
+export function filtering(policy: Pick<DataPolicy, "training" | "retention" | "regions">) {
+  return policy.training === "denied" || policy.retention === "zero" || policy.regions.length > 0
+}
+
+// Why a provider's terms fall short of the data policy, if they do.
+export function shortfall(policy: Pick<DataPolicy, "training" | "retention" | "regions">, terms: DataTerms) {
+  const outside = terms.regions.filter((region) => !policy.regions.includes(region))
+  const reasons = [
+    policy.training === "denied" && terms.training ? "it may train models on your data" : undefined,
+    policy.retention === "zero" && terms.retention > 0
+      ? `it keeps data for ${terms.retention} ${terms.retention === 1 ? "day" : "days"}`
+      : undefined,
+    policy.regions.length > 0 && terms.regions.length === 0 ? "where it processes data isn't on record" : undefined,
+    policy.regions.length > 0 && outside.length > 0 ? `it processes data in ${outside.join(", ")}` : undefined,
+  ].filter((reason) => reason !== undefined)
+  return reasons.length > 0 ? reasons.join("; ") : undefined
+}
+
+// Why the data policy refuses a provider, if it does. The CLI and the gateway say the same.
+export function withheld(
+  policy: { readonly data?: Pick<Effective["data"], "providers" | "reasons"> },
+  provider: string,
+) {
+  const data = policy.data
+  if (!data?.providers || data.providers.includes(provider)) return undefined
+  return `Your organization's data policy doesn't allow ${provider}: ${data.reasons[provider] ?? "its data terms aren't on record"}.`
+}
+
+// OpenRouter routing preferences that hold a provider's requests to the data policy: with training
+// denied only endpoints that don't collect data serve them, with zero retention only endpoints that
+// keep nothing.
+// https://openrouter.ai/docs/guides/routing/provider-selection
+export function preferences(
+  policy: { readonly data?: Pick<Effective["data"], "training" | "retention" | "routing"> },
+  provider: string,
+) {
+  const data = policy.data
+  if (!data?.routing.includes(provider)) return undefined
+  const result = {
+    ...(data.training === "denied" ? { data_collection: "deny" as const } : {}),
+    ...(data.retention === "zero" ? { zdr: true as const } : {}),
+  }
+  return Object.keys(result).length > 0 ? result : undefined
 }
 
 // Why an MCP server may not start under this policy, if it may not.

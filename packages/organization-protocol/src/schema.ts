@@ -124,6 +124,47 @@ export const RemoteServer = Schema.StructWithRest(
 export const Server = Schema.Union([LocalServer, RemoteServer])
 export type Server = typeof Server.Type
 
+// A provider id as clients know it ("anthropic", "openrouter"), and as the gateway routes it.
+export const ProviderID = Schema.String.check(
+  Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
+)
+
+// ---- data policy --------------------------------------------------------------------------
+
+// Where a provider processes data: a coarse geography such as "us", "eu" or "uk".
+export const Region = Schema.String.check(
+  Schema.isPattern(/^[a-z][a-z0-9-]{1,31}$/, { message: "must be a region code like us or eu" }),
+)
+
+// What a provider does with the organization's data under the organization's agreement with it.
+// Admins record these from the provider's terms; the data policy admits providers by them.
+export const DataTerms = Schema.Struct({
+  // Whether the provider may train models on prompts and completions.
+  training: Schema.Boolean,
+  // Days it keeps prompts and completions; 0 is zero data retention.
+  retention: Whole.check(Schema.isLessThanOrEqualTo(36_500)),
+  // Where it processes them. Empty when that isn't known, which no region filter admits.
+  regions: list(Region),
+  // An OpenRouter-compatible API that sends each request on to one of many companies. Requests carry
+  // the policy's training and retention filters as routing preferences, so only endpoints that meet
+  // them serve the request.
+  routing: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  note: Schema.optional(Schema.String.check(Schema.isMaxLength(500))),
+})
+export type DataTerms = typeof DataTerms.Type
+
+export const DataPolicy = Schema.Struct({
+  // "denied" admits only providers that don't train models on the organization's data.
+  training: Schema.Literals(["allowed", "denied"]).pipe(Schema.withDecodingDefault(Effect.succeed("allowed" as const))),
+  // "zero" admits only providers that keep nothing once they've answered.
+  retention: Schema.Literals(["any", "zero"]).pipe(Schema.withDecodingDefault(Effect.succeed("any" as const))),
+  // Admits only providers that process data in these regions; empty admits any region.
+  regions: list(Region),
+  // Each provider's terms, by its id. While any filter is on, a provider without terms is refused.
+  providers: Schema.Record(ProviderID, DataTerms).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+})
+export type DataPolicy = typeof DataPolicy.Type
+
 export const Policy = Schema.Struct({
   models: Schema.Struct({
     // Org-wide ceiling. A bare provider id ("openai") blocks all of its models; anything with a
@@ -171,6 +212,8 @@ export const Policy = Schema.Struct({
       ),
     }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  // Which providers may see the organization's data, judged by the terms recorded for each.
+  data: DataPolicy.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Policy = typeof Policy.Type
 
@@ -447,11 +490,6 @@ export type GatewayApi = typeof GatewayApi.Type
 export const gatewayApi = (kind: GatewayKind): GatewayApi =>
   kind === "bedrock" || kind === "vertex" ? "anthropic" : kind
 
-// A client provider id ("anthropic", "openrouter"): clients send that provider's requests here.
-export const ProviderID = Schema.String.check(
-  Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
-)
-
 // A header the gateway may add to upstream requests. Framing and connection headers belong to the
 // HTTP client.
 const UpstreamHeader = Schema.String.check(
@@ -679,6 +717,18 @@ export const Effective = Schema.Struct({
   gateway: Schema.Struct({
     exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
     providers: list(GatewayRoute),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  // The data policy as clients apply it.
+  data: Schema.Struct({
+    training: DataPolicy.fields.training,
+    retention: DataPolicy.fields.retention,
+    regions: list(Schema.String),
+    // The only providers that meet it; null while it has no filters.
+    providers: Schema.NullOr(Schema.Array(Schema.String)).pipe(Schema.withDecodingDefault(Effect.succeed(null))),
+    // Why providers whose terms are on record fall short of it.
+    reasons: Schema.Record(Schema.String, Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+    // Providers whose requests carry its filters as OpenRouter routing preferences.
+    routing: list(Schema.String),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Effective = typeof Effective.Type

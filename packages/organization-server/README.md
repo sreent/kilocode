@@ -20,6 +20,7 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 | Audit streaming | New audit events pushed to SIEMs as they happen: HMAC-signed HTTPS webhooks or RFC 5424 syslog over TLS, in order, at least once, resuming after outages |
 | LLM gateway | Routes chosen providers through the server, which holds the org's credentials, enforces model policy, budgets and per-member rate limits on every call, meters usage from the responses and logs each call. Upstreams: Anthropic, OpenAI, Azure OpenAI, any OpenAI-compatible server or gateway (LiteLLM, vLLM, Ollama, OpenRouter, Portkey), and Claude on Amazon Bedrock and Google Vertex AI |
 | Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
+| Data policy | Refuses providers that may train on the org's data, keep it, or process it outside chosen regions, judged by the terms admins record for each provider. OpenRouter-compatible providers get the filters as routing preferences on every request |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
 | Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
@@ -209,13 +210,33 @@ Bedrock and Vertex providers need their model list, since clients don't know the
 
 ### Every call
 
-On every call the gateway checks the token, membership and the member's effective model policy, refuses with `402` once a budget is spent and with `429` past a rate limit, signs in upstream, and relays the response as it streams. Only content, version, beta and user-agent headers are relayed upstream; only content type, request ids, `retry-after` and rate-limit headers come back. Usage is recorded with `source: "gateway"` when the response ends, including when the client hangs up. Usage clients report for a routed provider is dropped, so nothing counts twice.
+On every call the gateway checks the token, membership, the [data policy](#data-policy) and the member's effective model policy, refuses with `402` once a budget is spent and with `429` past a rate limit, signs in upstream, and relays the response as it streams. Only content, version, beta and user-agent headers are relayed upstream; only content type, request ids, `retry-after` and rate-limit headers come back. Usage is recorded with `source: "gateway"` when the response ends, including when the client hangs up. Usage clients report for a routed provider is dropped, so nothing counts twice.
 
 **Prices.** A call is priced by the first that applies: the organization's own price for the model (Governance → LLM gateway → Prices, or `PUT /api/v1/orgs/{org}/prices`), what the upstream reports (OpenRouter, LiteLLM), the provider's model list, then `ORGANIZATION_MODELS_URL` with the same arithmetic the CLI uses. An organization price is either rates per million tokens or a discount off the catalog price, for one model or for all of a provider's (`"model": "*"`). Organization prices apply to usage clients report as well.
 
 **Rate limits.** `"gateway": { "limits": { "requests": 60, "tokens": 400000 } }` in the policy caps each member per minute; tokens count input and output, cache and reasoning included. The counts live in the database, so every replica enforces the same totals. A call past a limit gets `429` with `retry-after`.
 
 **Call log.** Every call is logged, refused ones too: who made it, the model, the status and the reason the gateway refused it, tokens, cost and time taken (Insight → Gateway call log, or `GET /api/v1/orgs/{org}/gateway/calls`). With `"gateway": { "log": { "bodies": true } }`, the first 64 KB of each request and response are kept too, so admins can read prompts and answers; turn it on only where that is allowed. The log is kept for `log.retention` days, 30 by default.
+
+## Data policy
+
+The data policy decides which providers may see the organization's code and prompts (Governance → Data policy, or `data` in the policy). Admins record each provider's terms as the organization's agreement with it states them, by the provider id clients use:
+
+| Field | Meaning |
+|---|---|
+| `training` | Whether the provider may train models on prompts and completions |
+| `retention` | Days it keeps them; `0` is zero data retention |
+| `regions` | Where it processes them, as region codes the organization chooses (`eu`, `us`, `uk`). Empty means not on record |
+| `routing` | The provider is an OpenRouter-compatible API that sends each request on to one of many companies (OpenRouter, the Kilo gateway) |
+| `note` | Where the terms come from, for the next admin |
+
+Then the filters: `"training": "denied"` refuses providers that may train on the data, `"retention": "zero"` refuses providers that keep any, and `regions` refuses providers that process data anywhere else. With any filter on, only providers whose terms meet every filter can be used, and a provider without recorded terms is refused, so a provider nobody has checked can't slip through.
+
+- **Clients** drop the models of refused providers from the model list and refuse requests to them, saying why ("Your organization's data policy doesn't allow openai: it keeps data for 30 days"). The effective policy carries the admitted providers and the reasons.
+- **The gateway** refuses calls to a refused provider with `403` and the code `data_policy`, whatever the client does.
+- **Routed requests.** For a provider with `routing`, clients and the gateway add OpenRouter's [provider routing preferences](https://openrouter.ai/docs/guides/routing/provider-selection) to every request: `data_collection: "deny"` when training is denied and `zdr: true` when retention must be zero, so only endpoints that meet the filters serve it. The client SDKs for OpenRouter, the Kilo gateway and OpenAI-compatible providers send them; the gateway adds them to chat completions and responses calls. Regions can't be routed this way, so a routed provider still needs regions that meet the filter.
+
+The terms are the organization's record, not something the server can check: keep them in step with the agreements.
 
 ## Policy reference
 
@@ -241,6 +262,15 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
     "exclusive": false,
     "limits": { "requests": 60, "tokens": 400000 },
     "log": { "bodies": false, "retention": 30 }
+  },
+  "data": {
+    "training": "denied",
+    "retention": "zero",
+    "regions": ["eu"],
+    "providers": {
+      "anthropic": { "training": false, "retention": 0, "regions": ["eu"], "note": "Zero retention addendum" },
+      "openrouter": { "training": false, "retention": 0, "regions": ["eu"], "routing": true }
+    }
   }
 }
 ```
@@ -251,6 +281,7 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 - **MCP rules** match the server's target, its URL or its full command line, never its name, because users choose names freely.
 - **`permission`** uses the same format as the CLI's `permission` config. Deny rules become hard rules; allow and ask rules override user config but not a user's session approvals.
 - **`share`** controls session sharing and syncing sessions to the upstream vendor's cloud. **`telemetry.product`** controls the upstream product analytics. Both default to off.
+- **`data`** is the [data policy](#data-policy): filters on training, retention and regions, and each provider's recorded terms.
 - **`gateway.exclusive`** makes clients refuse every provider the [LLM gateway](#llm-gateway) does not route. **`gateway.limits`** caps each member's gateway requests and tokens per minute, and **`gateway.log`** sets whether the call log keeps bodies and for how many days.
 
 Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.

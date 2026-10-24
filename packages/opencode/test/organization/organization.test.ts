@@ -209,6 +209,41 @@ describe("policy enforcement", () => {
   })
 })
 
+describe("data policy", () => {
+  test("the plugin refuses providers it doesn't admit and routes OpenRouter-compatible ones by it", async () => {
+    expect(
+      (
+        await cp.admin("PUT", "/policy", {
+          data: {
+            training: "denied",
+            retention: "zero",
+            providers: {
+              anthropic: { training: false, retention: 0, regions: ["us"] },
+              openai: { training: false, retention: 30, regions: ["us"] },
+              openrouter: { training: false, retention: 0, regions: ["us"], routing: true },
+            },
+          },
+        })
+      ).status,
+    ).toBe(200)
+    signin((await cp.join("data@acme.com", "member")).token)
+    const hooks = await OrganizationPlugin(await client())({} as never)
+    const params = hooks["chat.params"]!
+    const request = (providerID: string, id: string, options: Record<string, unknown> = {}) => {
+      const output = { options }
+      return params({ model: { providerID, id } } as never, output as never).then(() => output.options)
+    }
+    await expect(request("openai", "gpt-5")).rejects.toThrow(
+      "Your organization's data policy doesn't allow openai: it keeps data for 30 days.",
+    )
+    await expect(request("mistral", "codestral")).rejects.toThrow("its data terms aren't on record")
+    expect(await request("anthropic", "claude-sonnet-4")).toEqual({})
+    expect(await request("openrouter", "anthropic/claude-sonnet-4", { provider: { order: ["anthropic"] } })).toEqual({
+      provider: { order: ["anthropic"], data_collection: "deny", zdr: true },
+    })
+  })
+})
+
 describe("vendor cloud sync", () => {
   test("stays off unless the org explicitly allows sharing", async () => {
     expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)

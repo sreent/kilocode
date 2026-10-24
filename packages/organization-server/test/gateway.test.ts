@@ -379,6 +379,41 @@ describe("gateway relay", () => {
     expect(upstream.seen).toHaveLength(0)
   })
 
+  test("holds calls to the data policy: refuses providers it doesn't admit, routes the rest by it", async () => {
+    await env.call("PUT", "/api/v1/orgs/acme/policy", {
+      token: env.owner.token,
+      body: {
+        data: {
+          retention: "zero",
+          providers: {
+            anthropic: { training: false, retention: 30, regions: ["us"] },
+            together: { training: false, retention: 0, regions: ["us"], routing: true },
+          },
+        },
+      },
+    })
+    const kept = await relay("anthropic/messages", { token: env.owner.token, body: { model: "claude-sonnet-4" } })
+    expect(kept.status).toBe(403)
+    expect(await kept.json()).toMatchObject({
+      error: {
+        type: "permission_error",
+        code: "data_policy",
+        message: "Your organization's data policy doesn't allow anthropic: it keeps data for 30 days.",
+      },
+    })
+    const unknown = await relay("openai/responses", { token: env.owner.token, body: { model: "gpt-5" } })
+    expect((await unknown.json()).error.message).toContain("its data terms aren't on record")
+    expect(upstream.seen).toHaveLength(0)
+
+    // An OpenRouter-compatible upstream gets the policy as routing preferences, merged into the client's.
+    const routed = await relay("together/chat/completions", {
+      token: env.owner.token,
+      body: { model: "llama-4", messages: [], provider: { order: ["deepinfra"], zdr: false } },
+    })
+    expect(routed.status).toBe(200)
+    expect(upstream.seen.at(-1)!.body).toMatchObject({ provider: { order: ["deepinfra"], zdr: true } })
+  })
+
   test("refuses calls once a budget is spent", async () => {
     await env.call("PUT", "/api/v1/orgs/acme/budgets", {
       token: env.owner.token,

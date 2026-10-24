@@ -7,7 +7,7 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "effect/unstable/http"
-import { allows, overBudget } from "@organization/protocol/match"
+import { allows, overBudget, preferences, withheld } from "@organization/protocol/match"
 import type { GatewayKind } from "@organization/protocol/schema"
 import { Bedrock } from "../bedrock"
 import * as Crypto from "../crypto"
@@ -121,6 +121,9 @@ function credential(request: HttpServerRequest.HttpServerRequest) {
     headers["x-goog-api-key"]
   )
 }
+
+// A JSON object's fields, or none for anything else.
+const fields = (value: unknown) => (value && typeof value === "object" && !Array.isArray(value) ? value : {})
 
 function label(value: string | undefined, max: number) {
   const text = value?.trim()
@@ -306,6 +309,8 @@ export const gatewayRoutes = HttpRouter.use((router) =>
         })
 
       const policy = yield* effective(store, { org, user, role: access.role })
+      const reason = withheld(policy, provider.id)
+      if (reason) return yield* refuse(403, "data_policy", reason, { model, request: sent })
       if (model && !allows(policy, provider.id, model))
         return yield* refuse(
           403,
@@ -363,8 +368,15 @@ export const gatewayRoutes = HttpRouter.use((router) =>
         )
       }
 
-      // Streamed chat completions only carry usage when asked to.
+      // Streamed chat completions only carry usage when asked to, and an OpenRouter-compatible upstream
+      // holds a request to the data policy only when it carries the policy's routing preferences.
       const options = payload?.stream_options
+      const include =
+        route.meter === "chat" &&
+        payload?.stream === true &&
+        (options as { include_usage?: unknown } | undefined)?.include_usage !== true
+      const routing =
+        route.meter === "chat" || route.meter === "responses" ? preferences(policy, provider.id) : undefined
       const outgoing = (() => {
         if (provider.kind === "bedrock")
           return Bedrock.request({
@@ -381,11 +393,13 @@ export const gatewayRoutes = HttpRouter.use((router) =>
             payload: payload!,
           })
         const relayed =
-          route.meter === "chat" &&
-          payload?.stream === true &&
-          (options as { include_usage?: unknown } | undefined)?.include_usage !== true
+          include || routing
             ? encoder.encode(
-                JSON.stringify({ ...payload, stream_options: { ...(options as object), include_usage: true } }),
+                JSON.stringify({
+                  ...payload,
+                  ...(include ? { stream_options: { ...(options as object), include_usage: true } } : {}),
+                  ...(routing ? { provider: { ...fields(payload?.provider), ...routing } } : {}),
+                }),
               )
             : body
         return { url: `${provider.base}${path}${url.search}`, body: relayed }

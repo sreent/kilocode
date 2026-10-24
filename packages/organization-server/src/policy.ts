@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { normalize, target } from "@organization/protocol/match"
+import { filtering, normalize, shortfall, target } from "@organization/protocol/match"
 import {
   gatewayApi,
   type BudgetStatus,
@@ -37,6 +37,19 @@ export function resolve(input: {
     ? null
     : unique(grants.flatMap((grant) => (grant.mode === "selected" ? grant.items.map(normalize) : [])))
 
+  // With a filter on, only providers whose recorded terms meet every filter are admitted.
+  const data = input.policy.data
+  const filtered = filtering(data)
+  const reasons = Object.fromEntries(
+    Object.entries(data.providers).flatMap(([id, terms]) => {
+      const reason = filtered ? shortfall(data, terms) : undefined
+      return reason ? [[id, reason]] : []
+    }),
+  )
+  const admitted = Object.keys(data.providers)
+    .filter((id) => !(id in reasons))
+    .toSorted()
+
   const servers = input.policy.mcp.servers
   const mcp =
     input.policy.mcp.mode === "open" ? null : unique([...input.policy.mcp.allow, ...Object.values(servers).map(target)])
@@ -64,6 +77,14 @@ export function resolve(input: {
     telemetry: input.policy.telemetry,
     budget: { exceeded: input.budgets.some((budget) => budget.spent >= budget.amount), limits: input.budgets },
     gateway: { exclusive: input.policy.gateway.exclusive, providers: input.gateway ?? [] },
+    data: {
+      training: data.training,
+      retention: data.retention,
+      regions: data.regions,
+      providers: filtered ? admitted : null,
+      reasons,
+      routing: filtered ? admitted.filter((id) => data.providers[id]?.routing) : [],
+    },
   }
 }
 
