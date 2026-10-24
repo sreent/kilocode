@@ -39,7 +39,7 @@ export function Members() {
         value: created.token,
         hint: created.sso
           ? `They can also simply sign in with single sign-on at ${created.sso}.`
-          : `They can run: kilo org login --url ${location.origin} --org ${scope.slug()} --invite ${created.token}`,
+          : `They can run: tucode org login --url ${location.origin} --org ${scope.slug()} --invite ${created.token}`,
       })
       setEmail("")
       void invitations.refetch()
@@ -184,7 +184,7 @@ export function Members() {
                                   setSecret({
                                     title: `Access token for ${row.email}`,
                                     value: issued.token,
-                                    hint: `They can run: kilo org login --url ${location.origin} --org ${scope.slug()} --token <token>`,
+                                    hint: `They can run: tucode org login --url ${location.origin} --org ${scope.slug()} --token <token>`,
                                   })
                                 })
                               }

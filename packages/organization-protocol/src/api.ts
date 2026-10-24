@@ -23,7 +23,7 @@ export const Api = HttpApi.make("organization")
       title: "Organization server",
       version: "0.2.0",
       description:
-        "Organizations, single sign-on, SCIM provisioning, policy, audit, usage and the LLM gateway for Kilo clients.",
+        "Organizations, single sign-on, SCIM provisioning, policy, audit, usage and the LLM gateway for TU Code clients.",
     }),
   )
   .middleware(SchemaErrorMiddleware)

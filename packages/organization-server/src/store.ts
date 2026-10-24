@@ -521,7 +521,7 @@ const make = Effect.gen(function* () {
         .values({
           name: lower(name),
           org: orgID,
-          token: `kilo-org-verify=${Crypto.secret(18)}`,
+          token: `tucode-org-verify=${Crypto.secret(18)}`,
           created: yield* now,
         })
         .returning())[0]

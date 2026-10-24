@@ -276,7 +276,7 @@ export const ssoRoutes = HttpRouter.use((router) =>
             relay ? "Sign-in expired" : "Sign-in failed",
             relay
               ? "This sign-in attempt is invalid or has expired. Please try again."
-              : `${org.name} accepts sign-ins started from Kilo, not from the identity provider's app list.`,
+              : `${org.name} accepts sign-ins started from TU Code, not from the identity provider's app list.`,
             relay ? 400 : 403,
           )
 

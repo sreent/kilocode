@@ -12,8 +12,8 @@ export function SignIn(props: { reason?: string }) {
     <Frame class="signin">
       <Card class="signin-card" padding={0}>
         <header class="signin-head">
-          <img src={`${import.meta.env.BASE_URL}kilo-logo.svg`} alt="" width="40" height="40" />
-          <h1>Sign in to Kilo Organization</h1>
+          <img src={`${import.meta.env.BASE_URL}tucode-logo.svg`} alt="" width="40" height="40" />
+          <h1>Sign in to TU Code Organization</h1>
           <p>Use your organization's single sign-on.</p>
         </header>
         <form

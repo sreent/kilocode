@@ -1,7 +1,7 @@
 {
-  "cluster": "kilo",
-  "serviceName": "kilo-organization-server",
-  "taskDefinition": "kilo-organization-server",
+  "cluster": "tucode",
+  "serviceName": "tucode-organization-server",
+  "taskDefinition": "tucode-organization-server",
   "desiredCount": 2,
   "launchType": "FARGATE",
   "platformVersion": "LATEST",
@@ -14,7 +14,7 @@
   },
   "loadBalancers": [
     {
-      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/kilo-organization/0123456789abcdef",
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/tucode-organization/0123456789abcdef",
       "containerName": "organization-server",
       "containerPort": 8787
     }

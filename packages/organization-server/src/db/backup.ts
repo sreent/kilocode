@@ -7,10 +7,10 @@ import { promisify } from "node:util"
 import { gzip } from "node:zlib"
 
 // Backups of the embedded database: gzipped tarballs of its files, named for when they were taken,
-// such as kilo-organization-20261024T153012.345Z.tar.gz. They hold everything the server keeps, sealed
+// such as tucode-organization-20261024T153012.345Z.tar.gz. They hold everything the server keeps, sealed
 // secrets and the audit log included, so only the server's own user can read them.
 
-const prefix = "kilo-organization-"
+const prefix = "tucode-organization-"
 const suffix = ".tar.gz"
 
 export class BackupError extends Schema.TaggedErrorClass<BackupError>()("BackupError", {

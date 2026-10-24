@@ -86,10 +86,10 @@ function Header(props: { account: Me }) {
   const scope = useOrg()
   return (
     <header class="app-header">
-      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="Kilo Organization home">
+      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="TU Code Organization home">
         <img
           class="header-mark header-mark-logo"
-          src={`${import.meta.env.BASE_URL}kilo-logo.svg`}
+          src={`${import.meta.env.BASE_URL}tucode-logo.svg`}
           alt=""
           width="28"
           height="28"

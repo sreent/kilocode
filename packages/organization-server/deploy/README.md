@@ -35,16 +35,16 @@ Your own address means the count is right. `192.0.2.1` means it is too high, and
 ## Kubernetes
 
 ```sh
-kubectl create secret generic kilo-organization \
+kubectl create secret generic tucode-organization \
   --from-literal=ORGANIZATION_SECRET=$(openssl rand -hex 32) \
   --from-literal=ORGANIZATION_BOOTSTRAP_TOKEN=korg_$(openssl rand -hex 32)
 
-helm install kilo ./helm/organization-server \
+helm install tucode ./helm/organization-server \
   --set image.repository=registry.example.com/organization-server \
   --set baseUrl=https://ai.example.com \
-  --set secret.existingSecret=kilo-organization \
+  --set secret.existingSecret=tucode-organization \
   --set bootstrap.org=Example,bootstrap.slug=example,bootstrap.email=admin@example.com \
-  --set bootstrap.existingSecret=kilo-organization \
+  --set bootstrap.existingSecret=tucode-organization \
   --set ingress.enabled=true,ingress.className=nginx
 ```
 
@@ -57,7 +57,7 @@ helm install kilo ./helm/organization-server \
 
 ## AWS ECS on Fargate
 
-1. Keep the secrets in one Secrets Manager secret, with the keys `ORGANIZATION_SECRET`, `ORGANIZATION_DATABASE_URL` and `ORGANIZATION_BOOTSTRAP_TOKEN`. The task execution role needs `secretsmanager:GetSecretValue` on it (and `kms:Decrypt` if a customer managed key encrypts it), besides the `AmazonECSTaskExecutionRolePolicy` permissions for the image and logs. Create the `/ecs/kilo-organization-server` log group.
+1. Keep the secrets in one Secrets Manager secret, with the keys `ORGANIZATION_SECRET`, `ORGANIZATION_DATABASE_URL` and `ORGANIZATION_BOOTSTRAP_TOKEN`. The task execution role needs `secretsmanager:GetSecretValue` on it (and `kms:Decrypt` if a customer managed key encrypts it), besides the `AmazonECSTaskExecutionRolePolicy` permissions for the image and logs. Create the `/ecs/tucode-organization-server` log group.
 2. For RDS, the URL is `postgres://USER:PASSWORD@HOST:5432/DATABASE?sslmode=verify-full&sslrootcert=/certs/rds-global-bundle.pem`, with [Amazon's certificate bundle](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) added to the image (`COPY global-bundle.pem /certs/rds-global-bundle.pem` in a Dockerfile `FROM` yours). `uselibpqcompat=true&sslmode=require` instead encrypts the connection without checking the server's certificate.
 3. Put an Application Load Balancer in front, with an HTTPS listener and a target group of type `ip` on port 8787, health check path `/readyz`. Lower the target group's deregistration delay to 120 seconds, and raise the load balancer's idle timeout to an hour:
 
@@ -77,13 +77,13 @@ The load balancer appends the client's address to `X-Forwarded-For`, so `ORGANIZ
 
 ## Google Cloud Run
 
-1. Keep the secrets in Secret Manager as `kilo-organization-secret`, `kilo-organization-database-url` and `kilo-organization-bootstrap-token`. The service's account needs `roles/secretmanager.secretAccessor` on them and `roles/cloudsql.client`.
+1. Keep the secrets in Secret Manager as `tucode-organization-secret`, `tucode-organization-database-url` and `tucode-organization-bootstrap-token`. The service's account needs `roles/secretmanager.secretAccessor` on them and `roles/cloudsql.client`.
 2. Point the URL at the Cloud SQL instance's socket, which Cloud Run connects and encrypts: `postgres://USER:PASSWORD@/DATABASE?host=/cloudsql/PROJECT:REGION:INSTANCE`.
 3. Deploy, let anyone reach the service (the server signs people in itself), and map your domain to it:
 
    ```sh
    gcloud run services replace gcp-cloud-run/service.yaml --region us-central1
-   gcloud run services add-iam-policy-binding kilo-organization-server --region us-central1 \
+   gcloud run services add-iam-policy-binding tucode-organization-server --region us-central1 \
      --member=allUsers --role=roles/run.invoker
    ```
 
@@ -96,14 +96,14 @@ One instance always runs with its CPU allocated, which is billed while it runs. 
 3. Create the app, then add your domain and its certificate:
 
    ```sh
-   az containerapp create --resource-group kilo --name kilo-organization-server \
+   az containerapp create --resource-group tucode --name tucode-organization-server \
      --yaml azure-container-apps/containerapp.yaml
    ```
 
 The environment's ingress closes a request that sends nothing for 4 minutes. A gateway stream that pauses for longer needs [premium ingress](https://learn.microsoft.com/azure/container-apps/premium-ingress), which allows up to 30 minutes on an environment with a workload profile of at least two nodes:
 
 ```sh
-az containerapp env premium-ingress add --resource-group kilo --name kilo \
+az containerapp env premium-ingress add --resource-group tucode --name tucode \
   --workload-profile-name Ingress-D4 --request-idle-timeout 30
 ```
 

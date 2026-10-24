@@ -198,7 +198,7 @@ describe("syslog streams", () => {
       rest = bytes.subarray(length).toString()
     }
     expect(messages).toHaveLength(2)
-    expect(messages[1]).toMatch(/^<110>1 \d{4}-\d\d-\d\dT[\d:.]+Z localhost kilo-organization - group\.create - \{/)
+    expect(messages[1]).toMatch(/^<110>1 \d{4}-\d\d-\d\dT[\d:.]+Z localhost tucode-organization - group\.create - \{/)
     expect(JSON.parse(messages[1]!.slice(messages[1]!.indexOf("{")))).toMatchObject({
       action: "group.create",
       email: "owner@acme.com",
@@ -236,12 +236,12 @@ describe("OTLP streams", () => {
     expect(delivery.headers["x-org-signature"]).toBeUndefined()
     const [resource] = JSON.parse(delivery.body).resourceLogs
     expect(attributes(resource.resource.attributes)).toEqual({
-      "service.name": "kilo-organization",
-      "kilo.org.id": env.owner.org.id,
-      "kilo.org.slug": "acme",
-      "kilo.org.name": "Acme",
+      "service.name": "tucode-organization",
+      "tucode.org.id": env.owner.org.id,
+      "tucode.org.slug": "acme",
+      "tucode.org.name": "Acme",
     })
-    expect(resource.scopeLogs[0].scope).toEqual({ name: "kilo.organization.audit" })
+    expect(resource.scopeLogs[0].scope).toEqual({ name: "tucode.organization.audit" })
     const records: Record[] = resource.scopeLogs[0].logRecords
     expect(records.map((record) => attributes(record.attributes)["event.name"])).toEqual([
       "audit.stream_create",
@@ -253,7 +253,7 @@ describe("OTLP streams", () => {
     expect(records[1].timeUnixNano).toBe(`${event.at}000000`)
     expect(records[1].severityText).toBe("INFO")
     expect(attributes(records[1].attributes)).toMatchObject({
-      "kilo.audit.id": String(event.id),
+      "tucode.audit.id": String(event.id),
       "user.id": env.owner.user.id,
       "user.email": "owner@acme.com",
     })

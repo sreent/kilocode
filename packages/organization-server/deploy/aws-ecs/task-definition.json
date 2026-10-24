@@ -1,11 +1,11 @@
 {
-  "family": "kilo-organization-server",
+  "family": "tucode-organization-server",
   "requiresCompatibilities": ["FARGATE"],
   "networkMode": "awsvpc",
   "runtimePlatform": { "operatingSystemFamily": "LINUX", "cpuArchitecture": "X86_64" },
   "cpu": "1024",
   "memory": "2048",
-  "executionRoleArn": "arn:aws:iam::123456789012:role/kilo-organization-execution",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/tucode-organization-execution",
   "containerDefinitions": [
     {
       "name": "organization-server",
@@ -24,22 +24,22 @@
       "secrets": [
         {
           "name": "ORGANIZATION_SECRET",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:kilo-organization-AbCdEf:ORGANIZATION_SECRET::"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_SECRET::"
         },
         {
           "name": "ORGANIZATION_DATABASE_URL",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:kilo-organization-AbCdEf:ORGANIZATION_DATABASE_URL::"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_DATABASE_URL::"
         },
         {
           "name": "ORGANIZATION_BOOTSTRAP_TOKEN",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:kilo-organization-AbCdEf:ORGANIZATION_BOOTSTRAP_TOKEN::"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_BOOTSTRAP_TOKEN::"
         }
       ],
       "stopTimeout": 120,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/kilo-organization-server",
+          "awslogs-group": "/ecs/tucode-organization-server",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "server"
         }

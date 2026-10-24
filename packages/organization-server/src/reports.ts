@@ -61,7 +61,7 @@ export function text(summary: Summary) {
     `*${summary.org.name}: AI use, ${label(summary.period.cadence, summary.period)}*`,
     `${dollars(summary.spend)} spent${change(summary.spend, summary.previous.spend, unit)}, ` +
       `${summary.requests.toLocaleString("en")} ${summary.requests === 1 ? "request" : "requests"}. ` +
-      `${summary.people.active} of ${summary.people.members} members used Kilo` +
+      `${summary.people.active} of ${summary.people.members} members used TU Code` +
       (summary.people.new > 0 ? `, ${summary.people.new} for the first time.` : "."),
     ...(summary.models.length > 0 ? [`Top models: ${top(summary.models)}`] : []),
     ...(summary.spenders.length > 0 ? [`Top spenders: ${top(summary.spenders)}`] : []),
@@ -141,7 +141,7 @@ export const layer = Layer.effect(
       const time = Math.floor((yield* Clock.currentTimeMillis) / 1000)
       const request = HttpClientRequest.post(row.url).pipe(
         HttpClientRequest.setHeaders({
-          "user-agent": "kilo-organization",
+          "user-agent": "tucode-organization",
           "x-org-delivery": crypto.randomUUID(),
           "x-org-signature": `t=${time},v1=${signature(secret, time, body)}`,
         }),

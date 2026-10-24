@@ -1,8 +1,8 @@
 # Organization server
 
-A self-hosted server for running Kilo across an organization: single sign-on, SCIM provisioning, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. The Kilo CLI, VS Code extension and JetBrains plugin sign in to it and enforce what it decides.
+A self-hosted server for running TU Code across an organization: single sign-on, SCIM provisioning, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. The TU Code CLI, VS Code extension and JetBrains plugin sign in to it and enforce what it decides.
 
-These are standard features of this fork's Kilo Code, not a separate paid tier. Upstream Kilo offers similar features in its hosted Enterprise plan, on a backend that is not open source; this package implements the same concepts so they run on your own infrastructure. The roles, model access rules and audit event names follow Kilo's published Enterprise documentation, so they behave the way Kilo users expect.
+These are standard features of TU Code, not a separate paid tier. Kilo Code, which TU Code is built on, offers similar features in its hosted Enterprise plan, on a backend that is not open source; this package implements the same concepts so they run on your own infrastructure. The roles, model access rules and audit event names follow Kilo's published Enterprise documentation, so they behave the way Kilo users expect.
 
 ## What it provides
 
@@ -22,7 +22,7 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 | Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
 | Data policy | Refuses providers that may train on the org's data, keep it, or process it outside chosen regions, judged by the terms admins record for each provider. OpenRouter-compatible providers get the filters as routing preferences on every request |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
-| Analytics | Adoption by day, week or month (active and new people, sessions, requests, spend), members who don't use Kilo, and groups, sub-organizations and models compared with the period before; weekly or monthly reports posted to a webhook, such as a Slack channel |
+| Analytics | Adoption by day, week or month (active and new people, sessions, requests, spend), members who don't use TU Code, and groups, sub-organizations and models compared with the period before; weekly or monthly reports posted to a webhook, such as a Slack channel |
 | Budgets | Daily or monthly limits for the whole organization (its sub-organizations included), each person, one person, a group's combined spend, and a sub-organization's allowance; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
 | Deployment | One binary or container with Postgres embedded, or any number of replicas behind a load balancer on a shared PostgreSQL server ([storage and high availability](#storage-and-high-availability)) |
@@ -135,17 +135,17 @@ Deploy `organization.json` to each developer machine with your MDM:
 
 | OS | Path |
 |---|---|
-| Linux | `/etc/kilo/organization.json` |
-| macOS | `/Library/Application Support/kilo/organization.json` |
-| Windows | `%ProgramData%\kilo\organization.json` |
+| Linux | `/etc/tucode/organization.json` |
+| macOS | `/Library/Application Support/tucode/organization.json` |
+| Windows | `%ProgramData%\tucode\organization.json` |
 
 ```json
 { "url": "https://ai.acme.com", "org": "acme", "required": true }
 ```
 
-Developers then run `kilo org login`, which opens the browser for SSO. The VS Code and JetBrains extensions run the same CLI underneath and pick up the same sign-in, provided they are built from this fork. The marketplace builds of upstream Kilo don't contain these features. Other commands: `kilo org status`, `kilo org policy`, `kilo org logout`. With `required: true` (the default for a managed file) the agent refuses to run until the user has signed in and a policy is loaded.
+Developers then run `tucode org login`, which opens the browser for SSO. The VS Code and JetBrains extensions run the same CLI underneath and pick up the same sign-in. Kilo Code's own marketplace builds don't contain these features. Other commands: `tucode org status`, `tucode org policy`, `tucode org logout`. With `required: true` (the default for a managed file) the agent refuses to run until the user has signed in and a policy is loaded.
 
-Without a managed file, `KILO_ORG_URL`, `KILO_ORG` and optionally `KILO_ORG_TOKEN` (for CI) do the same. A managed file always wins over the environment. Devices and CI set up before the rename keep working: a managed `enterprise.json` applies while no `organization.json` exists, and the `KILO_ENTERPRISE_*` variables while their `KILO_ORG*` counterparts are unset. Stored sign-ins don't carry over, so people run `kilo org login` once more.
+Without a managed file, `KILO_ORG_URL`, `KILO_ORG` and optionally `KILO_ORG_TOKEN` (for CI) do the same. A managed file always wins over the environment. Devices and CI set up before the rename keep working: a managed `enterprise.json` applies while no `organization.json` exists, and the `KILO_ENTERPRISE_*` variables while their `KILO_ORG*` counterparts are unset. Stored sign-ins don't carry over, so people run `tucode org login` once more.
 
 See [FORK.md](../../FORK.md) for exactly where the client enforces each policy.
 
@@ -247,14 +247,14 @@ The data policy decides which providers may see the organization's code and prom
 | `training` | Whether the provider may train models on prompts and completions |
 | `retention` | Days it keeps them; `0` is zero data retention |
 | `regions` | Where it processes them, as region codes the organization chooses (`eu`, `us`, `uk`). Empty means not on record |
-| `routing` | The provider is an OpenRouter-compatible API that sends each request on to one of many companies (OpenRouter, the Kilo gateway) |
+| `routing` | The provider is an OpenRouter-compatible API that sends each request on to one of many companies (OpenRouter, for example) |
 | `note` | Where the terms come from, for the next admin |
 
 Then the filters: `"training": "denied"` refuses providers that may train on the data, `"retention": "zero"` refuses providers that keep any, and `regions` refuses providers that process data anywhere else. With any filter on, only providers whose terms meet every filter can be used, and a provider without recorded terms is refused, so a provider nobody has checked can't slip through.
 
 - **Clients** drop the models of refused providers from the model list and refuse requests to them, saying why ("Your organization's data policy doesn't allow openai: it keeps data for 30 days"). The effective policy carries the admitted providers and the reasons.
 - **The gateway** refuses calls to a refused provider with `403` and the code `data_policy`, whatever the client does.
-- **Routed requests.** For a provider with `routing`, clients and the gateway add OpenRouter's [provider routing preferences](https://openrouter.ai/docs/guides/routing/provider-selection) to every request: `data_collection: "deny"` when training is denied and `zdr: true` when retention must be zero, so only endpoints that meet the filters serve it. The client SDKs for OpenRouter, the Kilo gateway and OpenAI-compatible providers send them; the gateway adds them to chat completions and responses calls. Regions can't be routed this way, so a routed provider still needs regions that meet the filter.
+- **Routed requests.** For a provider with `routing`, clients and the gateway add OpenRouter's [provider routing preferences](https://openrouter.ai/docs/guides/routing/provider-selection) to every request: `data_collection: "deny"` when training is denied and `zdr: true` when retention must be zero, so only endpoints that meet the filters serve it. The client SDKs for OpenRouter and OpenAI-compatible providers send them; the gateway adds them to chat completions and responses calls. Regions can't be routed this way, so a routed provider still needs regions that meet the filter.
 
 The terms are the organization's record, not something the server can check: keep them in step with the agreements.
 
@@ -266,7 +266,7 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 {
   "models": {
     "blocked": ["openai", "openrouter/*:free"],
-    "default": { "mode": "selected", "items": ["anthropic", "kilo/anthropic/claude-sonnet-*"] }
+    "default": { "mode": "selected", "items": ["anthropic", "openrouter/anthropic/claude-sonnet-*"] }
   },
   "mcp": {
     "mode": "allowlist",
@@ -296,7 +296,7 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 }
 ```
 
-- **Model identifiers** are `provider/model` as the client knows them, for example `anthropic/claude-sonnet-4`, or `kilo/anthropic/claude-opus-4` for models routed through the Kilo gateway provider. An entry without a slash means the whole provider; `*` matches any characters, including `/`.
+- **Model identifiers** are `provider/model` as the client knows them, for example `anthropic/claude-sonnet-4`, or `openrouter/anthropic/claude-opus-4` for a model reached through OpenRouter. An entry without a slash means the whole provider; `*` matches any characters, including `/`.
 - **`models.blocked`** is the org-wide ceiling. Nothing granted anywhere can get past it.
 - **`models.default`** applies to everyone, and each group can carry its own grant. A person's effective access is the ceiling intersected with the union of the default and their groups' grants. If none of these is set, access is unrestricted below the ceiling.
 - **MCP rules** match the server's target, its URL or its full command line, never its name, because users choose names freely.
@@ -325,8 +325,8 @@ A sub-organization is bound by its own budgets, by its parent's `org` budget and
 Under Insight → Audit streaming (or `POST /api/v1/orgs/{org}/audit/streams`), owners and admins add destinations that receive every new audit event. A stream starts with the events recorded after it is created, its own creation first; older history is in the CSV export.
 
 - **Webhook**: a `POST` of `{ "org": { "id", "slug", "name" }, "events": [...] }`, up to 200 events per request. Each event is the audit API's event plus an ISO `time`. An optional header, such as Splunk HEC's `Authorization: Splunk <token>`, is stored encrypted. Every delivery carries `x-org-delivery` (a unique id) and `x-org-signature: t=<unix seconds>,v1=<hex>`, where the hex is the HMAC-SHA256 of `<t>.<raw body>` keyed with the stream's signing secret, which is shown once when the stream is created. Compare signatures in constant time, and reject timestamps more than a few minutes old. Any 2xx response accepts the batch; redirects are not followed.
-- **Syslog**: one RFC 5424 message per event over TCP, TLS by default (RFC 5425), with RFC 6587 octet-counting framing: facility 13 (log audit), severity informational, `APP-NAME` `kilo-organization`, `MSGID` the action, and the event as JSON in the message.
-- **OpenTelemetry**: OTLP/HTTP log export in [JSON encoding](https://opentelemetry.io/docs/specs/otlp/#json-protobuf-encoding), posted to a collector's logs endpoint, usually `https://<collector>:4318/v1/logs`. An OpenTelemetry Collector's `otlp` receiver takes it and forwards it wherever the collector exports; backends that accept OTLP/HTTP with JSON directly work too. Each delivery is one resource (`service.name` `kilo-organization`, plus `kilo.org.id`, `kilo.org.slug` and `kilo.org.name`) with one log record per event: its time, severity `INFO`, the event as JSON in the body, and the attributes `event.name` (the action), `kilo.audit.id`, `user.id`, `user.email`, `kilo.audit.target` and `client.address`. Deliveries aren't signed; collectors authenticate with a header, such as `Authorization: Bearer <token>`, stored encrypted. Records a collector accepts the batch but refuses (an OTLP partial success) are logged on the server and not sent again.
+- **Syslog**: one RFC 5424 message per event over TCP, TLS by default (RFC 5425), with RFC 6587 octet-counting framing: facility 13 (log audit), severity informational, `APP-NAME` `tucode-organization`, `MSGID` the action, and the event as JSON in the message.
+- **OpenTelemetry**: OTLP/HTTP log export in [JSON encoding](https://opentelemetry.io/docs/specs/otlp/#json-protobuf-encoding), posted to a collector's logs endpoint, usually `https://<collector>:4318/v1/logs`. An OpenTelemetry Collector's `otlp` receiver takes it and forwards it wherever the collector exports; backends that accept OTLP/HTTP with JSON directly work too. Each delivery is one resource (`service.name` `tucode-organization`, plus `tucode.org.id`, `tucode.org.slug` and `tucode.org.name`) with one log record per event: its time, severity `INFO`, the event as JSON in the body, and the attributes `event.name` (the action), `tucode.audit.id`, `user.id`, `user.email`, `tucode.audit.target` and `client.address`. Deliveries aren't signed; collectors authenticate with a header, such as `Authorization: Bearer <token>`, stored encrypted. Records a collector accepts the batch but refuses (an OTLP partial success) are logged on the server and not sent again.
 
 Events are delivered in order and at least once, so receivers can use the event `id` to drop the rare duplicate. A failing destination is retried with backoff, from 5 seconds up to every 5 minutes, and resumes exactly where it stopped. Its error shows on the stream until it recovers, and pausing a stream keeps its place. "Send test" sends a synthetic `audit.stream_test` event (id `0`) without affecting delivery. With several servers, one at a time delivers each stream (see [high availability](#storage-and-high-availability)).
 
@@ -355,7 +355,7 @@ Insight → Analytics shows adoption and comparisons; the same figures come from
 
 `from` and `to` take dates or epoch milliseconds, and default to the last 30 days.
 
-**Scheduled reports** (Insight → Scheduled reports, or `/api/v1/orgs/{org}/reports`) post a summary an hour after each week (Monday to Sunday) or month ends, in UTC: spend and how it moved on the period before, requests, how many members used Kilo and how many for the first time, and the top five models and spenders. `"format": "text"` posts `{ "text": ... }`, which Slack, Mattermost and Google Chat incoming webhooks show as a message; `"format": "json"` posts the whole summary. Deliveries are signed like audit stream webhooks with a secret shown once at creation, never follow redirects, and are retried every 15 minutes until they succeed or the next period's report replaces them. `POST /api/v1/orgs/{org}/reports/{id}/send` sends the last whole period's report now.
+**Scheduled reports** (Insight → Scheduled reports, or `/api/v1/orgs/{org}/reports`) post a summary an hour after each week (Monday to Sunday) or month ends, in UTC: spend and how it moved on the period before, requests, how many members used TU Code and how many for the first time, and the top five models and spenders. `"format": "text"` posts `{ "text": ... }`, which Slack, Mattermost and Google Chat incoming webhooks show as a message; `"format": "json"` posts the whole summary. Deliveries are signed like audit stream webhooks with a secret shown once at creation, never follow redirects, and are retried every 15 minutes until they succeed or the next period's report replaces them. `POST /api/v1/orgs/{org}/reports/{id}/send` sends the last whole period's report now.
 
 ## Audit events
 
@@ -427,7 +427,7 @@ bun run migration           # after changing src/db/schema.sql.ts; --check fails
 bun run build               # dist/organization-server with the console embedded
 ```
 
-The server is built on the same stack as the Kilo CLI's own server:
+The server is built on the same stack as the TU Code CLI's own server:
 
 | Concern | Where |
 |---|---|

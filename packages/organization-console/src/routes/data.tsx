@@ -30,7 +30,7 @@ const codes = (text: string) => [
 const days = (text: string) => (/^\d+$/.test(text.trim()) ? Number(text) : undefined)
 
 // The aggregators whose APIs take OpenRouter's routing preferences.
-const aggregators = new Set(["openrouter", "kilo"])
+const aggregators = new Set(["openrouter"])
 
 const blank = (): Row => ({ provider: "", training: false, retention: "", regions: "", routing: false, note: "" })
 
@@ -145,7 +145,7 @@ function Editor(props: { current: Current; saved: () => void }) {
       </Panel>
       <Panel
         title="Provider terms"
-        description="By the provider id clients use: anthropic, openai, openrouter, kilo, or the id of a gateway provider. OpenRouter and the Kilo gateway route each request to one of many companies; with routing on, requests ask for only endpoints that meet the training and retention filters."
+        description="By the provider id clients use: anthropic, openai, openrouter, or the id of a gateway provider. OpenRouter routes each request to one of many companies; with routing on, requests ask for only endpoints that meet the training and retention filters."
         actions={
           <Show when={!locked()}>
             <Button

@@ -100,10 +100,10 @@ export function Overview() {
         title="Connect the CLI and IDE extensions"
         description={
           <>
-            Deploy this file with your device management to <span class="mono">/etc/kilo/organization.json</span>{" "}
-            (macOS: <span class="mono">/Library/Application Support/kilo</span>, Windows:{" "}
-            <span class="mono">%ProgramData%\kilo</span>), then have people run <span class="mono">kilo org login</span>{" "}
-            on each device.
+            Deploy this file with your device management to <span class="mono">/etc/tucode/organization.json</span>{" "}
+            (macOS: <span class="mono">/Library/Application Support/tucode</span>, Windows:{" "}
+            <span class="mono">%ProgramData%\tucode</span>), then have people run{" "}
+            <span class="mono">tucode org login</span> on each device.
           </>
         }
       >

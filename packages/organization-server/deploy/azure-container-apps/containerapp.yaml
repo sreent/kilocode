@@ -1,14 +1,14 @@
 # Deploy with:
-#   az containerapp create --resource-group kilo --name kilo-organization-server --yaml containerapp.yaml
+#   az containerapp create --resource-group tucode --name tucode-organization-server --yaml containerapp.yaml
 # Replace the subscription, resource group, environment, identity, registry and vault with your own.
 location: eastus
 identity:
   type: UserAssigned
   userAssignedIdentities:
-    /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization:
+    /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tucode-organization:
       {}
 properties:
-  managedEnvironmentId: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.App/managedEnvironments/kilo
+  managedEnvironmentId: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.App/managedEnvironments/tucode
   configuration:
     activeRevisionsMode: Single
     ingress:
@@ -17,24 +17,24 @@ properties:
       transport: http
       allowInsecure: false
     registries:
-      - server: kilo.azurecr.io
-        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+      - server: tucode.azurecr.io
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tucode-organization
     # Read from Key Vault with the identity above.
     secrets:
       - name: organization-secret
-        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/organization-secret
-        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+        keyVaultUrl: https://tucode-vault.vault.azure.net/secrets/organization-secret
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tucode-organization
       # postgres://USER:PASSWORD@SERVER.postgres.database.azure.com:5432/DATABASE?sslmode=verify-full
       - name: database-url
-        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/database-url
-        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+        keyVaultUrl: https://tucode-vault.vault.azure.net/secrets/database-url
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tucode-organization
       - name: bootstrap-token
-        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/bootstrap-token
-        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+        keyVaultUrl: https://tucode-vault.vault.azure.net/secrets/bootstrap-token
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tucode/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tucode-organization
   template:
     containers:
       - name: organization-server
-        image: kilo.azurecr.io/organization-server:0.2.0
+        image: tucode.azurecr.io/organization-server:0.2.0
         args: ["serve"]
         env:
           - name: ORGANIZATION_BASE_URL

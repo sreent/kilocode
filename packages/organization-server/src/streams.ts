@@ -49,7 +49,7 @@ export function signature(secret: string, time: number, body: string) {
 // most 32 characters; the message is the event as JSON.
 export function syslog(host: string, event: ReturnType<typeof view>) {
   const id = event.action.replace(/[^!-~]/g, "_").slice(0, 32) || "-"
-  return `<110>1 ${event.time} ${host} kilo-organization - ${id} - ${JSON.stringify(event)}`
+  return `<110>1 ${event.time} ${host} tucode-organization - ${id} - ${JSON.stringify(event)}`
 }
 
 // OTLP/HTTP with JSON encoding: one resource for the org, one scope for its audit log, one log record
@@ -64,15 +64,15 @@ export function otlp(org: Pick<Org, "id" | "slug" | "name">, events: ReadonlyArr
       {
         resource: {
           attributes: [
-            { key: "service.name", value: text("kilo-organization") },
-            { key: "kilo.org.id", value: text(org.id) },
-            { key: "kilo.org.slug", value: text(org.slug) },
-            { key: "kilo.org.name", value: text(org.name) },
+            { key: "service.name", value: text("tucode-organization") },
+            { key: "tucode.org.id", value: text(org.id) },
+            { key: "tucode.org.slug", value: text(org.slug) },
+            { key: "tucode.org.name", value: text(org.name) },
           ],
         },
         scopeLogs: [
           {
-            scope: { name: "kilo.organization.audit" },
+            scope: { name: "tucode.organization.audit" },
             logRecords: events.map((event) => ({
               timeUnixNano: String(BigInt(event.at) * 1_000_000n),
               severityNumber: 9,
@@ -80,10 +80,10 @@ export function otlp(org: Pick<Org, "id" | "slug" | "name">, events: ReadonlyArr
               body: text(JSON.stringify(event)),
               attributes: [
                 ...attribute("event.name", event.action),
-                ...attribute("kilo.audit.id", event.id),
+                ...attribute("tucode.audit.id", event.id),
                 ...attribute("user.id", event.actor),
                 ...attribute("user.email", event.email),
-                ...attribute("kilo.audit.target", event.target),
+                ...attribute("tucode.audit.target", event.target),
                 ...attribute("client.address", event.ip),
               ],
             })),
@@ -182,7 +182,7 @@ export const layer = Layer.effect(
         }
       })
       const request = HttpClientRequest.post(target.url).pipe(
-        HttpClientRequest.setHeaders({ ...headers, "user-agent": "kilo-organization", ...signed.headers }),
+        HttpClientRequest.setHeaders({ ...headers, "user-agent": "tucode-organization", ...signed.headers }),
         HttpClientRequest.bodyText(signed.body, "application/json"),
       )
       // Never follow redirects: the destination is what the admin configured, nothing else.
@@ -247,7 +247,7 @@ export const layer = Layer.effect(
         actor: null,
         email: null,
         target: row.id,
-        details: { message: "Test event from Kilo Organization. It is not part of the audit log." },
+        details: { message: "Test event from TU Code Organization. It is not part of the audit log." },
         ip: null,
       }
       const exit = yield* deliver(org, row, [event]).pipe(Effect.exit)
