@@ -255,8 +255,8 @@ export namespace KilocodeConfigSources {
     if (process.platform !== "darwin") return []
     const user = os.userInfo().username
     const files = [
-      path.join("/Library/Managed Preferences", user, "ai.opencode.managed.plist"),
-      path.join("/Library/Managed Preferences", "ai.opencode.managed.plist"),
+      path.join("/Library/Managed Preferences", user, "com.tucode.managed.plist"),
+      path.join("/Library/Managed Preferences", "com.tucode.managed.plist"),
     ]
     return Promise.all(
       files.map(async (file) => ({

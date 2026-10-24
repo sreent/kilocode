@@ -6,6 +6,7 @@ import * as Sbom from "../../script/kilocode/sbom"
 import { LanceDBRuntime } from "../../src/kilocode/lancedb"
 import { validate } from "../../../../script/kilocode/sbom/index"
 import { pin } from "../../../../script/kilocode/bun"
+import { Brand } from "../../src/tucode/brand"
 
 const release = { version: "9.9.9", channel: "latest", commit: "d".repeat(40) }
 
@@ -21,7 +22,7 @@ function delivery(bom: any, name: string) {
 describe("target", () => {
   test("maps every published archive name to its pinned Bun artifact", async () => {
     expect(Sbom.target("linux-x64")).toEqual({
-      name: "@kilocode/cli-linux-x64",
+      name: `${Brand.npm.cli}-linux-x64`,
       os: "linux",
       arch: "x64",
       abi: undefined,
@@ -44,8 +45,8 @@ describe("target", () => {
   }, 30_000)
 
   test("accepts the npm package name form", () => {
-    expect(Sbom.target("@kilocode/cli-linux-arm64-musl")).toMatchObject({
-      name: "@kilocode/cli-linux-arm64-musl",
+    expect(Sbom.target(`${Brand.npm.cli}-linux-arm64-musl`)).toMatchObject({
+      name: `${Brand.npm.cli}-linux-arm64-musl`,
       os: "linux",
       arch: "arm64",
       abi: "musl",
@@ -93,8 +94,8 @@ describe("archive", () => {
       await Bun.write(file, "a")
       const result = await Sbom.archive({ file, target: Sbom.target("linux-x64-musl"), release })
       const root = (await Bun.file(result.sidecar).json()).metadata.component
-      expect(root.name).toBe("@kilocode/cli-linux-x64-musl")
-      expect(root.purl).toBe("pkg:npm/%40kilocode/cli-linux-x64-musl@9.9.9")
+      expect(root.name).toBe(`${Brand.npm.cli}-linux-x64-musl`)
+      expect(root.purl).toBe(`pkg:npm/${Brand.npm.cli.replace("@", "%40")}-linux-x64-musl@9.9.9`)
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
     }
@@ -172,7 +173,7 @@ describe("npm package", () => {
     try {
       const file = path.join(dir, "kilocode-cli-9.9.9.tgz")
       await Bun.write(file, "a")
-      const result = await Sbom.npmPackage({ file, name: "@kilocode/cli", release })
+      const result = await Sbom.npmPackage({ file, name: Brand.npm.cli, release })
       const bom = await Bun.file(result.sidecar).json()
       expect(await validate(bom)).toEqual([])
       const root = bom.dependencies.find((item: any) => item.ref.startsWith("kilocode:artifact:"))
@@ -186,8 +187,10 @@ describe("npm package", () => {
 
 describe("oci image", () => {
   test("names a failed and a successful description identically", () => {
-    expect(Sbom.ociName("sha256:" + "a".repeat(64), "linux/amd64")).toBe("kilo-oci-linux-amd64@aaaaaaaaaaaa")
-    expect(Sbom.ociName("sha256:" + "a".repeat(64))).toBe("kilo-oci-index@aaaaaaaaaaaa")
+    expect(Sbom.ociName("sha256:" + "a".repeat(64), "linux/amd64")).toBe(
+      `${Brand.command}-oci-linux-amd64@aaaaaaaaaaaa`,
+    )
+    expect(Sbom.ociName("sha256:" + "a".repeat(64))).toBe(`${Brand.command}-oci-index@aaaaaaaaaaaa`)
   })
 
   test("records an empty image inventory as a failure rather than valid evidence", async () => {
@@ -196,7 +199,7 @@ describe("oci image", () => {
     process.env.SYFT = ""
     try {
       const result = await Sbom.ociImage({
-        reference: "ghcr.io/kilo-org/kilocode@sha256:" + "b".repeat(64),
+        reference: `${Brand.image}@sha256:` + "b".repeat(64),
         digest: "sha256:" + "b".repeat(64),
         platform: "linux/arm64",
         release,
@@ -216,18 +219,18 @@ describe("evidence", () => {
   test("covers every produced archive and writes a manifest plus checksums", async () => {
     const dir = await scratch()
     try {
-      await Bun.write(path.join(dir, "kilo-linux-x64.tar.gz"), "a")
-      await Bun.write(path.join(dir, "kilo-windows-x64.zip"), "b")
+      await Bun.write(path.join(dir, `${Brand.command}-linux-x64.tar.gz`), "a")
+      await Bun.write(path.join(dir, `${Brand.command}-windows-x64.zip`), "b")
       const result = await Sbom.evidence({ dir, release, expected: 2 })
 
       expect(result.manifest.entries.map((entry) => entry.artifact)).toEqual([
-        "kilo-linux-x64.tar.gz",
-        "kilo-windows-x64.zip",
+        `${Brand.command}-linux-x64.tar.gz`,
+        `${Brand.command}-windows-x64.zip`,
       ])
       expect(result.manifest.entries.every((entry) => entry.sbom && !entry.error)).toBe(true)
       const sums = await Bun.file(path.join(dir, Sbom.CHECKSUMS)).text()
-      expect(sums).toContain("kilo-linux-x64.tar.gz\n")
-      expect(sums).toContain("kilo-windows-x64.zip.cdx.json\n")
+      expect(sums).toContain(`${Brand.command}-linux-x64.tar.gz\n`)
+      expect(sums).toContain(`${Brand.command}-windows-x64.zip.cdx.json\n`)
       expect(result.files.some((file) => file.endsWith("cli-sbom-evidence.json"))).toBe(true)
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
@@ -237,7 +240,7 @@ describe("evidence", () => {
   test("reports a shortfall when the build stopped emitting a platform", async () => {
     const dir = await scratch()
     try {
-      await Bun.write(path.join(dir, "kilo-linux-x64.tar.gz"), "a")
+      await Bun.write(path.join(dir, `${Brand.command}-linux-x64.tar.gz`), "a")
       const result = await Sbom.evidence({ dir, release, expected: 12 })
       expect(result.manifest.expected).toBe(12)
       expect(result.manifest.entries).toHaveLength(1)
@@ -250,11 +253,11 @@ describe("evidence", () => {
   test("ignores files that are not release archives", async () => {
     const dir = await scratch()
     try {
-      await Bun.write(path.join(dir, "kilo-linux-x64.tar.gz"), "a")
+      await Bun.write(path.join(dir, `${Brand.command}-linux-x64.tar.gz`), "a")
       await Bun.write(path.join(dir, "notes.txt"), "b")
-      await fs.promises.mkdir(path.join(dir, "@kilocode"), { recursive: true })
+      await fs.promises.mkdir(path.join(dir, Brand.npm.scope), { recursive: true })
       const result = await Sbom.evidence({ dir, release, expected: 1 })
-      expect(result.manifest.entries.map((entry) => entry.artifact)).toEqual(["kilo-linux-x64.tar.gz"])
+      expect(result.manifest.entries.map((entry) => entry.artifact)).toEqual([`${Brand.command}-linux-x64.tar.gz`])
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
     }

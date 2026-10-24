@@ -2,6 +2,7 @@ import { Effect } from "effect"
 import { define } from "../internal"
 import { Integration } from "../../integration"
 import { ProviderV2 } from "../../provider" // kilocode_change
+import { Brand } from "../../tucode/brand" // kilocode_change - tucode
 
 export const LLMGatewayPlugin = define({
   id: "llmgateway",
@@ -17,10 +18,10 @@ export const LLMGatewayPlugin = define({
           if (item.provider.id !== ProviderV2.ID.make("llmgateway")) continue // kilocode_change
           if (!(yield* integrations.get(Integration.ID.make(item.provider.id)))) continue
           evt.provider.update(item.provider.id, (provider) => {
-            provider.request.headers["HTTP-Referer"] = "https://kilo.ai/"
+            provider.request.headers["HTTP-Referer"] = Brand.repository // kilocode_change - tucode
             // kilocode_change start
-            provider.request.headers["X-Title"] = "Kilo Code"
-            provider.request.headers["X-Source"] = "kilo"
+            provider.request.headers["X-Title"] = Brand.name // kilocode_change - tucode
+            provider.request.headers["X-Source"] = Brand.command // kilocode_change - tucode
             // kilocode_change end
           })
         }

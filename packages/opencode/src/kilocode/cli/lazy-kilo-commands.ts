@@ -1,8 +1,9 @@
 import { lazy } from "@/kilocode/cli/lazy-commands"
+import { Brand } from "@/tucode/brand"
 
 export const KiloConsoleCommand = lazy({
   command: "console",
-  describe: "open or stop the local Kilo Console (deprecated)",
+  describe: "open or stop the local web console (deprecated)",
   load: async () => (await import("@/kilocode/cli/cmd/console")).KiloConsoleCommand,
 })
 
@@ -46,7 +47,7 @@ export const RemoteCommand = lazy({
 
 export const DaemonCommand = lazy({
   command: "daemon",
-  describe: "manage the local kilo daemon",
+  describe: `manage the local ${Brand.command} daemon`,
   load: async () => (await import("@/kilocode/cli/cmd/daemon")).DaemonCommand,
 })
 

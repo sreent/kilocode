@@ -3,11 +3,12 @@ import fs from "node:fs/promises"
 import os from "os"
 import path from "path"
 import { ShellPrompt } from "../../src/tool/shell/prompt"
+import { Brand } from "../../src/tucode/brand"
 
 // Cloud sessions allowlist a session-scoped temp dir, so the bash tool
 // description must name a path the injected external_directory rules permit.
 // The allowlist root is the literal `/tmp`, not `os.tmpdir()`.
-const sharedTmp = path.join(os.tmpdir(), "kilo")
+const sharedTmp = path.join(os.tmpdir(), Brand.command)
 const sessionTmp = path.join("/tmp", "agent_test-session_1")
 
 const withEnv = (env: Record<string, string | undefined>, run: () => void) => {

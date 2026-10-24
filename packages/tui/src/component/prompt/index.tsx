@@ -71,6 +71,7 @@ import { useVim, VimModeIndicator, vimToggleCommand } from "@/kilocode/cli/cmd/t
 import { usePromptWorkspace } from "./workspace"
 import { usePromptMove } from "./move"
 import { readLocalAttachment } from "./local-attachment"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 registerOpencodeSpinner()
 
@@ -468,7 +469,7 @@ export function Prompt(props: PromptProps) {
       // kilocode_change start
       {
         title: "Cost alert",
-        desc: "Set Kilo's cost alert",
+        desc: `Set ${Brand.name}'s cost alert`,
         name: "cost_alert",
         category: "Session",
         slashName: "cost-alert",

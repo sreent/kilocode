@@ -3,10 +3,11 @@ import { UI } from "../ui"
 import * as prompts from "@clack/prompts"
 import { Installation } from "../../installation"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export const UpgradeCommand = {
   command: "upgrade [target]",
-  describe: "upgrade kilo to the latest or a specific version", // kilocode_change
+  describe: `upgrade ${Brand.command} to the latest or a specific version`, // kilocode_change - tucode
   builder: (yargs: Argv) => {
     return yargs
       .positional("target", {
@@ -46,7 +47,7 @@ export const UpgradeCommand = {
     const target = args.target ? args.target.replace(/^v/, "") : await Installation.latest(method) // kilocode_change
 
     if (InstallationVersion === target) {
-      prompts.log.warn(`kilo upgrade skipped: ${target} is already installed`) // kilocode_change
+      prompts.log.warn(`${Brand.command} upgrade skipped: ${target} is already installed`) // kilocode_change - tucode
       prompts.outro("Done")
       return
     }

@@ -54,7 +54,7 @@ describe("util.error", () => {
       providerID: "anthropic",
       modelID: "claude-sonnet-4",
     })
-    expect(model).toContain("kilo models")
+    expect(model).toContain("tucode models") // kilocode_change - tucode
     expect(model).toContain("kilo.json")
     expect(model).not.toContain("opencode")
 

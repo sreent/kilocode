@@ -55,6 +55,7 @@ import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions 
 import { ProviderError } from "./error"
 import { Organization } from "@/organization" // kilocode_change - organization
 import { allows } from "@organization/protocol/match" // kilocode_change - organization
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -501,9 +502,9 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://kilo.ai/", // kilocode_change
-            "X-Title": "Kilo Code", // kilocode_change
-            "X-Source": "kilo", // kilocode_change
+            "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+            "X-Title": Brand.name, // kilocode_change - tucode
+            "X-Source": Brand.command, // kilocode_change - tucode
           },
         },
       }),
@@ -512,8 +513,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://kilo.ai/", // kilocode_change
-            "X-Title": "Kilo Code", // kilocode_change
+            "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+            "X-Title": Brand.name, // kilocode_change - tucode
           },
         },
       }),
@@ -522,9 +523,9 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: provider.source === "config",
         options: {
           headers: {
-            "HTTP-Referer": "https://kilo.ai/", // kilocode_change
-            "X-Title": "Kilo Code", // kilocode_change
-            "X-BILLING-INVOKE-ORIGIN": "KiloCode", // kilocode_change
+            "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+            "X-Title": Brand.name, // kilocode_change - tucode
+            "X-BILLING-INVOKE-ORIGIN": Brand.name.replaceAll(" ", ""), // kilocode_change - tucode
           },
         },
       }),
@@ -533,8 +534,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://kilo.ai/", // kilocode_change
-            "x-title": "Kilo Code", // kilocode_change
+            "http-referer": Brand.repository, // kilocode_change - tucode
+            "x-title": Brand.name, // kilocode_change - tucode
           },
         },
       }),
@@ -647,8 +648,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://kilo.ai/", // kilocode_change
-            "X-Title": "Kilo Code", // kilocode_change
+            "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+            "X-Title": Brand.name, // kilocode_change - tucode
           },
         },
       }),
@@ -669,7 +670,7 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
       const directory = yield* InstanceState.directory
 
       const aiGatewayHeaders = {
-        "User-Agent": `kilo/${InstallationVersion} gitlab-ai-provider/${GITLAB_PROVIDER_VERSION} (${os.platform()} ${os.release()}; ${os.arch()})`, // kilocode_change
+        "User-Agent": `${Brand.command}/${InstallationVersion} gitlab-ai-provider/${GITLAB_PROVIDER_VERSION} (${os.platform()} ${os.release()}; ${os.arch()})`, // kilocode_change - tucode
         "anthropic-beta": "context-1m-2025-08-07",
         ...providerConfig?.options?.aiGatewayHeaders,
       }
@@ -847,7 +848,7 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
       if (!apiToken) {
         throw new Error(
           "CLOUDFLARE_API_TOKEN (or CF_AIG_TOKEN) is required for Cloudflare AI Gateway. " +
-            "Set it via environment variable or run `kilo auth cloudflare-ai-gateway`.",
+            `Set it via environment variable or run \`${Brand.command} auth cloudflare-ai-gateway\`.`, // kilocode_change - tucode
         )
       }
 
@@ -928,7 +929,7 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "X-Cerebras-3rd-Party-Integration": "Kilo Code", // kilocode_change
+            "X-Cerebras-3rd-Party-Integration": Brand.name, // kilocode_change - tucode
           },
         },
       }),
@@ -937,8 +938,8 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://kilo.ai/", // kilocode_change
-            "X-Title": "Kilo Code", // kilocode_change
+            "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+            "X-Title": Brand.name, // kilocode_change - tucode
           },
         },
       }),

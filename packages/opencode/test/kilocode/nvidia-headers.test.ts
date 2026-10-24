@@ -8,6 +8,7 @@ import { testEffect } from "../lib/effect"
 import { Env } from "../../src/env"
 import { Provider } from "../../src/provider/provider"
 import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Brand } from "../../src/tucode/brand"
 const it = testEffect(Layer.mergeAll(AppNodeBuilder.build(Provider.node), AppNodeBuilder.build(Env.node), AppNodeBuilder.build(CrossSpawnSpawner.node)))
 
 function withNvidiaKey<A, E, R>(self: Effect.Effect<A, E, R>) {
@@ -19,7 +20,7 @@ function withNvidiaKey<A, E, R>(self: Effect.Effect<A, E, R>) {
   })
 }
 
-it.live("nvidia provider includes KiloCode billing origin header", () =>
+it.live("nvidia provider includes the brand's billing origin header", () =>
   provideTmpdirInstance(() =>
     withNvidiaKey(
       Provider.Service.use((provider) =>
@@ -27,9 +28,9 @@ it.live("nvidia provider includes KiloCode billing origin header", () =>
           const providers = yield* provider.list()
           const headers = providers[ProviderV2.ID.make("nvidia")].options.headers
 
-          expect(headers["HTTP-Referer"]).toBe("https://kilo.ai/")
-          expect(headers["X-Title"]).toBe("Kilo Code")
-          expect(headers["X-BILLING-INVOKE-ORIGIN"]).toBe("KiloCode")
+          expect(headers["HTTP-Referer"]).toBe(Brand.repository)
+          expect(headers["X-Title"]).toBe(Brand.name)
+          expect(headers["X-BILLING-INVOKE-ORIGIN"]).toBe("TUCode")
         }),
       ),
     ),
@@ -63,8 +64,8 @@ it.live("nvidia billing origin header can be overridden from config", () =>
             const providers = yield* provider.list()
             const headers = providers[ProviderV2.ID.make("nvidia")].options.headers
 
-            expect(headers["HTTP-Referer"]).toBe("https://kilo.ai/")
-            expect(headers["X-Title"]).toBe("Kilo Code")
+            expect(headers["HTTP-Referer"]).toBe(Brand.repository)
+            expect(headers["X-Title"]).toBe(Brand.name)
             expect(headers["X-BILLING-INVOKE-ORIGIN"]).toBe("CustomOrigin")
           }),
         ),

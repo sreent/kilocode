@@ -7,7 +7,7 @@ import { UI } from "@/cli/ui"
 import { dollars } from "@organization/protocol/match"
 import { Organization } from "./organization"
 
-// Loaded lazily (see lazy-kilo-commands): only `kilo org ...` pays for this module.
+// Loaded lazily (see lazy-kilo-commands): only `tucode org ...` pays for this module.
 
 const LoginCommand = effectCmd({
   command: "login",

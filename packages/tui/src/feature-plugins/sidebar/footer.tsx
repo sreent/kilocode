@@ -3,6 +3,7 @@ import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, Show } from "solid-js"
 import { abbreviateHome } from "../../runtime"
 import { useTuiPaths } from "../../context/runtime"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 const id = "internal:sidebar-footer"
 
@@ -54,7 +55,9 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
               </text>
             </box>
             {/* kilocode_change start */}
-            <text fg={theme().textMuted}>Kilo includes free models so you can start immediately.</text>
+            <text fg={theme().textMuted}>
+              Sign in to your organization with {Brand.command} org login, or connect a provider.
+            </text>
             {/* kilocode_change end */}
             <text fg={theme().textMuted}>
               Connect from 75+ providers to use other models, including Claude, GPT, Gemini etc
@@ -72,7 +75,7 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
       </text>
       {/* kilocode_change start */}
       <text fg={theme().textMuted}>
-        <span style={{ fg: theme().success }}>•</span> <b>Kilo</b> <span>{props.api.app.version}</span>
+        <span style={{ fg: theme().success }}>•</span> <b>{Brand.name}</b> <span>{props.api.app.version}</span>
       </text>
       {/* kilocode_change end */}
     </box>

@@ -9,16 +9,8 @@ import { testEffect } from "../lib/effect"
 
 const it = testEffect(LayerNode.compile(McpAuth.node))
 
-it.live("hosted client document matches the provider's metadata and client ID", () =>
-  Effect.gen(function* () {
-    const store = yield* McpAuth.Service
-    const provider = new McpOAuthProvider("contract", "https://example.com/mcp", {}, { onRedirect: () => {} }, store)
-    const document = yield* Effect.promise(() =>
-      Bun.file(new URL("../../../kilo-docs/public/oauth/kilo/client.json", import.meta.url)).json(),
-    )
-    expect(document).toEqual({ client_id: provider.clientMetadataUrl, ...provider.clientMetadata })
-  }),
-)
+// TU Code has no client ID metadata document of its own and never presents Kilo's, so a server that
+// supports CIMD gets a dynamic registration under TU Code's name, as one that doesn't would.
 
 function serve(cimd?: boolean, methods?: string[]) {
   const registrations: OAuthClientMetadata[] = []
@@ -67,38 +59,34 @@ function serve(cimd?: boolean, methods?: string[]) {
   return { server, registrations, exchanges, url: `${server.url.origin}/mcp` }
 }
 
-const cases: { name: string; cimd?: boolean; config: McpOAuthConfig; methods?: string[]; document: boolean }[] = [
-  { name: "CIMD with public authentication", cimd: true, methods: ["none"], config: {}, document: true },
-  { name: "CIMD with omitted authentication methods", cimd: true, config: {}, document: true },
-  { name: "DCR when CIMD is absent", config: {}, document: false },
-  { name: "DCR when CIMD is false", cimd: false, config: {}, document: false },
-  { name: "static public client", cimd: true, config: { clientId: "static" }, document: false },
+const cases: { name: string; cimd?: boolean; config: McpOAuthConfig; methods?: string[] }[] = [
+  { name: "CIMD with public authentication", cimd: true, methods: ["none"], config: {} },
+  { name: "CIMD with omitted authentication methods", cimd: true, config: {} },
+  { name: "DCR when CIMD is absent", config: {} },
+  { name: "DCR when CIMD is false", cimd: false, config: {} },
+  { name: "static public client", cimd: true, config: { clientId: "static" } },
   {
     name: "static confidential client",
     cimd: true,
     methods: ["none", "client_secret_post"],
     config: { clientId: "static", clientSecret: "secret" },
-    document: false,
   },
   {
     name: "secret without a client ID",
     cimd: true,
     methods: ["client_secret_post"],
     config: { clientSecret: "secret" },
-    document: false,
   },
-  { name: "custom callback port", cimd: true, config: { callbackPort: 23456 }, document: false },
+  { name: "custom callback port", cimd: true, config: { callbackPort: 23456 } },
   {
     name: "custom redirect URI",
     cimd: true,
     config: { redirectUri: "http://127.0.0.1:23457/custom" },
-    document: false,
   },
   {
     name: "explicit default redirect overrides custom port",
     cimd: true,
     config: { redirectUri: "http://127.0.0.1:19876/mcp/oauth/callback", callbackPort: 23456 },
-    document: true,
   },
 ]
 
@@ -126,14 +114,15 @@ for (const Provider of [McpOAuthProvider, McpOAuthPendingProvider]) {
           store,
         )
         yield* Effect.promise(async () => {
-          expect(provider.clientMetadataUrl !== undefined).toBe(item.document || item.cimd !== true)
-          const expected = item.document ? provider.clientMetadataUrl! : (item.config.clientId ?? "registered")
+          expect(provider.clientMetadataUrl).toBeUndefined()
+          expect(provider.clientMetadata.client_name).toBe("TU Code")
+          const expected = item.config.clientId ?? "registered"
           expect(await auth(provider, { serverUrl: fixture.url })).toBe("REDIRECT")
           expect(redirects).toHaveLength(1)
           const redirect = redirects.at(0)!
           expect(redirect.searchParams.get("client_id")).toBe(expected)
           expect(redirect.searchParams.get("redirect_uri")).toBe(provider.redirectUrl)
-          expect(fixture.registrations).toHaveLength(item.document || item.config.clientId ? 0 : 1)
+          expect(fixture.registrations).toHaveLength(item.config.clientId ? 0 : 1)
           if (fixture.registrations.length) {
             expect(fixture.registrations.at(0)?.redirect_uris).toEqual([provider.redirectUrl])
           }
@@ -189,7 +178,7 @@ for (const Provider of [McpOAuthProvider, McpOAuthPendingProvider]) {
   }
 }
 
-it.live("stored DCR credentials take precedence over CIMD; pending reauthorization commits only on success", () =>
+it.live("stored DCR credentials are reused; pending reauthorization commits only on success", () =>
   Effect.gen(function* () {
     const store = yield* McpAuth.Service
     const name = `cimd-${crypto.randomUUID()}`
@@ -216,7 +205,7 @@ it.live("stored DCR credentials take precedence over CIMD; pending reauthorizati
       expect(await auth(pending, { serverUrl: fixture.url, authorizationCode: "code" })).toBe("AUTHORIZED")
       expect(await Effect.runPromise(store.get(name))).toEqual(before)
       await pending.commit()
-      expect((await Effect.runPromise(store.get(name)))?.clientInfo?.clientId).toBe(pending.clientMetadataUrl)
+      expect((await Effect.runPromise(store.get(name)))?.clientInfo?.clientId).toBe("registered")
     })
   }),
 )

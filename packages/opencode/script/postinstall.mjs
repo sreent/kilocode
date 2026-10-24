@@ -25,8 +25,10 @@ const archMap = {
 
 const platform = platformMap[os.platform()] ?? os.platform()
 const arch = archMap[os.arch()] ?? os.arch()
-const base = `@kilocode/cli-${platform}-${arch}`
-const sourceBinary = platform === "windows" ? "kilo.exe" : "kilo"
+// tucode: the platform packages and the binary carry the names this package is published under
+const command = Object.keys(packageJson.bin || { kilo: "" })[0]
+const base = `${packageJson.name}-${platform}-${arch}`
+const sourceBinary = platform === "windows" ? `${command}.exe` : command
 const targetBinary = path.join(__dirname, "bin", ".kilo")
 
 function supportsAvx2() {
@@ -219,6 +221,6 @@ function main() {
 try {
   main()
 } catch (error) {
-  console.error("Failed to setup kilo binary:", error.message)
+  console.error(`Failed to setup ${packageJson.name} binary:`, error.message)
   process.exit(1)
 }

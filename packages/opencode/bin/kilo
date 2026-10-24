@@ -108,8 +108,17 @@ let arch = archMap[os.arch()]
 if (!arch) {
   arch = os.arch()
 }
-const base = "@kilocode/cli-" + platform + "-" + arch
-const binary = platform === "windows" ? "kilo.exe" : "kilo"
+// kilocode_change start - tucode: the platform packages and the binary carry the names this package is
+// published under (its name and its command), so a renamed build finds its own
+const own = (() => {
+  const file = path.join(scriptDir, "..", "package.json")
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {}
+})()
+const title = own.name || "the CLI"
+const command = Object.keys(own.bin || { kilo: "" })[0]
+const base = own.name + "-" + platform + "-" + arch
+const binary = platform === "windows" ? command + ".exe" : command
+// kilocode_change end
 
 function supportsAvx2() {
   if (arch !== "x64") return false
@@ -212,13 +221,13 @@ const resolved = envPath || (fs.existsSync(cached) ? cached : findBinary(scriptD
 if (!resolved) {
   if (platform === "windows" && arch === "arm64") {
     console.error(
-      "The Kilo CLI native binary for Windows ARM64 could not be found.\n" +
+      "The " + title + " native binary for Windows ARM64 could not be found.\n" +
       "If the native package is unavailable, you can try downloading the pre-built x64 binary from the GitHub Releases page to run under Windows 11 emulation.\n" +
       "Alternatively, use WSL2 with the Linux ARM64 build."
     )
   } else {
     console.error(
-      "It seems that your package manager failed to install the right version of the Kilo CLI for your platform.\n" +
+      "It seems that your package manager failed to install the right version of " + title + " for your platform.\n" +
       "You can try manually installing the " +
         names.map((n) => `"${n}"`).join(" or ") +
         " package, or download a pre-built binary from the GitHub Releases page."

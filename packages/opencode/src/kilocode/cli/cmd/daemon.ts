@@ -3,6 +3,7 @@ import type { Daemon } from "@/kilocode/daemon/daemon"
 import type { resolveNetworkOptions } from "@/cli/network"
 import { cmd } from "@/cli/cmd/cmd"
 import { explicitNetworkOptions, withNetworkOptions } from "@/cli/network"
+import { Brand } from "@/tucode/brand"
 
 // Keep the top-level import graph light: this module is registered eagerly at CLI
 // startup, so implementation dependencies are imported inside handlers (same
@@ -52,12 +53,12 @@ function print(input: Daemon.Status, json?: boolean) {
     return
   }
   if (!input.running) {
-    console.log(input.stale ? `kilo daemon stale: ${input.reason}` : `kilo daemon not running`)
+    console.log(input.stale ? `${Brand.command} daemon stale: ${input.reason}` : `${Brand.command} daemon not running`)
     console.log(`state: ${input.file}`)
     if (input.state?.log) console.log(`log: ${input.state.log}`)
     return
   }
-  console.log(`kilo daemon running`)
+  console.log(`${Brand.command} daemon running`)
   if (input.state?.urls) {
     const urls = input.state.urls
     console.log(`local:   ${urls.local}`)
@@ -93,7 +94,7 @@ async function network(args: { [key: string]: unknown }) {
 function start(command: string) {
   return cmd({
     command,
-    describe: "start the local kilo daemon",
+    describe: `start the local ${Brand.command} daemon`,
     builder: (yargs) => withForeground(withJson(withNetworkOptions(yargs))),
     handler: async (args) => {
       await hold(Boolean(args.foreground), Boolean(args.json), async (signal) => {
@@ -108,10 +109,10 @@ function start(command: string) {
         if (!args.json) {
           console.log(
             result.reused
-              ? "kilo daemon already running"
+              ? `${Brand.command} daemon already running`
               : daemon.restarted
-                ? "kilo daemon restarted"
-                : "kilo daemon started",
+                ? `${Brand.command} daemon restarted`
+                : `${Brand.command} daemon started`,
           )
           print(result)
         }
@@ -126,7 +127,7 @@ const StartCommand = start("start")
 
 const StatusCommand = cmd({
   command: "status",
-  describe: "show local kilo daemon status",
+  describe: `show local ${Brand.command} daemon status`,
   builder: (yargs) => withJson(yargs),
   handler: async (args) => {
     const { Daemon } = await import("@/kilocode/daemon/daemon")
@@ -136,7 +137,7 @@ const StatusCommand = cmd({
 
 export const StopCommand = cmd({
   command: "stop",
-  describe: "stop the local kilo daemon",
+  describe: `stop the local ${Brand.command} daemon`,
   builder: (yargs) => withJson(yargs),
   handler: async (args) => {
     const { Daemon } = await import("@/kilocode/daemon/daemon")
@@ -145,13 +146,13 @@ export const StopCommand = cmd({
       print(result, true)
       return
     }
-    console.log(result.stopped ? "kilo daemon stopped" : "kilo daemon not running")
+    console.log(result.stopped ? `${Brand.command} daemon stopped` : `${Brand.command} daemon not running`)
   },
 })
 
 const RestartCommand = cmd({
   command: "restart",
-  describe: "restart the local kilo daemon",
+  describe: `restart the local ${Brand.command} daemon`,
   builder: (yargs) => withForeground(withJson(withNetworkOptions(yargs))),
   handler: async (args) => {
     await hold(Boolean(args.foreground), Boolean(args.json), async (signal) => {
@@ -163,7 +164,7 @@ const RestartCommand = cmd({
       if (signal?.aborted) return state
       if (args.json) print(result, true)
       if (!args.json) {
-        console.log("kilo daemon restarted")
+        console.log(`${Brand.command} daemon restarted`)
         print(result)
       }
       return state
@@ -173,7 +174,7 @@ const RestartCommand = cmd({
 
 export const DaemonCommand = cmd({
   command: "daemon",
-  describe: "manage the local kilo daemon",
+  describe: `manage the local ${Brand.command} daemon`,
   builder: (yargs: Argv) =>
     yargs
       .command(DefaultCommand)

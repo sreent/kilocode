@@ -23,6 +23,7 @@ import { skillShellPrompt } from "@/kilocode/skills/display"
 // kilocode_change end
 import { KILO_BASE_MODE, useBindings, useCommandShortcut } from "../../keymap"
 import { usePathFormatter } from "../../context/path-format"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 type PermissionStage = "permission" | "always" | "reject"
 
@@ -499,7 +500,7 @@ export function PermissionPrompt(props: { request: PermissionRequest; directory?
                   <text fg={theme.textMuted}>
                     {props.request.permission === "edit"
                       ? "Config file edits always require approval"
-                      : "Kilo configuration access always requires approval"}
+                      : `${Brand.name} configuration access always requires approval`}
                   </text>
                 </box>
               </Show>
@@ -599,7 +600,9 @@ function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: (
           <text fg={theme.text}>Reject permission</text>
         </box>
         <box paddingLeft={1}>
-          <text fg={theme.textMuted}>Tell Kilo what to do differently</text>
+          {/* kilocode_change start - tucode */}
+          <text fg={theme.textMuted}>Tell {Brand.name} what to do differently</text>
+          {/* kilocode_change end */}
         </box>
       </box>
       <box

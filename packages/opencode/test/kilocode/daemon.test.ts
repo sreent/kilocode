@@ -307,7 +307,7 @@ describe("daemon manager", () => {
     ])
 
     expect(code).toBe(0)
-    expect(stdout).toContain("kilo daemon stopped")
+    expect(stdout).toContain("tucode daemon stopped")
     expect(stderr).not.toContain("Could not open browser automatically")
     expect((await Daemon.status()).running).toBe(false)
   }, 45_000)
@@ -338,7 +338,7 @@ describe("daemon manager", () => {
         proc.kill("SIGINT")
         expect(await deadline(proc.exited, 10_000)).toBe(0)
         expect((await Daemon.status()).running).toBe(false)
-        expect(await stdout.text).toContain("kilo daemon started")
+        expect(await stdout.text).toContain("tucode daemon started")
         await stderr
       } finally {
         if (proc.exitCode === null) proc.kill("SIGKILL")

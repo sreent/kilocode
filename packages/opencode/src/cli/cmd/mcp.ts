@@ -22,6 +22,7 @@ import { modify, applyEdits } from "jsonc-parser"
 import { Filesystem } from "@/util/filesystem"
 import { Effect } from "effect"
 import { Flag } from "@opencode-ai/core/flag/flag" // kilocode_change
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 function getAuthStatusIcon(status: MCP.AuthStatus): string {
   switch (status) {
@@ -121,7 +122,7 @@ export const McpListCommand = effectCmd({
 
     if (servers.length === 0) {
       prompts.log.warn("No MCP servers configured")
-      prompts.outro("Add servers with: kilo mcp add") // kilocode_change
+      prompts.outro(`Add servers with: ${Brand.command} mcp add`) // kilocode_change - tucode
       return
     }
 

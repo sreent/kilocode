@@ -1,3 +1,4 @@
+import "@/tucode/guard" // kilocode_change - tucode: refuse connections to Kilo's services before anything can make one
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
 // kilocode_change - upstream account console intentionally omitted; KiloCli registers `kilo console` for local settings
@@ -10,6 +11,7 @@ import { EOL } from "os"
 import { errorMessage } from "./util/error"
 import { Heap } from "./cli/heap"
 import { KiloCli } from "@/kilocode/cli/setup" // kilocode_change
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 import * as Log from "@opencode-ai/core/util/log" // kilocode_change
 import { ensureProcessMetadata } from "@opencode-ai/core/util/opencode-process" // kilocode_change
 // kilocode_change start - defer heavy command implementations until yargs selects them
@@ -21,7 +23,6 @@ import {
   DebugCommand,
   ExportCommand,
   GenerateCommand,
-  GithubCommand,
   ImportCommand,
   McpCommand,
   ModelsCommand,
@@ -55,7 +56,7 @@ function show(out: string) {
 
 let cli = yargs(args) // kilocode_change
   .parserConfiguration({ "populate--": true })
-  .scriptName("kilo") // kilocode_change
+  .scriptName(Brand.command) // kilocode_change - tucode
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -116,7 +117,7 @@ let cli = yargs(args) // kilocode_change
   .command(StatsCommand)
   .command(ExportCommand)
   .command(ImportCommand)
-  .command(GithubCommand)
+  // kilocode_change - tucode: `github` relies on Kilo's GitHub app and token exchange, so TU Code omits it
   .command(PrCommand)
   .command(SessionCommand)
   .command(PluginCommand)

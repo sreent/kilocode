@@ -4,6 +4,7 @@ import { iife } from "@/util/iife"
 import * as KiloError from "@/kilocode/provider/error" // kilocode_change
 import type { ProviderV2 } from "@opencode-ai/core/provider"
 import { isContextOverflow } from "@opencode-ai/llm"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export class HeaderTimeoutError extends Error {
   public override readonly name = "ProviderHeaderTimeoutError"
@@ -66,7 +67,7 @@ function message(providerID: ProviderV2.ID, e: APICallError) {
     // provide a human-readable message instead of dumping raw markup
     if (/^\s*<!doctype|^\s*<html/i.test(e.responseBody)) {
       if (e.statusCode === 401) {
-        return "Unauthorized: request was blocked by a gateway or proxy. Your authentication token may be missing or expired — try running `kilo auth login <your provider URL>` to re-authenticate." // kilocode_change
+        return `Unauthorized: request was blocked by a gateway or proxy. Your authentication token may be missing or expired — try running \`${Brand.command} auth login <your provider URL>\` to re-authenticate.` // kilocode_change - tucode
       }
       if (e.statusCode === 403) {
         return "Forbidden: request was blocked by a gateway or proxy. You may not have permission to access this resource — check your account and provider settings."

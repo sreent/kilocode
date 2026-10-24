@@ -27,6 +27,7 @@ import { KiloSandboxNetwork } from "./kilocode/kilo-sandbox-network"
 import * as KiloSbom from "./kilocode/sbom"
 import * as KiloRelease from "../../../script/kilocode/release"
 import * as KiloBun from "../../../script/kilocode/bun"
+import { Brand } from "../src/tucode/brand"
 if (Bun.revision !== KiloBun.pin.revision) {
   throw new Error(`Build the CLI with Bun ${KiloBun.pin.version} (${KiloBun.pin.revision}), not ${Bun.revision}`)
 }
@@ -280,7 +281,7 @@ if (!skipInstall) {
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
+    Brand.npm.cli, // kilocode_change - tucode: platform packages are named after the brand, not the workspace package
     // changing to win32 flags npm for some reason
     item.os === "win32" ? "windows" : item.os,
     item.arch,
@@ -341,11 +342,11 @@ for (const item of targets) {
       autoloadDotenv: false,
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
+      target: name.replace(Brand.npm.cli, "bun") as any, // kilocode_change - tucode
       // kilocode_change start
       executablePath: runtime,
-      outfile: `dist/${name}/bin/kilo`,
-      execArgv: [`--user-agent=kilo/${Script.version}`, "--use-system-ca", "--"],
+      outfile: `dist/${name}/bin/${Brand.command}`,
+      execArgv: [`--user-agent=${Brand.command}/${Script.version}`, "--use-system-ca", "--"],
       // kilocode_change end
       windows: {},
     },
@@ -396,7 +397,7 @@ for (const item of targets) {
     const interpreter = interpreters[key]
     if (interpreter) {
       try {
-        await $`patchelf --set-interpreter ${interpreter} dist/${name}/bin/kilo`
+        await $`patchelf --set-interpreter ${interpreter} dist/${name}/bin/${Brand.command}`
         console.log(`patched interpreter for ${name} -> ${interpreter}`)
       } catch {
         console.warn(`patchelf not available, skipping interpreter fix for ${name}`)
@@ -407,7 +408,7 @@ for (const item of targets) {
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/kilo` // kilocode_change
+    const binaryPath = `dist/${name}/bin/${Brand.command}` // kilocode_change
     console.log(`Running smoke test: ${binaryPath} --version`)
     try {
       const versionOutput = await $`${binaryPath} --version`.text()
@@ -456,7 +457,7 @@ for (const item of targets) {
         private: pkg.private,
         repository: {
           type: "git",
-          url: "https://github.com/Kilo-Org/kilocode",
+          url: Brand.repository,
         },
         // kilocode_change end
         ...(item.abi ? { libc: [item.abi] } : {}),
@@ -471,7 +472,7 @@ for (const item of targets) {
 if (Script.release) {
   const archives: string[] = [] // kilocode_change
   for (const key of Object.keys(binaries)) {
-    const archive = key.replace(pkg.name, "kilo") // kilocode_change
+    const archive = key.replace(Brand.npm.cli, Brand.command) // kilocode_change
     if (key.includes("linux")) {
       // kilocode_change start
       const out = path.resolve("dist", `${archive}.tar.gz`)

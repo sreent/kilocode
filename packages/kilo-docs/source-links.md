@@ -4,6 +4,9 @@
 
 - <https://accounts.x.ai>
   <!-- packages/opencode/src/plugin/xai.ts -->
+- <https://ai.example.com>
+  <!-- packages/kilo-vscode/webview-ui/src/components/profile/OrganizationCard.tsx -->
+  <!-- packages/opencode/src/organization/cli.ts -->
 - <https://api.apertis.ai/v1>
   <!-- packages/opencode/src/provider/model-cache.ts -->
   <!-- packages/opencode/src/provider/models.ts -->
@@ -20,9 +23,6 @@
   <!-- packages/opencode/src/config/config.ts -->
 - <https://app.kilo.ai/credits>
   <!-- packages/kilo-vscode/src/services/autocomplete/AutocompleteServiceManager.ts -->
-  <!-- packages/kilo-vscode/webview-ui/src/components/profile/ProfileView.tsx -->
-- <https://app.kilo.ai/profile>
-  <!-- packages/kilo-vscode/webview-ui/src/components/profile/ProfileView.tsx -->
 - <https://app.kilo.ai/tui.json>
   <!-- packages/opencode/src/config/tui-migrate.ts -->
 - <https://app.kilo.ai/usage>
@@ -35,8 +35,6 @@
   <!-- packages/opencode/src/plugin/xai.ts -->
 - <https://auth.x.ai/oauth2/token>
   <!-- packages/opencode/src/plugin/xai.ts -->
-- <https://blog.kilo.ai/p/kilo-gateway-now-supports-byok-20-providers>
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/ProviderConnectDialog.tsx -->
 - <https://chatgpt.com/explore/plus>
   <!-- packages/opencode/src/provider/error.ts -->
 - <https://cli.github.com/>
@@ -63,6 +61,8 @@
   <!-- packages/kilo-vscode/src/agent-manager/git-errors.ts -->
 - <https://github.com>
   <!-- packages/opencode/src/kilocode/security/github.ts -->
+- <https://github.com/>
+  <!-- packages/opencode/src/kilocode/installation/index.ts -->
 - <https://github.com/anthropics/claude-code/issues/31375>
   <!-- packages/kilo-vscode/src/utils.ts -->
 - <https://github.com/apps/kiloconnect>
@@ -77,25 +77,22 @@
   <!-- packages/opencode/src/tool/edit.ts -->
 - <https://github.com/Kilo-Org/kilo-marketplace>
   <!-- packages/kilo-vscode/webview-ui/src/components/marketplace/MarketplaceContribute.tsx -->
-- <https://github.com/Kilo-Org/kilocode>
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
-  <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
-- <https://github.com/Kilo-Org/kilocode/issues>
-  <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
 - <https://github.com/Kilo-Org/kilocode/issues/6986>
   <!-- packages/kilo-vscode/src/agent-manager/constants.ts -->
 - <https://github.com/Kilo-Org/kilocode/issues/9618>
   <!-- packages/opencode/src/kilocode/encoding.ts -->
 - <https://github.com/Kilo-Org/kilocode/issues/9755>
   <!-- packages/opencode/src/kilocode/encoding.ts -->
-- <https://github.com/Kilo-Org/kilocode/issues/new/choose>
-  <!-- packages/kilo-vscode/webview-ui/src/components/chat/FeedbackDialog.tsx -->
 - <https://github.com/microsoft/vscode-eslint/archive/refs/heads/main.zip>
   <!-- packages/opencode/src/lsp/server.ts -->
 - <https://github.com/oven-sh/bun/issues/16682>
   <!-- packages/opencode/src/provider/provider.ts -->
 - <https://github.com/Rob--W/proxy-from-env>
   <!-- packages/opencode/src/util/proxy-env.ts -->
+- <https://github.com/sreent/kilocode>
+  <!-- packages/kilo-vscode/src/brand.ts -->
+- <https://github.com/sreent/kilocode/blob/main/packages/kilo-docs/pages>
+  <!-- packages/kilo-vscode/src/brand.ts -->
 - <https://github.com/vercel/ai/blob/2dc67e0ef538307f21368db32d5a12345d98831b/packages/ai/src/logger/log-warnings.ts#L85>
   <!-- packages/opencode/src/server/server.ts -->
 - <https://gitlab.com>
@@ -105,37 +102,17 @@
 - <https://kilo.ai>
   <!-- packages/opencode/src/cli/cmd/github.handler.ts -->
   <!-- packages/opencode/src/kilocode/cloud/origin.ts -->
-  <!-- packages/opencode/src/mcp/oauth-provider.ts -->
-  <!-- packages/opencode/src/session/network.ts -->
 - <https://kilo.ai/>
   <!-- packages/opencode/src/cli/cmd/generate.ts -->
   <!-- packages/opencode/src/kilocode/server/httpapi/public.ts -->
-  <!-- packages/opencode/src/provider/provider.ts -->
-- <https://kilo.ai/cli/install>
-  <!-- packages/opencode/src/kilocode/installation/index.ts -->
-- <https://kilo.ai/discord>
-  <!-- packages/kilo-vscode/webview-ui/src/components/chat/FeedbackDialog.tsx -->
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
-  <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
 - <https://kilo.ai/docs>
-  <!-- packages/kilo-vscode/webview-ui/src/hooks/useSlashCommand.ts -->
   <!-- packages/opencode/src/kilocode/cli/cmd/tui/app.tsx -->
-  <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
 - <https://kilo.ai/docs/ai-providers/cloudflare>
   <!-- packages/opencode/src/cli/cmd/providers.ts -->
 - <https://kilo.ai/docs/ai-providers/gemini>
   <!-- packages/opencode/src/kilocode/provider/error.ts -->
-- <https://kilo.ai/docs/ai-providers#custom-provider>
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/CustomProviderDialog.tsx -->
-- <https://kilo.ai/docs/automate/agent-manager-workflows>
-  <!-- packages/kilo-vscode/webview-ui/agent-manager/intro/AgentManagerIntro.tsx -->
-- <https://kilo.ai/docs/automate/mcp/what-is-mcp>
-  <!-- packages/kilo-vscode/webview-ui/src/components/marketplace/InstallModal.tsx -->
 - <https://kilo.ai/docs/code-with-ai/platforms/github>
   <!-- packages/opencode/src/cli/cmd/github.handler.ts -->
-- <https://kilo.ai/docs/customize/marketplace>
-  <!-- packages/kilo-vscode/webview-ui/src/components/marketplace/InstallModal.tsx -->
-  <!-- packages/kilo-vscode/webview-ui/src/components/marketplace/MarketplaceListView.tsx -->
 - <https://kilo.ai/docs/getting-started/settings>
   <!-- packages/opencode/src/kilocode/config/claude-migration.ts -->
   <!-- packages/opencode/src/kilocode/config/config.ts -->
@@ -143,13 +120,6 @@
   <!-- packages/opencode/src/kilocode/mcp/client-metadata.ts -->
 - <https://kilo.ai/gateway>
   <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-provider.tsx -->
-- <https://kilo.ai/pricing/kilo-pass>
-  <!-- packages/kilo-vscode/webview-ui/src/components/profile/ProfileView.tsx -->
-- <https://kilo.ai/support>
-  <!-- packages/kilo-vscode/webview-ui/src/components/chat/FeedbackDialog.tsx -->
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
-- <https://kilocode.ai>
-  <!-- packages/opencode/src/kilocode/const.ts -->
 - <https://opencode.ai/>
   <!-- packages/opencode/src/cli/cmd/generate.ts -->
   <!-- packages/opencode/src/kilocode/server/httpapi/public.ts -->
@@ -159,8 +129,6 @@
   <!-- packages/opencode/src/kilocode/session/index.ts -->
 - <https://opncd.ai>
   <!-- packages/opencode/src/share/share-next.ts -->
-- <https://reddit.com/r/kilocode>
-  <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
 - <https://search.parallel.ai/mcp>
   <!-- packages/opencode/src/tool/mcp-websearch.ts -->
 - <https://v5.ai-sdk.dev/providers/ai-sdk-providers/amazon-bedrock>

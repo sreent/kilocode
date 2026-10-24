@@ -3,6 +3,7 @@ import { $ } from "bun"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
+import { Brand } from "../../../src/tucode/brand"
 
 const root = path.join(import.meta.dir, "..", "..", "..")
 const wrapper = path.join(root, "bin", "kilo")
@@ -13,7 +14,7 @@ describe("npm install artifact behavior", () => {
     const text = await fs.readFile(wrapper, "utf8")
     expect(text.startsWith("#!/usr/bin/env node")).toBe(true)
     expect(text).toContain("const envPath = process.env.KILO_BIN_PATH")
-    expect(text).toContain('const base = "@kilocode/cli-" + platform + "-" + arch')
+    expect(text).toContain('const base = own.name + "-" + platform + "-" + arch')
     expect(text).toContain("function findBinary(startDir)")
   })
 
@@ -27,8 +28,8 @@ describe("npm install artifact behavior", () => {
 
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "kilo-postinstall-artifact-"))
     try {
-      const pkg = path.join(tmp, "node_modules", "@kilocode", "cli")
-      const native = path.join(tmp, "node_modules", "@kilocode", `cli-${process.platform}-${process.arch}`)
+      const pkg = path.join(tmp, "node_modules", Brand.npm.cli)
+      const native = path.join(tmp, "node_modules", `${Brand.npm.cli}-${process.platform}-${process.arch}`)
       const bin = path.join(native, "bin")
       await fs.mkdir(path.join(pkg, "bin"), { recursive: true })
       await fs.mkdir(path.join(bin, "tree-sitter"), { recursive: true })
@@ -37,17 +38,19 @@ describe("npm install artifact behavior", () => {
       await Bun.write(
         path.join(pkg, "package.json"),
         JSON.stringify({
+          name: Brand.npm.cli,
+          bin: { [Brand.command]: "./bin/kilo" },
           optionalDependencies: {
-            [`@kilocode/cli-${process.platform}-${process.arch}`]: "1.0.0",
+            [`${Brand.npm.cli}-${process.platform}-${process.arch}`]: "1.0.0",
           },
         }),
       )
       await Bun.write(
         path.join(native, "package.json"),
-        JSON.stringify({ name: `@kilocode/cli-${process.platform}-${process.arch}` }),
+        JSON.stringify({ name: `${Brand.npm.cli}-${process.platform}-${process.arch}` }),
       )
       const binary = "#!/bin/sh\n# binary\nexit 0\n"
-      await Bun.write(path.join(bin, "kilo"), binary)
+      await Bun.write(path.join(bin, Brand.command), binary)
       await Bun.write(path.join(bin, "kilo-sandbox-mutation-worker.js"), "worker")
       await Bun.write(path.join(bin, "tree-sitter", "tree-sitter.wasm"), "wasm")
       await Bun.write(path.join(bin, "console", "index.html"), "console")
@@ -87,8 +90,7 @@ describe("npm install artifact behavior", () => {
             name: "kilo-install-artifact-repro",
             version: "1.0.0",
             bin: {
-              kilo: "./bin/kilo",
-              kilocode: "./bin/kilo",
+              [Brand.command]: "./bin/kilo",
             },
           },
           null,
@@ -98,12 +100,9 @@ describe("npm install artifact behavior", () => {
 
       await $`npm install --prefix ${prefix} ${pkg} --no-package-lock --ignore-scripts --no-audit --no-fund`.quiet()
 
-      const commands = ["kilo", "kilocode"]
-      for (const name of commands) {
-        const link = path.join(prefix, "node_modules", ".bin", name)
-        const stat = await fs.lstat(link)
-        expect(stat.isSymbolicLink() || stat.isFile()).toBe(true)
-      }
+      const link = path.join(prefix, "node_modules", ".bin", Brand.command)
+      const linked = await fs.lstat(link)
+      expect(linked.isSymbolicLink() || linked.isFile()).toBe(true)
 
       const hidden = path.join(prefix, "node_modules", ".bin", ".kilo")
       const exists = await fs

@@ -18,15 +18,12 @@ import { ExportCommand } from "../../src/cli/cmd/export"
 import { ImportCommand } from "../../src/cli/cmd/import"
 import { PrCommand } from "../../src/cli/cmd/pr"
 import { SessionCommand } from "../../src/cli/cmd/session"
-import { RemoteCommand } from "../../src/cli/cmd/remote"
 import { ConfigCommand as ConfigCLICommand } from "../../src/cli/cmd/config"
 import { PluginCommand } from "../../src/cli/cmd/plug"
 import { DbCommand } from "../../src/cli/cmd/db"
 import { HelpCommand } from "../../src/kilocode/help-command"
-import { ProfileCommand } from "../../src/kilocode/cli/cmd/profile"
 import { DaemonCommand } from "../../src/kilocode/cli/cmd/daemon"
 import { KiloConsoleCommand } from "../../src/kilocode/cli/cmd/console"
-import { CloudCommand } from "../../src/kilocode/cli/cmd/cloud"
 
 // Stand-in for TuiThreadCommand — the real one imports @opentui/solid which
 // doesn't resolve in the test environment. Only command/describe matter here.
@@ -69,35 +66,32 @@ const commands = [
   ImportCommand,
   PrCommand,
   SessionCommand,
-  RemoteCommand,
   DbCommand,
   ConfigCLICommand,
   PluginCommand,
-  ProfileCommand,
   DaemonCommand,
   KiloConsoleCommand,
-  CloudCommand,
   HelpCommand,
   CompletionStub,
 ] as any[]
 
-describe("kilo help --all (markdown)", () => {
+describe("tucode help --all (markdown)", () => {
   test("contains ## heading for each known top-level command", async () => {
     const output = await generateHelp({ all: true, format: "md", commands })
-    for (const cmd of ["run", "auth", "debug", "mcp", "session", "agent", "profile"]) {
-      expect(output).toContain(`## kilo ${cmd}`)
+    for (const cmd of ["run", "auth", "debug", "mcp", "session", "agent"]) {
+      expect(output).toContain(`## tucode ${cmd}`)
     }
   })
 
   test("contains headings for nested subcommands", async () => {
     const output = await generateHelp({ all: true, format: "md", commands })
-    expect(output).toContain("kilo auth login")
-    expect(output).toContain("kilo auth logout")
-    expect(output).toContain("kilo debug config")
+    expect(output).toContain("tucode auth login")
+    expect(output).toContain("tucode auth logout")
+    expect(output).toContain("tucode debug config")
   })
 })
 
-describe("kilo help --all (text)", () => {
+describe("tucode help --all (text)", () => {
   test("does NOT contain Markdown ## headings or triple-backtick fences", async () => {
     const output = await generateHelp({ all: true, format: "text", commands })
     expect(output).not.toMatch(/^##\s/m)
@@ -106,75 +100,46 @@ describe("kilo help --all (text)", () => {
 
   test("still contains each command name", async () => {
     const output = await generateHelp({ all: true, format: "text", commands })
-    for (const cmd of ["run", "auth", "debug", "mcp", "session", "agent", "profile"]) {
-      expect(output).toContain(`kilo ${cmd}`)
+    for (const cmd of ["run", "auth", "debug", "mcp", "session", "agent"]) {
+      expect(output).toContain(`tucode ${cmd}`)
     }
   })
 })
 
-describe("kilo help <command>", () => {
-  test("kilo help auth contains auth subcommand headings", async () => {
+describe("tucode help <command>", () => {
+  test("tucode help auth contains auth subcommand headings", async () => {
     const output = await generateHelp({ command: "auth", format: "md", commands })
-    expect(output).toContain("kilo auth login")
-    expect(output).toContain("kilo auth logout")
-    expect(output).toContain("kilo auth list")
+    expect(output).toContain("tucode auth login")
+    expect(output).toContain("tucode auth logout")
+    expect(output).toContain("tucode auth list")
   })
 
-  test("kilo help auth does NOT contain run or debug headings", async () => {
+  test("tucode help auth does NOT contain run or debug headings", async () => {
     const output = await generateHelp({ command: "auth", format: "md", commands })
-    expect(output).not.toContain("## kilo run")
-    expect(output).not.toContain("## kilo debug")
+    expect(output).not.toContain("## tucode run")
+    expect(output).not.toContain("## tucode debug")
   })
 
   test("documents pr subcommands", async () => {
     const output = await generateHelp({ command: "pr", format: "md", commands })
-    expect(output).toContain("kilo pr checkout")
-    expect(output).toContain("kilo pr link")
-    expect(output).toContain("kilo pr unlink")
-    expect(output).toContain("kilo pr status")
+    expect(output).toContain("tucode pr checkout")
+    expect(output).toContain("tucode pr link")
+    expect(output).toContain("tucode pr unlink")
+    expect(output).toContain("tucode pr status")
   })
 
   test("documents console stop and foreground mode", async () => {
     const output = await generateHelp({ command: "console", format: "md", commands })
-    expect(output).toContain("kilo console stop")
+    expect(output).toContain("tucode console stop")
     expect(output).toContain("--foreground")
     expect(output).toContain("-f")
   })
 
   test("documents daemon foreground mode", async () => {
     const output = await generateHelp({ command: "daemon", format: "md", commands })
-    expect(output).toContain("kilo daemon start")
+    expect(output).toContain("tucode daemon start")
     expect(output).toContain("--foreground")
     expect(output).toContain("-f")
-  })
-})
-
-describe("kilo cloud help", () => {
-  async function parser() {
-    const cli = yargs([])
-      .scriptName("kilo cloud")
-      .exitProcess(false)
-      .help()
-      .fail((msg, err) => {
-        throw err ?? new Error(msg)
-      })
-    if (typeof CloudCommand.builder !== "function") throw new Error("cloud command builder is missing")
-    return await CloudCommand.builder(cli)
-  }
-
-  test("requires a subcommand and exposes only the public Cloud Agent operations", async () => {
-    const bare = await parser()
-    await expect(Promise.resolve().then(() => bare.parseAsync([]))).rejects.toThrow()
-
-    const help = await (await parser()).getHelp()
-    const names = [...help.matchAll(/^\s*kilo cloud ([a-z][a-z-]*)\b/gm)].map((match) => match[1])
-    expect([...new Set(names)].sort()).toEqual(["result", "send", "start", "status"])
-  })
-
-  test("documents start prompt stdin", async () => {
-    const output = await generateHelp({ command: "cloud", format: "md", commands })
-    expect(output).toContain("kilo cloud start")
-    expect(output).toContain("--prompt-stdin")
   })
 })
 
@@ -184,7 +149,7 @@ describe("edge cases", () => {
     expect(/\x1b\[/.test(output)).toBe(false)
   })
 
-  test("kilo help nonexistent throws unknown command error", async () => {
+  test("tucode help nonexistent throws unknown command error", async () => {
     await expect(generateHelp({ command: "nonexistent", commands })).rejects.toThrow("unknown command")
   })
 })
@@ -198,13 +163,13 @@ describe("generateCommandTable", () => {
   test("contains rows for known commands", async () => {
     const output = await generateCommandTable({ commands })
     for (const name of ["run", "auth", "debug", "mcp"]) {
-      expect(output).toContain(`kilo ${name}`)
+      expect(output).toContain(`tucode ${name}`)
     }
   })
 
-  test("default command appears as kilo [project], not $0", async () => {
+  test("default command appears as tucode [project], not $0", async () => {
     const output = await generateCommandTable({ commands })
-    expect(output).toContain("`kilo [project]`")
+    expect(output).toContain("`tucode [project]`")
     expect(output).not.toContain("$0")
   })
 
@@ -215,17 +180,17 @@ describe("generateCommandTable", () => {
 
   test("skips commands with no describe", async () => {
     const output = await generateCommandTable({ commands })
-    expect(output).not.toContain("`kilo generate`")
+    expect(output).not.toContain("`tucode generate`")
   })
 
-  test("contains kilo completion row", async () => {
+  test("contains tucode completion row", async () => {
     const output = await generateCommandTable({ commands })
-    expect(output).toContain("`kilo completion`")
+    expect(output).toContain("`tucode completion`")
   })
 
-  test("contains kilo help row", async () => {
+  test("contains tucode help row", async () => {
     const output = await generateCommandTable({ commands })
-    expect(output).toContain("`kilo help")
+    expect(output).toContain("`tucode help")
   })
 })
 
@@ -235,9 +200,10 @@ describe("Kilo CLI customizations are wired into index.ts", () => {
   const SETUP = "../../src/kilocode/cli/setup.ts"
   const BARREL = "../../src/kilocode/commands.ts"
 
-  test("CLI is branded `kilo`, not `opencode`", async () => {
+  test("CLI is branded with the TU Code command, not `kilo` or `opencode`", async () => {
     const index = await file(INDEX)
-    expect(index).toContain('.scriptName("kilo")')
+    expect(index).toContain(".scriptName(Brand.command)")
+    expect(index).not.toContain('.scriptName("kilo")')
     expect(index).not.toContain('.scriptName("opencode")')
   })
 

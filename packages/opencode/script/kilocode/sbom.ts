@@ -21,9 +21,14 @@ import { Artifact, Deps, Manifest, Policy, Scan, compose, serialize } from "../.
 import type { Component, Gap, Tool } from "../../../../script/kilocode/sbom/index"
 import { LanceDBRuntime } from "../../src/kilocode/lancedb"
 import { pin, target as artifact } from "../../../../script/kilocode/bun"
+import { Brand } from "../../src/tucode/brand"
 
 const root = path.resolve(import.meta.dir, "../..")
 const repo = path.resolve(root, "../..")
+
+/** The platform packages are named after brand.json's npm package and the release archives after its command. */
+const prefix = `${Brand.npm.cli}-`
+const archived = `${Brand.command}-`
 
 /** Pinned, runtime-downloaded search binary. Not in any lockfile or archive. */
 const RIPGREP = "15.1.0"
@@ -31,7 +36,7 @@ const RIPGREP = "15.1.0"
 const BUBBLEWRAP = "0.11.2"
 
 export type Target = {
-  /** npm package name, e.g. `@kilocode/cli-linux-x64-musl`. */
+  /** npm package name, e.g. `@tucode/cli-linux-x64-musl`. */
   name: string
   os: string
   arch: string
@@ -49,11 +54,11 @@ export type Graph = { components: Component[]; dependencies: Record<string, stri
  * identity instead of the archive claiming a nonexistent `pkg:npm/linux-x64`.
  */
 export function target(input: string): Target {
-  const slug = input.replace(/^@kilocode\/cli-/, "")
+  const slug = input.startsWith(prefix) ? input.slice(prefix.length) : input
   const parts = slug.split("-")
   const os = parts[0] === "windows" ? "win32" : parts[0]
   return {
-    name: `@kilocode/cli-${slug}`,
+    name: `${prefix}${slug}`,
     os,
     arch: parts[1],
     abi: parts.includes("musl") ? "musl" : undefined,
@@ -86,7 +91,7 @@ function explicit(input: Target): Component[] {
       supplier: "Oven",
       licenses: ["MIT"],
       delivery: "contained",
-      description: "Bun runtime compiled into the Kilo CLI executable",
+      description: `Bun runtime compiled into the ${Brand.name} CLI executable`,
       properties: {
         "bun:revision": pin.revision,
         "bun:runtime-version": pin.runtime,
@@ -224,7 +229,7 @@ export async function archive(input: { file: string; target: Target; release: Re
       version: input.release.version,
       type: "application",
       purl: Deps.purl(input.target.name, input.release.version),
-      description: `Kilo CLI for ${platform(input.target)}`,
+      description: `${Brand.name} CLI for ${platform(input.target)}`,
     },
     target: {
       platform: platform(input.target),
@@ -264,11 +269,13 @@ export async function archive(input: { file: string; target: Target; release: Re
  */
 export async function archives(input: { dir: string; release: Release; expected: number }) {
   const lock = await Deps.load(path.join(repo, "bun.lock"))
-  const files = (await fs.promises.readdir(input.dir)).filter((file) => /^kilo-.*\.(?:tar\.gz|zip)$/.test(file)).sort()
+  const files = (await fs.promises.readdir(input.dir))
+    .filter((file) => file.startsWith(archived) && /\.(?:tar\.gz|zip)$/.test(file))
+    .sort()
 
   const entries: Manifest.Entry[] = []
   for (const file of files) {
-    const name = file.replace(/\.(?:tar\.gz|zip)$/, "").replace(/^kilo-/, "")
+    const name = file.replace(/\.(?:tar\.gz|zip)$/, "").slice(archived.length)
     try {
       const result = await archive({
         file: path.join(input.dir, file),
@@ -316,7 +323,7 @@ export async function npmPackage(input: {
 }) {
   const subject = await Artifact.subject(input.file)
   const rootRef = `kilocode:artifact:${subject.name}`
-  const binary = input.name.startsWith("@kilocode/cli-")
+  const binary = input.name.startsWith(prefix)
 
   const [component, scan] = await Promise.all([
     binary
@@ -332,7 +339,9 @@ export async function npmPackage(input: {
       version: input.release.version,
       type: "application",
       purl: Deps.purl(input.name, input.release.version),
-      description: binary ? `Kilo CLI npm package for ${platform(target(input.name))}` : "Kilo CLI launcher package",
+      description: binary
+        ? `${Brand.name} CLI npm package for ${platform(target(input.name))}`
+        : `${Brand.name} CLI launcher package`,
     },
     ...(binary
       ? {
@@ -387,7 +396,7 @@ async function wrapper(input: { version: string; subject: string }): Promise<Gra
     "windows-arm64",
     "windows-x64",
     "windows-x64-baseline",
-  ].map((item) => `@kilocode/cli-${item}`)
+  ].map((item) => `${prefix}${item}`)
 
   return {
     components: names.map((name) => ({
@@ -395,7 +404,7 @@ async function wrapper(input: { version: string; subject: string }): Promise<Gra
       name,
       version: input.version,
       purl: Deps.purl(name, input.version),
-      supplier: "Kilo Code",
+      supplier: Brand.name,
       delivery: "runtime",
       description: "Platform binary resolved through optionalDependencies at install time",
     })),
@@ -411,7 +420,7 @@ async function wrapper(input: { version: string; subject: string }): Promise<Gra
  */
 export function ociName(digest: string, platform?: string) {
   const label = platform ? platform.replace("/", "-") : "index"
-  return `kilo-oci-${label}@${digest.replace(/^sha256:/, "").slice(0, 12)}`
+  return `${archived}oci-${label}@${digest.replace(/^sha256:/, "").slice(0, 12)}`
 }
 
 /**
@@ -429,17 +438,18 @@ export async function ociImage(input: {
   out: string
 }) {
   const name = ociName(input.digest, input.platform)
+  const image = input.reference.slice(0, input.reference.lastIndexOf("@"))
   const scan = await Scan.scan(`registry:${input.reference}`)
   const subject = { name, sha256: input.digest.replace(/^sha256:/, "") }
 
   const bom = compose({
     subject,
     product: {
-      name: "ghcr.io/kilo-org/kilocode",
+      name: image,
       version: input.release.version,
       type: "container",
-      purl: `pkg:oci/kilocode@${input.digest}`,
-      description: `Kilo CLI container image (${input.platform ?? "multi-arch index"})`,
+      purl: `pkg:oci/${image.split("/").at(-1)}@${input.digest}`,
+      description: `${Brand.name} CLI container image (${input.platform ?? "multi-arch index"})`,
     },
     ...(input.platform ? { target: { platform: input.platform } } : {}),
     build: { ...build(input.release), properties: { "oci:reference": input.reference, distribution: "oci" } },

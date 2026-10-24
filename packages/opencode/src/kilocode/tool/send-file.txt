@@ -1,4 +1,4 @@
-Send a file from the local machine to the user's Kilo app. This tool works only when this session is connected to Kilo cloud (remote CLI relay). It sends exactly one file per call, up to 4 MiB.
+Send a file from the local machine to the user's TU Code app. This tool works only when this session is connected to TU Code cloud (remote CLI relay). It sends exactly one file per call, up to 4 MiB.
 
 Use this tool ONLY for:
 - Files the user explicitly asked to see on mobile ("show me the log file on my phone")
@@ -11,4 +11,4 @@ Do NOT use this tool:
 - For files larger than 4 MiB — the tool rejects them; give the user the workspace path instead
 - In a cloud-agent session — delivery is remote-CLI only
 
-The filename visible on mobile is always the basename, never a full path. Older Kilo app builds ignore non-image file deliveries.
+The filename visible on mobile is always the basename, never a full path. Older TU Code app builds ignore non-image file deliveries.

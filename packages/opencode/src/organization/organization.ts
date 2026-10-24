@@ -43,10 +43,10 @@ import { Event } from "@/server/event"
 // any of them; it imports only leaf modules (types aside).
 //
 // Activation, in precedence order:
-//   1. <managed config dir>/organization.json, deployed by IT/MDM (e.g. /etc/kilo/organization.json).
+//   1. <managed config dir>/organization.json, deployed by IT/MDM (e.g. /etc/tucode/organization.json).
 //      Users cannot override it and, by default, cannot use the agent without signing in.
 //   2. KILO_ORG_URL + KILO_ORG (+ KILO_ORG_TOKEN for CI).
-//   3. A stored `kilo org login`.
+//   3. A stored `tucode org login`.
 // With none of these present every operation is a no-op.
 
 const week = 7 * 24 * 60 * 60 * 1000
@@ -522,7 +522,7 @@ export const layer = Layer.effect(
         if (!cfg.token || state.denied)
           return `Your organization (${cfg.org}) requires you to sign in. ${
             // The IDEs sign in from their profile page; the terminal has a command for it.
-            Flag.KILO_CLIENT === "cli" ? "Run `kilo org login`." : "Sign in from your Kilo profile."
+            Flag.KILO_CLIENT === "cli" ? "Run `tucode org login`." : "Sign in from your TU Code profile."
           }`
         return `Cannot load your organization's policy from ${cfg.url}${state.error ? ` (${state.error})` : ""}.`
       }

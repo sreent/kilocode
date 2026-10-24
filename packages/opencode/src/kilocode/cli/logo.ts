@@ -1,36 +1,27 @@
 // kilocode_change - new file
+import { Brand } from "@/tucode/brand"
+
 const yes = new Set(["1", "true", "yes", "on"])
 const no = new Set(["0", "false", "no", "off"])
 
-const modern = {
+// The TU Code wordmark in full blocks, which every terminal draws. "~" marks the shadow under a
+// letter and "_" a full shadow cell (see the TUI's logo component and UI.logo).
+const blocks = {
   tui: [
-    `██  ██ ██🬺🬏   ██  ██   ██🬺🬏     ████ ██     ██🬺🬏   `,
-    `████🬺🬏 ~~██   ██  ~~ ██~~██   ██~~~~ ██     ~~██   `,
-    `██  ██ ██████ 🬁🬬████ 🬁🬬██~~   🬁🬬████ 🬁🬬████ ██████ `,
-    `~~  ~~ ~~~~~~   ~~~~   ~~       ~~~~   ~~~~ ~~~~~~ `,
+    `██████ ██  ██   ██████ ██████ ████   ██████ `,
+    `~~██~~ ██  ██   ██~~~~ ██~~██ ██~~██ ████~~ `,
+    `  ██   ██████   ██████ ██████ ████~~ ██████ `,
+    `  ~~   ~~~~~~   ~~~~~~ ~~~~~~ ~~~~   ~~~~~~ `,
   ],
   plain: [
-    `██  ██ ██🬺🬏   ██  ██   ██🬺🬏     ████ ██     ██🬺🬏   `,
-    `████🬺🬏   ██   ██     ██  ██   ██     ██       ██   `,
-    `██  ██ ██████ 🬁🬬████ 🬁🬬██     🬁🬬████ 🬁🬬████ ██████ `,
+    `██████ ██  ██   ██████ ██████ ████   ██████ `,
+    `  ██   ██  ██   ██     ██  ██ ██  ██ ████   `,
+    `  ██   ██████   ██████ ██████ ████   ██████ `,
   ],
-  exit: [`  ██  ██ ██🬺🬏   ██  ██   ██🬺🬏  `, `  ████🬺🬏   ██   ██     ██  ██  `, `  ██  ██ ██████ 🬁🬬████ 🬁🬬██    `],
+  exit: [`  ██████ ██  ██  `, `    ██   ██  ██  `, `    ██   ██████  `],
 }
-
-const fallback = {
-  tui: [
-    `██  ██ ████   ██  ██   ██       ████ ██     ████   `,
-    `████   ~~██   ██  ~~ ██~~██   ██~~~~ ██     ~~██   `,
-    `██  ██ ██████ ██████   ██~~     ████   ████ ██████ `,
-    `~~  ~~ ~~~~~~  ~~~~~   ~~       ~~~~   ~~~~ ~~~~~~ `,
-  ],
-  plain: [
-    `██  ██ ████   ██  ██   ███      ████ ██     ████   `,
-    `████     ██   ██     ██  ██   ██     ██       ██   `,
-    `██  ██ ██████ ██████   ██       ████ ██████ ██████ `,
-  ],
-  exit: [`  ██  ██ ████   ██  ██   ██    `, `  ████     ██   ██     ██  ██  `, `  ██  ██ ██████ ██████   ██    `],
-}
+const modern = blocks
+const fallback = blocks
 
 function flag(value: string | undefined) {
   const key = value?.toLowerCase()
@@ -75,5 +66,7 @@ export function session(
   platform = process.platform,
 ) {
   const logo = supports(env, platform) ? modern.exit : fallback.exit
-  return [``, `${logo[0]}${dim}${title}${normal}`, `${logo[1]}${dim}kilo -s ${id}${normal}`, logo[2]].join("\n")
+  return [``, `${logo[0]}${dim}${title}${normal}`, `${logo[1]}${dim}${Brand.command} -s ${id}${normal}`, logo[2]].join(
+    "\n",
+  )
 }

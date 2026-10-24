@@ -2,21 +2,22 @@ import { describe, expect, test } from "bun:test"
 import { mkdir, mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import { join } from "path"
+import { Brand } from "../../src/tucode/brand"
 
 const script = join(import.meta.dir, "..", "..", "bin", "kilo")
 const helper = join(import.meta.dir, "..", "..", "bin", "kilocode", "windows-avx2.cjs")
 const platform = process.platform === "win32" ? "windows" : process.platform
-const binary = platform === "windows" ? "kilo.exe" : "kilo"
+const binary = platform === "windows" ? `${Brand.command}.exe` : Brand.command
 
 describe("bin/kilo tree-sitter resources", () => {
   async function setup(root: string, nested: boolean) {
     const dir = nested
-      ? join(root, "node_modules", "@kilocode", `cli-${platform}-${process.arch}`, "bin")
-      : join(root, "node_modules", "@kilocode", "cli", "bin")
+      ? join(root, "node_modules", `${Brand.npm.cli}-${platform}-${process.arch}`, "bin")
+      : join(root, "node_modules", Brand.npm.cli, "bin")
     const wasm = join(dir, "tree-sitter")
     const bin = join(dir, nested ? binary : ".kilo")
     const log = join(root, nested ? "nested-env.txt" : "cached-env.txt")
-    const cli = join(root, "node_modules", "@kilocode", "cli", "bin")
+    const cli = join(root, "node_modules", Brand.npm.cli, "bin")
     const helperTarget = join(cli, "kilocode", "windows-avx2.cjs")
 
     await mkdir(wasm, { recursive: true })
@@ -24,6 +25,11 @@ describe("bin/kilo tree-sitter resources", () => {
     await writeFile(join(wasm, "tree-sitter.wasm"), "wasm")
     await writeFile(bin, "binary")
     await Bun.write(helperTarget, Bun.file(helper))
+    // The published launcher package: its name and command name the platform packages and the binary.
+    await writeFile(
+      join(cli, "..", "package.json"),
+      JSON.stringify({ name: Brand.npm.cli, bin: { [Brand.command]: "./bin/kilo" } }),
+    )
 
     return { bin, log, wasm, wrapper: join(dir, "kilo") }
   }

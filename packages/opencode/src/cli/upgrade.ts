@@ -30,7 +30,7 @@ export async function upgrade() {
 
   const kind = Installation.getReleaseType(InstallationVersion, latest)
 
-  if (config.autoupdate === "notify" || kind !== "patch") {
+  if (config.autoupdate !== true /* kilocode_change - tucode */ || kind !== "patch") {
     GlobalBus.emit("event", {
       directory: "global",
       payload: {

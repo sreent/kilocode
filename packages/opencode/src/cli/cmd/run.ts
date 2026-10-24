@@ -28,6 +28,7 @@ import type { KiloClient, Session, ToolPart } from "@kilocode/sdk/v2"
 import { FormatError, FormatUnknownError } from "../error"
 import { INTERACTIVE_INPUT_ERROR, resolveInteractiveStdin } from "./run/runtime.stdin"
 import { readPipedStdin } from "./run-stdin" // kilocode_change - bounded piped-stdin read
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 // kilocode_change start - Kilo implementations (createKiloClient, run-message,
 // cloud-session, run-auto, headless, KiloRun) are dynamically imported inside the
 // handler so other CLI commands don't pay their module cost at startup.
@@ -133,7 +134,7 @@ async function toolError(part: ToolPart) {
 
 export const RunCommand = effectCmd({
   command: "run [message..]",
-  describe: "run kilo with a message", // kilocode_change
+  describe: `run ${Brand.command} with a message`, // kilocode_change - tucode
   // --attach connects to a remote server (no local instance needed); the
   // default path runs an in-process server and needs the project instance.
   instance: (args) => !args.attach,
@@ -203,7 +204,7 @@ export const RunCommand = effectCmd({
       })
       .option("attach", {
         type: "string",
-        describe: "attach to a running kilo server (e.g., http://localhost:4096)",
+        describe: `attach to a running ${Brand.command} server (e.g., http://localhost:4096)`, // kilocode_change - tucode
       })
       .option("password", {
         alias: ["p"],

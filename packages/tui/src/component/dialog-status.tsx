@@ -7,6 +7,7 @@ import { useProject } from "@tui/context/project"
 import { For, Match, Switch, Show, createMemo } from "solid-js"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import { Global } from "@opencode-ai/core/global" // kilocode_change
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export type DialogStatusProps = {}
 
@@ -55,7 +56,9 @@ export function DialogStatus() {
         </text>
       </box>
       {/* kilocode_change start */}
-      <text fg={theme.textMuted}>Kilo v{InstallationVersion}</text>
+      <text fg={theme.textMuted}>
+        {Brand.name} v{InstallationVersion}
+      </text>
       {/* kilocode_change end */}
       {/* kilocode_change start */}
       <box>
@@ -102,7 +105,7 @@ export function DialogStatus() {
                       <Match when={item.status === "failed" && item}>{(val) => val().error}</Match>
                       <Match when={item.status === "disabled"}>Disabled in configuration</Match>
                       <Match when={(item.status as string) === "needs_auth"}>
-                        Needs authentication (run: kilo mcp auth {key}){/* kilocode_change */}
+                        Needs authentication (run: {Brand.command} mcp auth {key}){/* kilocode_change - tucode */}
                       </Match>
                       <Match when={(item.status as string) === "needs_client_registration" && item}>
                         {(val) => (val() as { error: string }).error}

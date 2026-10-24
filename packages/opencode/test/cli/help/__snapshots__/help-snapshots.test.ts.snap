@@ -1,7 +1,7 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo acp --help 1`] = `
-"kilo acp
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode acp --help 1`] = `
+"tucode acp
 
 start ACP (Agent Client Protocol) server
 
@@ -22,17 +22,17 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo mcp --help 1`] = `
-"kilo mcp
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode mcp --help 1`] = `
+"tucode mcp
 
 manage MCP (Model Context Protocol) servers
 
 Commands:
-  kilo mcp add [name]     add an MCP server
-  kilo mcp list           list MCP servers and their status                        [aliases: ls]
-  kilo mcp auth [name]    authenticate with an OAuth-enabled MCP server
-  kilo mcp logout [name]  remove OAuth credentials for an MCP server
-  kilo mcp debug <name>   debug OAuth connection for an MCP server
+  tucode mcp add [name]     add an MCP server
+  tucode mcp list           list MCP servers and their status                      [aliases: ls]
+  tucode mcp auth [name]    authenticate with an OAuth-enabled MCP server
+  tucode mcp logout [name]  remove OAuth credentials for an MCP server
+  tucode mcp debug <name>   debug OAuth connection for an MCP server
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -43,10 +43,10 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo attach --help 1`] = `
-"kilo attach <url>
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode attach --help 1`] = `
+"tucode attach <url>
 
-attach to a running kilo server
+attach to a running tucode server
 
 Positionals:
   url  http://localhost:4096                                                     [string] [required]
@@ -70,10 +70,10 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo run --help 1`] = `
-"kilo run [message..]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode run --help 1`] = `
+"tucode run [message..]
 
-run kilo with a message
+run tucode with a message
 
 Positionals:
   message  message to send                                                     [array] [default: []]
@@ -96,7 +96,7 @@ Options:
                                           [string] [choices: "default", "json"] [default: "default"]
   -f, --file         file(s) to attach to message                                            [array]
       --title        title for the session (uses truncated prompt if no value provided)     [string]
-      --attach       attach to a running kilo server (e.g., http://localhost:4096)          [string]
+      --attach       attach to a running tucode server (e.g., http://localhost:4096)        [string]
   -p, --password     basic auth password (defaults to KILO_SERVER_PASSWORD)                 [string]
   -u, --username     basic auth username (defaults to KILO_SERVER_USERNAME or 'kilo')       [string]
       --dir          directory to run in, path on remote server if attaching                [string]
@@ -111,25 +111,25 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo debug --help 1`] = `
-"kilo debug
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode debug --help 1`] = `
+"tucode debug
 
 debugging and troubleshooting tools
 
 Commands:
-  kilo debug config        show resolved configuration
-  kilo debug lsp           LSP debugging utilities
-  kilo debug rg            ripgrep debugging utilities
-  kilo debug file          file system debugging utilities
-  kilo debug scrap         list all known projects
-  kilo debug skill         list all available skills
-  kilo debug snapshot      snapshot debugging utilities
-  kilo debug startup       print startup timing
-  kilo debug agent <name>  show agent configuration details
-  kilo debug v2            debug v2 catalog and built-in plugins
-  kilo debug info          show debug information
-  kilo debug paths         show global paths (data, config, cache, state)
-  kilo debug wait          wait indefinitely (for debugging)
+  tucode debug config        show resolved configuration
+  tucode debug lsp           LSP debugging utilities
+  tucode debug rg            ripgrep debugging utilities
+  tucode debug file          file system debugging utilities
+  tucode debug scrap         list all known projects
+  tucode debug skill         list all available skills
+  tucode debug snapshot      snapshot debugging utilities
+  tucode debug startup       print startup timing
+  tucode debug agent <name>  show agent configuration details
+  tucode debug v2            debug v2 catalog and built-in plugins
+  tucode debug info          show debug information
+  tucode debug paths         show global paths (data, config, cache, state)
+  tucode debug wait          wait indefinitely (for debugging)
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -140,15 +140,15 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo providers --help 1`] = `
-"kilo auth
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode providers --help 1`] = `
+"tucode auth
 
 manage AI providers and credentials
 
 Commands:
-  kilo providers list               list providers and credentials                 [aliases: ls]
-  kilo providers login [url]        log in to a provider
-  kilo providers logout [provider]  log out from a configured provider
+  tucode providers list               list providers and credentials               [aliases: ls]
+  tucode providers login [url]        log in to a provider
+  tucode providers logout [provider]  log out from a configured provider
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -159,14 +159,14 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo agent --help 1`] = `
-"kilo agent
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode agent --help 1`] = `
+"tucode agent
 
 manage agents
 
 Commands:
-  kilo agent create  create a new agent
-  kilo agent list    list all available agents
+  tucode agent create  create a new agent
+  tucode agent list    list all available agents
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -177,10 +177,10 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo upgrade --help 1`] = `
-"kilo upgrade [target]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode upgrade --help 1`] = `
+"tucode upgrade [target]
 
-upgrade kilo to the latest or a specific version
+upgrade tucode to the latest or a specific version
 
 Positionals:
   target  version to upgrade to, for ex '0.1.48' or 'v0.1.48'                               [string]
@@ -196,10 +196,10 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo uninstall --help 1`] = `
-"kilo uninstall
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode uninstall --help 1`] = `
+"tucode uninstall
 
-uninstall kilo and remove all related files
+uninstall tucode and remove all related files
 
 Options:
   -h, --help         show help                                                             [boolean]
@@ -214,10 +214,10 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo serve --help 1`] = `
-"kilo serve
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode serve --help 1`] = `
+"tucode serve
 
-starts a headless kilo server
+starts a headless tucode server
 
 Options:
   -h, --help         show help                                                             [boolean]
@@ -235,8 +235,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo models --help 1`] = `
-"kilo models [provider]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode models --help 1`] = `
+"tucode models [provider]
 
 list all available models
 
@@ -254,8 +254,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo stats --help 1`] = `
-"kilo stats
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode stats --help 1`] = `
+"tucode stats
 
 show token usage and cost statistics
 
@@ -273,8 +273,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo export --help 1`] = `
-"kilo export [sessionID]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode export --help 1`] = `
+"tucode export [sessionID]
 
 export session data as JSON
 
@@ -291,8 +291,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo import --help 1`] = `
-"kilo import <file>
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode import --help 1`] = `
+"tucode import <file>
 
 import session data from JSON file or URL
 
@@ -308,34 +308,16 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo github --help 1`] = `
-"kilo github
-
-manage GitHub agent
-
-Commands:
-  kilo github install  install the GitHub agent
-  kilo github run      run the GitHub agent
-
-Options:
-  -h, --help        show help                                                              [boolean]
-  -v, --version     show version number                                                    [boolean]
-      --print-logs  print logs to stderr                                                   [boolean]
-      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
-      --pure        run without external plugins                                           [boolean]
-"
-`;
-
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo pr --help 1`] = `
-"kilo pr
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode pr --help 1`] = `
+"tucode pr
 
 manage pull requests
 
 Commands:
-  kilo pr checkout <number>  fetch and checkout a GitHub PR branch, then run kilo
-  kilo pr link <url>         link a session to a pull request
-  kilo pr unlink             clear a session's linked pull request
-  kilo pr status             show a session's linked pull request
+  tucode pr checkout <number>  fetch and checkout a GitHub PR branch, then run tucode
+  tucode pr link <url>         link a session to a pull request
+  tucode pr unlink             clear a session's linked pull request
+  tucode pr status             show a session's linked pull request
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -346,14 +328,14 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo session --help 1`] = `
-"kilo session
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode session --help 1`] = `
+"tucode session
 
 manage sessions
 
 Commands:
-  kilo session list                list sessions
-  kilo session delete <sessionID>  delete a session
+  tucode session list                list sessions
+  tucode session delete <sessionID>  delete a session
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -364,8 +346,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo plugin --help 1`] = `
-"kilo plugin <module>
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode plugin --help 1`] = `
+"tucode plugin <module>
 
 install plugin and update config
 
@@ -383,14 +365,14 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo db --help 1`] = `
-"kilo db
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode db --help 1`] = `
+"tucode db
 
 database tools
 
 Commands:
-  kilo db [query]     open an interactive sqlite3 shell or run a query                     [default]
-  kilo db path        print the database path
+  tucode db [query]     open an interactive sqlite3 shell or run a query                   [default]
+  tucode db path        print the database path
 
 Positionals:
   query  SQL query to execute                                                               [string]
@@ -405,8 +387,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo mcp list --help 1`] = `
-"kilo mcp list
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode mcp list --help 1`] = `
+"tucode mcp list
 
 list MCP servers and their status
 
@@ -419,8 +401,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo mcp add --help 1`] = `
-"kilo mcp add [name]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode mcp add --help 1`] = `
+"tucode mcp add [name]
 
 add an MCP server
 
@@ -439,13 +421,13 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo mcp auth --help 1`] = `
-"kilo mcp auth [name]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode mcp auth --help 1`] = `
+"tucode mcp auth [name]
 
 authenticate with an OAuth-enabled MCP server
 
 Commands:
-  kilo mcp auth list  list OAuth-capable MCP servers and their auth status         [aliases: ls]
+  tucode mcp auth list  list OAuth-capable MCP servers and their auth status       [aliases: ls]
 
 Positionals:
   name  name of the MCP server                                                              [string]
@@ -459,8 +441,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo mcp logout --help 1`] = `
-"kilo mcp logout [name]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode mcp logout --help 1`] = `
+"tucode mcp logout [name]
 
 remove OAuth credentials for an MCP server
 
@@ -476,8 +458,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo providers list --help 1`] = `
-"kilo providers list
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode providers list --help 1`] = `
+"tucode providers list
 
 list providers and credentials
 
@@ -490,13 +472,13 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo providers login --help 1`] = `
-"kilo providers login [url]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode providers login --help 1`] = `
+"tucode providers login [url]
 
 log in to a provider
 
 Positionals:
-  url  kilo auth provider                                                                   [string]
+  url  tucode auth provider                                                                 [string]
 
 Options:
   -h, --help        show help                                                              [boolean]
@@ -509,8 +491,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo providers logout --help 1`] = `
-"kilo providers logout [provider]
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode providers logout --help 1`] = `
+"tucode providers logout [provider]
 
 log out from a configured provider
 
@@ -526,8 +508,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo agent create --help 1`] = `
-"kilo agent create
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode agent create --help 1`] = `
+"tucode agent create
 
 create a new agent
 
@@ -547,8 +529,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo agent list --help 1`] = `
-"kilo agent list
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode agent list --help 1`] = `
+"tucode agent list
 
 list all available agents
 
@@ -561,8 +543,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo session list --help 1`] = `
-"kilo session list
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode session list --help 1`] = `
+"tucode session list
 
 list sessions
 
@@ -579,8 +561,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo session delete --help 1`] = `
-"kilo session delete <sessionID>
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode session delete --help 1`] = `
+"tucode session delete <sessionID>
 
 delete a session
 
@@ -596,38 +578,8 @@ Options:
 "
 `;
 
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo github install --help 1`] = `
-"kilo github install
-
-install the GitHub agent
-
-Options:
-  -h, --help        show help                                                              [boolean]
-  -v, --version     show version number                                                    [boolean]
-      --print-logs  print logs to stderr                                                   [boolean]
-      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
-      --pure        run without external plugins                                           [boolean]
-"
-`;
-
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo github run --help 1`] = `
-"kilo github run
-
-run the GitHub agent
-
-Options:
-  -h, --help        show help                                                              [boolean]
-  -v, --version     show version number                                                    [boolean]
-      --print-logs  print logs to stderr                                                   [boolean]
-      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
-      --pure        run without external plugins                                           [boolean]
-      --event       GitHub mock event to run the agent for                                  [string]
-      --token       GitHub personal access token (github_pat_********)                      [string]
-"
-`;
-
-exports[`Kilo CLI help-text snapshots every documented command emits stable help text: kilo db path --help 1`] = `
-"kilo db path
+exports[`Kilo CLI help-text snapshots every documented command emits stable help text: tucode db path --help 1`] = `
+"tucode db path
 
 print the database path
 

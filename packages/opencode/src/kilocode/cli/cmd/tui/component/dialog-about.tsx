@@ -15,6 +15,7 @@ import { abbreviateHome } from "@tui/runtime"
 import * as Model from "@tui/util/model"
 import { useBindings } from "@tui/keymap"
 import { REDACTED_PATH } from "../../../../pii"
+import { Brand } from "@/tucode/brand"
 
 function runtime() {
   const rt = (globalThis as { Bun?: { version?: string } }).Bun
@@ -75,10 +76,8 @@ export function DialogAbout() {
   const projectRoot = () => project.data.project.mainDir ?? project.instance.path().directory ?? process.cwd()
 
   const links = [
-    { label: "Docs", url: "https://kilo.ai/docs" },
-    { label: "GitHub", url: "https://github.com/Kilo-Org/kilocode" },
-    { label: "Issues", url: "https://github.com/Kilo-Org/kilocode/issues" },
-    { label: "Discord", url: "https://kilo.ai/discord" },
+    { label: "GitHub", url: Brand.repository },
+    { label: "Issues", url: `${Brand.repository}/issues` },
   ]
 
   const copy = () => {
@@ -87,7 +86,7 @@ export function DialogAbout() {
       return
     }
     const lines = [
-      `Kilo CLI ${InstallationVersion} (${InstallationChannel})`,
+      `${Brand.name} CLI ${InstallationVersion} (${InstallationChannel})`,
       `Runtime: ${runtime()} (${process.platform}/${process.arch})`,
       `Config: ${pathLabel(Global.Path.config, privacy(), paths.home)}`,
       `Project: ${pathLabel(projectRoot(), privacy(), paths.home)}`,
@@ -118,7 +117,7 @@ export function DialogAbout() {
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
-          About Kilo CLI
+          About {Brand.name} CLI
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
@@ -127,7 +126,7 @@ export function DialogAbout() {
 
       <box gap={1}>
         <text fg={theme.textMuted} wrapMode="word">
-          Open source AI coding agent. Access hundreds of models through Kilo Gateway.
+          Open source AI coding agent for your organization, built on Kilo Code.
         </text>
 
         <box gap={0}>

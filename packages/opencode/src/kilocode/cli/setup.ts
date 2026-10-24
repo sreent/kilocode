@@ -1,22 +1,17 @@
 import type { Argv } from "yargs"
-import type { Auth } from "@/auth"
 import * as Log from "@opencode-ai/core/util/log"
 import { InstallationBuildKind, InstallationVersion } from "@opencode-ai/core/installation/version"
 import { KiloShutdown } from "@/kilocode/cli/shutdown"
 import { createHelpCommand } from "@/kilocode/help-command"
 import { hasLazyCommandSelection } from "@/kilocode/cli/lazy-commands"
 import {
-  AutoCommand,
-  CloudCommand,
   ConfigCLICommand,
   DaemonCommand,
   DevAliasCommand,
   DevSetupCommand,
   OrganizationCommand, // kilocode_change - organization
   KiloConsoleCommand,
-  ProfileCommand,
   PtySmokeCommand,
-  RemoteCommand,
   RollCallCommand,
   WorktreeCommand,
 } from "@/kilocode/cli/lazy-kilo-commands"
@@ -43,15 +38,12 @@ export namespace KiloCli {
 
   // Register only the Kilo-specific commands. Upstream commands stay in index.ts's chain so
   // upstream merges that add or remove commands keep working without touching this file.
+  // TU Code leaves out the commands that need Kilo's cloud: cloud, profile, auto and remote.
   export function register<T>(cli: Argv<T>): Argv<T> {
     cli
       .command(KiloConsoleCommand)
-      .command(CloudCommand)
       .command(RollCallCommand)
-      .command(ProfileCommand)
       .command(OrganizationCommand) // kilocode_change - organization
-      .command(AutoCommand)
-      .command(RemoteCommand)
       .command(DaemonCommand)
       .command(ConfigCLICommand)
       .command(WorktreeCommand)
@@ -112,31 +104,8 @@ export namespace KiloCli {
     if (!organization.telemetry) Telemetry.setEnabled(false)
     // kilocode_change end
 
-    const { migrateLegacyKiloAuth } = gateway
-    const getAuth = async () => {
-      if (runtime) return runtime.KiloCliBootstrapRuntime.getAuth()
-      const { Auth } = await import("@/auth")
-      return app!.AppRuntime.runPromise(Auth.Service.use((s) => s.get("kilo")))
-    }
-    const setAuth = async (auth: Auth.Info) => {
-      if (runtime) return runtime.KiloCliBootstrapRuntime.setAuth(auth)
-      const { Auth } = await import("@/auth")
-      return app!.AppRuntime.runPromise(Auth.Service.use((s) => s.set("kilo", auth)))
-    }
-
-    // Migrate legacy Kilo CLI auth (~/.kilocode/cli/config.json) into auth.json if present.
-    await migrateLegacyKiloAuth(
-      async () => (await getAuth()) !== undefined,
-      setAuth,
-    )
-
-    const auth = await getAuth()
-    if (auth) {
-      const token = auth.type === "oauth" ? auth.access : auth.key
-      const account = auth.type === "oauth" ? auth.accountId : undefined
-      await Telemetry.updateIdentity(token, account)
-    }
-
+    // TU Code has no Kilo account, so it neither migrates the legacy Kilo CLI sign-in
+    // (~/.kilocode/cli/config.json) nor identifies the user to telemetry.
     Telemetry.trackCliStart()
     // Overlap the event upload with command execution so exit is not delayed by
     // a network round trip (#10242).

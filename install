@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP=kilo # kilocode_change
+APP=tucode # kilocode_change - tucode: the command, its name and the repository whose releases it installs
+NAME="TU Code"
+REPO=sreent/kilocode
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -10,7 +12,7 @@ NC='\033[0m' # No Color
 # kilocode_change start - usage text
 usage() {
     cat <<EOF
-Kilo Code Installer
+$NAME Installer
 
 Usage: install [options]
 
@@ -21,9 +23,9 @@ Options:
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://kilo.ai/cli/install | bash
-    curl -fsSL https://kilo.ai/cli/install | bash -s -- --version 1.0.180
-    ./install --binary /path/to/kilo
+    curl -fsSL https://raw.githubusercontent.com/$REPO/main/install | bash
+    curl -fsSL https://raw.githubusercontent.com/$REPO/main/install | bash -s -- --version 1.0.180
+    ./install --binary /path/to/$APP
 EOF
 }
 # kilocode_change end
@@ -67,7 +69,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSTALL_DIR=$HOME/.kilo/bin # kilocode_change
+INSTALL_DIR=$HOME/.$APP/bin # kilocode_change
 mkdir -p "$INSTALL_DIR"
 
 # If --binary is provided, skip all download/detection logic
@@ -183,28 +185,29 @@ else
     fi
 
     if [ -z "$requested_version" ]; then
-        # The npm latest tag tracks stable CLI releases independently of other GitHub release types.
-        if ! specific_version=$(curl -fsSL "https://registry.npmjs.org/-/package/%40kilocode%2Fcli/dist-tags" |
-            sed -n 's/.*"latest"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'); then
+        # kilocode_change start - tucode: the repository's latest GitHub release, which must be a CLI release
+        if ! latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest"); then
             echo -e "${RED}Failed to fetch version information${NC}"
             exit 1
         fi
+        specific_version="${latest##*/v}"
+        # kilocode_change end
         if [[ ! "$specific_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo -e "${RED}Failed to fetch version information${NC}"
             exit 1
         fi
-        url="https://github.com/Kilo-Org/kilocode/releases/download/v${specific_version}/$filename"
+        url="https://github.com/$REPO/releases/download/v${specific_version}/$filename"
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
-        url="https://github.com/Kilo-Org/kilocode/releases/download/v${requested_version}/$filename"
+        url="https://github.com/$REPO/releases/download/v${requested_version}/$filename"
         specific_version=$requested_version
 
         # Verify the release exists before downloading
-        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/Kilo-Org/kilocode/releases/tag/v${requested_version}")
+        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/$REPO/releases/tag/v${requested_version}")
         if [ "$http_status" = "404" ]; then
             echo -e "${RED}Error: Release v${requested_version} not found${NC}"
-            echo -e "${MUTED}Available releases: https://github.com/Kilo-Org/kilocode/releases${NC}"
+            echo -e "${MUTED}Available releases: https://github.com/$REPO/releases${NC}"
             exit 1
         fi
     fi
@@ -226,11 +229,9 @@ print_message() {
 
 # kilocode_change start
 check_version() {
-    if command -v kilo >/dev/null 2>&1; then
-        kilo_path=$(which kilo)
-
+    if command -v "$APP" >/dev/null 2>&1; then
         ## Check the installed version
-        installed_version=$(kilo --version 2>/dev/null || echo "")
+        installed_version=$("$APP" --version 2>/dev/null || echo "")
 
         if [[ "$installed_version" != "$specific_version" ]]; then
             print_message info "${MUTED}Installed version: ${NC}$installed_version."
@@ -283,7 +284,7 @@ download_with_progress() {
     fi
 
     local tmp_dir=${TMPDIR:-/tmp}
-    local basename="${tmp_dir}/kilo_install_$$" # kilocode_change
+    local basename="${tmp_dir}/${APP}_install_$$" # kilocode_change
     local tracefile="${basename}.trace"
 
     rm -f "$tracefile"
@@ -334,8 +335,8 @@ download_with_progress() {
 
 download_and_install() {
     # kilocode_change start
-    print_message info "\n${MUTED}Installing ${NC}Kilo Code ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/kilo_install_$$"
+    print_message info "\n${MUTED}Installing ${NC}$NAME ${MUTED}version: ${NC}$specific_version"
+    local tmp_dir="${TMPDIR:-/tmp}/${APP}_install_$$"
     # kilocode_change end
     mkdir -p "$tmp_dir"
 
@@ -351,21 +352,21 @@ download_and_install() {
     fi
 
     # kilocode_change start
-    mv "$tmp_dir/kilo" "$INSTALL_DIR"
+    mv "$tmp_dir/$APP" "$INSTALL_DIR"
     rm -rf "${INSTALL_DIR}/tree-sitter"
     if [ -d "$tmp_dir/tree-sitter" ]; then
         mv "$tmp_dir/tree-sitter" "$INSTALL_DIR"
     fi
-    chmod 755 "${INSTALL_DIR}/kilo"
+    chmod 755 "${INSTALL_DIR}/$APP"
     # kilocode_change end
     rm -rf "$tmp_dir"
 }
 
 install_from_binary() {
     # kilocode_change start
-    print_message info "\n${MUTED}Installing ${NC}Kilo Code ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/kilo"
-    chmod 755 "${INSTALL_DIR}/kilo"
+    print_message info "\n${MUTED}Installing ${NC}$NAME ${MUTED}from: ${NC}$binary_path"
+    cp "$binary_path" "${INSTALL_DIR}/$APP"
+    chmod 755 "${INSTALL_DIR}/$APP"
     # kilocode_change end
 }
 
@@ -384,9 +385,9 @@ add_to_path() {
     if grep -Fxq "$command" "$config_file"; then
         print_message info "Command already exists in $config_file, skipping write."
     elif [[ -w $config_file ]]; then
-        echo -e "\n# kilo" >> "$config_file" # kilocode_change
+        echo -e "\n# $APP" >> "$config_file" # kilocode_change
         echo "$command" >> "$config_file"
-        print_message info "${MUTED}Successfully added ${NC}kilo ${MUTED}to \$PATH in ${NC}$config_file" # kilocode_change
+        print_message info "${MUTED}Successfully added ${NC}$APP ${MUTED}to \$PATH in ${NC}$config_file" # kilocode_change
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
         print_message info "  $command"
@@ -432,10 +433,10 @@ EOFPS
     fi
 
     if [[ "$ps_output" == *"added"* ]]; then
-        print_message info "${MUTED}Successfully added ${NC}kilo ${MUTED}to Windows user PATH${NC}"
+        print_message info "${MUTED}Successfully added ${NC}$APP ${MUTED}to Windows user PATH${NC}" # kilocode_change
     fi
 
-    # Also add to the current bash session so `kilo` works immediately
+    # Also add to the current bash session so the command works immediately
     # without the user needing to open a new terminal.
     if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
         export PATH="$INSTALL_DIR:$PATH"
@@ -525,54 +526,23 @@ if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" == "true" ]; then
 fi
 
 # kilocode_change start
-logo_supports() {
-    case "${KILO_UNICODE_LOGO:-}" in
-        1|true|TRUE|yes|YES|on|ON)
-            return 0
-        ;;
-        0|false|FALSE|no|NO|off|OFF)
-            return 1
-        ;;
-    esac
-
-    if [ "${TERM:-}" = "dumb" ]; then
-        return 1
-    fi
-
-    if [ -n "${SSH_TTY:-}" ] || [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_CONNECTION:-}" ]; then
-        return 1
-    fi
-
-    if [ -n "${ConEmuPID:-}" ] || [ -n "${ANSICON:-}" ]; then
-        return 1
-    fi
-
-    return 0
-}
-
 print_logo() {
-    if logo_supports; then
-        echo -e "██  ██ ██🬺🬏   ██  ██   ██🬺🬏     ████ ██     ██🬺🬏   "
-        echo -e "████🬺🬏   ██   ██     ██  ██   ██     ██       ██   "
-        echo -e "██  ██ ██████ 🬁🬬████ 🬁🬬██     🬁🬬████ 🬁🬬████ ██████ "
-        return
-    fi
-
-    echo -e "██  ██ ████   ██  ██   ███      ████ ██     ████   "
-    echo -e "████     ██   ██     ██  ██   ██     ██       ██   "
-    echo -e "██  ██ ██████ ██████   ██       ████ ██████ ██████ "
+    echo -e "██████ ██  ██   ██████ ██████ ████   ██████ "
+    echo -e "  ██   ██  ██   ██     ██  ██ ██  ██ ████   "
+    echo -e "  ██   ██████   ██████ ██████ ████   ██████ "
 }
 
 echo -e ""
 print_logo
 echo -e ""
 echo -e ""
-echo -e "${MUTED}Kilo includes free models so you can start immediately:${NC}"
+echo -e "${MUTED}Sign in to your organization, or connect a provider from inside:${NC}"
 echo -e ""
-echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-echo -e "kilo          ${MUTED}# Run Kilo${NC}"
+echo -e "$APP org login  ${MUTED}# Sign in to your organization${NC}"
+echo -e "cd <project>      ${MUTED}# Open directory${NC}"
+echo -e "$APP            ${MUTED}# Run $NAME${NC}"
 echo -e ""
-echo -e "${MUTED}For more information visit ${NC}https://kilo.ai/docs"
+echo -e "${MUTED}For more information visit ${NC}https://github.com/$REPO"
 echo -e ""
 echo -e ""
 # kilocode_change end

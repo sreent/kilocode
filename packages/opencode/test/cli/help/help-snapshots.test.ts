@@ -17,6 +17,7 @@ import { describe, expect } from "bun:test"
 import { Effect } from "effect"
 import { cliIt } from "../../lib/cli-process"
 import { normalizeForSnapshot, PATH_SEP } from "../../lib/snapshot"
+import { Brand } from "../../../src/tucode/brand" // kilocode_change - tucode
 
 // Composes `normalizeForSnapshot` (CRLF + tmpdir) with two help-specific
 // rules:
@@ -30,7 +31,7 @@ import { normalizeForSnapshot, PATH_SEP } from "../../lib/snapshot"
 //      line-wraps onto a fresh line on Windows). `\s+` matches both forms.
 function normalize(text: string): string {
   // kilocode_change start - snapshot Kilo help independently of lifecycle logs
-  const help = text.slice(text.indexOf("kilo "))
+  const help = text.slice(text.indexOf(`${Brand.command} `))
   const output = help
     .replace(/(?=INFO  \d{4}-\d{2}-\d{2}).*$/s, "")
     .replace(/ {4}(?=\[aliases: ls\])/g, "")
@@ -70,7 +71,7 @@ const TOP_LEVEL = [
   "stats",
   "export",
   "import",
-  "github",
+  // kilocode_change - tucode: no `github`, which needs Kilo's GitHub app
   "pr",
   "session",
   "plugin",
@@ -92,8 +93,7 @@ const SUBCOMMANDS = [
   ["agent", "list"],
   ["session", "list"],
   ["session", "delete"],
-  ["github", "install"],
-  ["github", "run"],
+  // kilocode_change - tucode: no `github install` or `github run`
   ["db", "path"],
 ] as const
 
@@ -132,7 +132,7 @@ describe("Kilo CLI help-text snapshots", () => {
             Effect.gen(function* () {
               const result = yield* opencode.spawn([...argv, "--help"], { env: SNAPSHOT_ENV })
               if (result.exitCode !== 0) {
-                return yield* Effect.fail(`kilo ${argv.join(" ")}: exit ${result.exitCode}`) // kilocode_change
+                return yield* Effect.fail(`${Brand.command} ${argv.join(" ")}: exit ${result.exitCode}`) // kilocode_change
               }
               return { argv, result }
             }),
@@ -143,7 +143,7 @@ describe("Kilo CLI help-text snapshots", () => {
           // yargs writes --help to stderr, not stdout. Snapshotting stderr
           // means our test catches the help body; stdout for these commands
           // is expected to be empty.
-          expect(normalize(result.stderr)).toMatchSnapshot(`kilo ${argv.join(" ")} --help`) // kilocode_change
+          expect(normalize(result.stderr)).toMatchSnapshot(`${Brand.command} ${argv.join(" ")} --help`) // kilocode_change
         }
         if (failures.length > 0) {
           throw new Error(`Help text failed for:\n  ${failures.join("\n  ")}`)

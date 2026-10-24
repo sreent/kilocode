@@ -1,4 +1,4 @@
-Send a push notification to the user's phone (Kilo mobile app).
+Send a push notification to the user's phone (TU Code mobile app).
 
 Use this tool ONLY for:
 - Notifications the user explicitly asked for ("ping me when the build finishes")

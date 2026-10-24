@@ -103,8 +103,8 @@ describe("managed deployments", () => {
     const organization = await client()
     expect(await run(organization.settings())).toMatchObject({ source: "managed", required: true })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
-    expect(await run(organization.refusal({ type: "local", command: ["npx", "server"] }))).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
+    expect(await run(organization.refusal({ type: "local", command: ["npx", "server"] }))).toContain("tucode org login")
     expect(await run(organization.telemetry())).toBe(false)
     expect(await run(organization.sync())).toBe(false)
   })
@@ -115,7 +115,7 @@ describe("managed deployments", () => {
     const organization = await client()
     expect(await run(organization.settings())).toMatchObject({ source: "managed", required: true })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("CI variables named before the rename keep the device enrolled", async () => {
@@ -130,7 +130,7 @@ describe("managed deployments", () => {
       required: true,
     })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("a malformed managed file blocks with a clear message instead of crashing", async () => {
@@ -500,7 +500,7 @@ describe("tool-run audit", () => {
 })
 
 describe("sign-in", () => {
-  // What the IDEs drive through `kilo serve`, and `kilo org login` in the terminal.
+  // What the IDEs drive through `tucode serve`, and `tucode org login` in the terminal.
   test("a device sign-in waits for the browser; a token signs in at once; signing out forgets both", async () => {
     const dev = await cp.join("device@acme.com", "member")
     // Device sign-in goes through the org's SSO; the browser leg is approved directly below.
@@ -707,7 +707,7 @@ describe("resilience", () => {
     await cp.store.user.update(dev.user.id, { active: false })
     await run(organization.refresh())
     expect(await run(organization.current())).toBeUndefined()
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("an unchanged policy is confirmed with a 304 and keeps the cached copy", async () => {

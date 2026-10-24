@@ -20,6 +20,7 @@ import type { Provider } from "@/provider/provider"
 import type { Auth } from "@/auth"
 import type { Config } from "@/config/config"
 import { organization, token } from "./catalog"
+import { Brand } from "@/tucode/brand"
 
 /** Default timeout (ms) for provider HTTP requests (connection phase). */
 export const REQUEST_TIMEOUT_MS = 300_000 // 5 minutes
@@ -265,7 +266,7 @@ export function patchCustomLoaderResult(
     case "cerebras":
       result.options.headers = {
         ...result.options.headers,
-        "X-Cerebras-3rd-Party-Integration": "kilo",
+        "X-Cerebras-3rd-Party-Integration": Brand.command,
       }
       break
     case "azure": {

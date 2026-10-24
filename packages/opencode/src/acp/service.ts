@@ -45,6 +45,7 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { Provider } from "@/provider/provider"
 import type { Command } from "@/command"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export const AuthMethodID = "kilo-login" // kilocode_change
 
@@ -95,8 +96,8 @@ export function make(input: {
     const started = performance.now()
     // kilocode_change start
     const authMethod: AuthMethod = {
-      description: "Run `kilo auth login` in the terminal",
-      name: "Login with Kilo",
+      description: `Run \`${Brand.command} auth login\` in the terminal`, // tucode
+      name: `Login with ${Brand.name}`, // tucode
       id: AuthMethodID,
     }
     // kilocode_change end
