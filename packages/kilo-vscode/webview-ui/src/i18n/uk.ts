@@ -906,11 +906,6 @@ export const dict = {
   "settings.notifications.sound.description":
     "За замовчуванням для завершення, запиту на введення та помилок використовуються різні звуки. В інших варіантах для всіх подій використовується один і той самий звук.",
 
-  "settings.experimental.share.title": "Режим публікації",
-  "settings.experimental.share.description": "Як поводиться публікація сесій",
-  "settings.experimental.share.manual": "Вручну",
-  "settings.experimental.share.auto": "Автоматично",
-  "settings.experimental.share.disabled": "Вимкнено",
   "settings.experimental.formatter.title": "Форматер",
   "settings.experimental.formatter.description": "Увімкнути автоматичне форматування коду",
   "settings.experimental.lsp.title": "LSP",
@@ -970,14 +965,6 @@ export const dict = {
     "Одноразово імпортуйте підтримувані глобальні інструкції CLAUDE.md, прості навички та вимкнені визначення MCP. Оригінальні файли Claude не змінюються; після ввімкнення перезапустіть бекенд.",
   "settings.experimental.mcpTimeout.title": "Тайм-аут MCP (мс)",
   "settings.experimental.mcpTimeout.description": "Тайм-аут у мілісекундах для запитів до MCP-сервера",
-  "settings.experimental.remote.title": "Керування Remote",
-  "settings.experimental.remote.description":
-    "Увімкніть керування Remote сеансами через Kilo Cloud. Це також вплине на CLI на цьому комп'ютері.",
-  "settings.experimental.remote.current": "Поточний стан:",
-  "settings.experimental.remote.startup": "Автоматичне ввімкнення під час запуску:",
-  "settings.experimental.remote.active": "Активний",
-  "settings.experimental.remote.inactive": "Неактивний",
-  "settings.experimental.remote.hint": "Використовуйте /remote у чаті для перемикання",
   "settings.experimental.toolToggles": "Перемикачі інструментів",
   "settings.experimental.codeMode.title": "Програмні виклики інструментів",
   "settings.experimental.codeMode.description":

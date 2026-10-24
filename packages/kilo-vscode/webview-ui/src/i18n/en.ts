@@ -890,11 +890,6 @@ export const dict = {
   "settings.notifications.sound.description":
     "Default uses different sounds for completion, input, and errors. Other choices use one sound for every event.",
 
-  "settings.experimental.share.title": "Share Mode",
-  "settings.experimental.share.description": "How session sharing behaves",
-  "settings.experimental.share.manual": "Manual",
-  "settings.experimental.share.auto": "Auto",
-  "settings.experimental.share.disabled": "Disabled",
   "settings.experimental.formatter.title": "Formatter",
   "settings.experimental.formatter.description": "Enable the automatic code formatter",
   "settings.experimental.lsp.title": "LSP",
@@ -973,14 +968,6 @@ export const dict = {
     "On the next backend start, import supported global CLAUDE.md instructions, simple skills, and disabled MCP definitions. This runs once with no automatic retry; global Claude instructions and skills are then handed off to TU Code. Claude files stay unchanged; keep them if you still use Claude Code.",
   "settings.experimental.mcpTimeout.title": "MCP Timeout (ms)",
   "settings.experimental.mcpTimeout.description": "Timeout for MCP server requests in milliseconds",
-  "settings.experimental.remote.title": "Remote Control",
-  "settings.experimental.remote.description":
-    "Enable remote control of sessions via Kilo Cloud. This will also affect CLIs on this machine.",
-  "settings.experimental.remote.current": "Current state:",
-  "settings.experimental.remote.startup": "Auto-enable on startup:",
-  "settings.experimental.remote.active": "Active",
-  "settings.experimental.remote.inactive": "Inactive",
-  "settings.experimental.remote.hint": "Use /remote in chat to toggle",
   "settings.experimental.toolToggles": "Tool Toggles",
 
   "settings.agentBehaviour.defaultAgent.title": "Default Agent",

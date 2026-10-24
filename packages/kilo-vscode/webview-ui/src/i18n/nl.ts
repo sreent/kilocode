@@ -911,11 +911,6 @@ export const dict = {
   "settings.notifications.sound.description":
     "Standaard worden verschillende geluiden gebruikt voor voltooiing, invoer en fouten. Andere keuzes gebruiken voor elke gebeurtenis hetzelfde geluid.",
 
-  "settings.experimental.share.title": "Deelmodus",
-  "settings.experimental.share.description": "Hoe sessiedelen zich gedraagt",
-  "settings.experimental.share.manual": "Handmatig",
-  "settings.experimental.share.auto": "Auto",
-  "settings.experimental.share.disabled": "Uitgeschakeld",
   "settings.experimental.formatter.title": "Formatter",
   "settings.experimental.formatter.description": "Schakel de automatische code formatter in",
   "settings.experimental.lsp.title": "LSP",
@@ -976,14 +971,6 @@ export const dict = {
     "Importeer ondersteunde globale CLAUDE.md-instructies, eenvoudige vaardigheden en uitgeschakelde MCP-definities één keer. Originele Claude-bestanden blijven ongewijzigd; herstart de backend na inschakelen.",
   "settings.experimental.mcpTimeout.title": "MCP Timeout (ms)",
   "settings.experimental.mcpTimeout.description": "Timeout voor MCP-serververzoeken in milliseconden",
-  "settings.experimental.remote.title": "Remote-bediening",
-  "settings.experimental.remote.description":
-    "Schakel Remote-bediening van sessies in via Kilo Cloud. Dit heeft ook invloed op CLI's op deze machine.",
-  "settings.experimental.remote.current": "Huidige status:",
-  "settings.experimental.remote.startup": "Automatisch inschakelen bij opstarten:",
-  "settings.experimental.remote.active": "Actief",
-  "settings.experimental.remote.inactive": "Inactief",
-  "settings.experimental.remote.hint": "Gebruik /remote in de chat om te schakelen",
   "settings.experimental.toolToggles": "Tool Schakelaars",
   "settings.experimental.codeMode.title": "Programmatische toolaanroepen",
   "settings.experimental.codeMode.description":

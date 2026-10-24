@@ -898,11 +898,6 @@ export const dict = {
   "settings.notifications.sound.description":
     "پیش‌فرض از صداهای مختلف برای تکمیل، ورودی و خطاها استفاده می‌کند. سایر گزینه‌ها از یک صدا برای همه رویدادها استفاده می‌کنند.",
 
-  "settings.experimental.share.title": "حالت اشتراک‌گذاری",
-  "settings.experimental.share.description": "نحوه رفتار اشتراک‌گذاری جلسه",
-  "settings.experimental.share.manual": "دستی",
-  "settings.experimental.share.auto": "خودکار",
-  "settings.experimental.share.disabled": "غیرفعال",
   "settings.experimental.formatter.title": "قالب‌بند",
   "settings.experimental.formatter.description": "فعال‌سازی قالب‌بند خودکار کد",
   "settings.experimental.lsp.title": "LSP",
@@ -967,14 +962,6 @@ export const dict = {
     "دستورالعمل‌های سراسری CLAUDE.md پشتیبانی‌شده، مهارت‌های ساده و تعریف‌های MCP غیرفعال را فقط یک‌بار وارد کنید. فایل‌های اصلی Claude تغییر نمی‌کنند؛ پس از فعال‌سازی backend را دوباره راه‌اندازی کنید.",
   "settings.experimental.mcpTimeout.title": "زمان‌وقفه MCP (میلی‌ثانیه)",
   "settings.experimental.mcpTimeout.description": "زمان‌وقفه برای درخواست‌های سرور MCP بر حسب میلی‌ثانیه",
-  "settings.experimental.remote.title": "کنترل از راه دور",
-  "settings.experimental.remote.description":
-    "فعال‌سازی کنترل از راه دور جلسات از طریق Kilo Cloud. این تنظیم بر CLIهای این دستگاه نیز تأثیر می‌گذارد.",
-  "settings.experimental.remote.current": "وضعیت فعلی:",
-  "settings.experimental.remote.startup": "فعال‌سازی خودکار هنگام راه‌اندازی:",
-  "settings.experimental.remote.active": "فعال",
-  "settings.experimental.remote.inactive": "غیرفعال",
-  "settings.experimental.remote.hint": "برای تغییر وضعیت از /remote در چت استفاده کنید",
   "settings.experimental.toolToggles": "تنظیمات ابزارها",
 
   "settings.agentBehaviour.defaultAgent.title": "عامل پیش‌فرض",

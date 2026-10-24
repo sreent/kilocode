@@ -905,11 +905,6 @@ export const dict = {
   "settings.notifications.sound.description":
     "Varsayılan seçenekte tamamlanma, giriş ve hatalar için farklı sesler kullanılır. Diğer seçeneklerde tüm etkinlikler için tek bir ses kullanılır.",
 
-  "settings.experimental.share.title": "Paylaşım Modu",
-  "settings.experimental.share.description": "Oturum paylaşımının nasıl davranacağı",
-  "settings.experimental.share.manual": "Manuel",
-  "settings.experimental.share.auto": "Otomatik",
-  "settings.experimental.share.disabled": "Devre Dışı",
   "settings.experimental.formatter.title": "Biçimlendirici",
   "settings.experimental.formatter.description": "Otomatik kod biçimlendiriciyi etkinleştir",
   "settings.experimental.lsp.title": "LSP",
@@ -969,14 +964,6 @@ export const dict = {
     "Desteklenen genel CLAUDE.md talimatlarını, basit becerileri ve devre dışı MCP tanımlarını bir kez içe aktarın. Orijinal Claude dosyaları değiştirilmez; etkinleştirdikten sonra arka ucu yeniden başlatın.",
   "settings.experimental.mcpTimeout.title": "MCP Zaman Aşımı (ms)",
   "settings.experimental.mcpTimeout.description": "MCP sunucu istekleri için milisaniye cinsinden zaman aşımı",
-  "settings.experimental.remote.title": "Remote Kontrolü",
-  "settings.experimental.remote.description":
-    "Kilo Cloud üzerinden oturumların Remote kontrolünü etkinleştirin. Bu, bu makinedeki CLI'leri de etkileyecektir.",
-  "settings.experimental.remote.current": "Mevcut durum:",
-  "settings.experimental.remote.startup": "Başlangıçta otomatik etkinleştir:",
-  "settings.experimental.remote.active": "Aktif",
-  "settings.experimental.remote.inactive": "Pasif",
-  "settings.experimental.remote.hint": "Geçiş yapmak için sohbette /remote kullanın",
   "settings.experimental.toolToggles": "Araç Açma/Kapatma",
   "settings.experimental.codeMode.title": "Programatik Araç Çağrıları",
   "settings.experimental.codeMode.description":
