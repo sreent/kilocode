@@ -11,14 +11,15 @@ import { useServer } from "../../context/server"
 import { useLanguage } from "../../context/language"
 import { useMarketplaceSession } from "../../context/marketplace-session"
 import type { MarketplaceItem, McpMarketplaceItem, McpInstallationMethod, McpParameter } from "../../types/marketplace"
+import { Brand } from "../../../../src/brand"
 
 interface ScopeOption {
   value: "project" | "global"
   label: string
 }
 
-const MARKETPLACE_DOCS = "https://kilo.ai/docs/customize/marketplace"
-const MCP_DOCS = "https://kilo.ai/docs/automate/mcp/what-is-mcp"
+const MARKETPLACE_DOCS = `${Brand.docs}/customize/marketplace.md`
+const MCP_DOCS = `${Brand.docs}/automate/mcp/what-is-mcp.md`
 
 interface Props {
   item: MarketplaceItem
@@ -60,7 +61,7 @@ export const InstallModal = (props: Props) => {
   } | null>(null)
 
   const destination = (target = scope().value) => {
-    const base = target === "project" ? ".kilo" : "~/.config/kilo"
+    const base = target === "project" ? ".kilo" : `~/.config/${Brand.command}`
     if (props.item.type === "mcp") return `${base}/kilo.json`
     if (props.item.type === "agent") return `${base}/agents/${props.item.id}.md`
     if (props.item.type === "plugin") return `${base}/`

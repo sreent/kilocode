@@ -7,6 +7,7 @@ import * as vscode from "vscode"
 import { resolveLocalBwrapEnv, resolveTreeSitterEnv } from "./cli-resources"
 import { t } from "./i18n"
 import { ensureServerCwd, scanServerPort } from "./server-utils"
+import { Brand } from "../../brand"
 
 export interface ServerInstance {
   port: number
@@ -249,7 +250,7 @@ export class ServerManager {
 
   private getCliPath(): string {
     // Always use the bundled binary from the extension directory
-    const binName = process.platform === "win32" ? "kilo.exe" : "kilo"
+    const binName = process.platform === "win32" ? `${Brand.command}.exe` : Brand.command
     const cliPath = path.join(this.context.extensionPath, "bin", binName)
     console.log("[Kilo New] ServerManager: 📦 Using CLI path:", cliPath)
     return cliPath

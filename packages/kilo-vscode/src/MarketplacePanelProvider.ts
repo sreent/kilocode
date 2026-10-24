@@ -47,7 +47,7 @@ export class MarketplacePanelProvider implements vscode.Disposable {
   private subscriptions: Array<() => void> = []
   private readonly marketplace = new MarketplaceService()
   private readonly extensionVersion =
-    vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ?? "unknown"
+    vscode.extensions.getExtension("tucode.tu-code")?.packageJSON?.version ?? "unknown"
 
   constructor(
     private readonly extensionUri: vscode.Uri,

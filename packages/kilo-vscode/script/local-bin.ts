@@ -14,18 +14,20 @@ import {
 } from "../src/services/cli-backend/cli-resources"
 import { currentBwrapTarget, ensureBwrapForTarget } from "./bwrap-helper"
 import { currentFfmpegTarget, ensureFfmpegForTarget } from "./ffmpeg-helper"
+import { Brand } from "../src/brand"
 
 const forceRebuild = process.argv.includes("--force")
 const compiledOnly = process.argv.includes("--compiled")
 
 /**
- * Ensures the VS Code extension has a CLI binary at `packages/kilo-vscode/bin/kilo`.
+ * Ensures the VS Code extension has a CLI binary at `packages/kilo-vscode/bin/<command>`, the
+ * command named in brand/brand.json.
  *
  * Strategy:
- * 1) If `bin/kilo` already exists -> ok.
+ * 1) If `bin/<command>` already exists -> ok.
  * 2) Else try to locate a prebuilt binary produced by `packages/opencode` build.
  * 3) Else try to build it via `bun run build --single` in `packages/opencode`.
- * 4) Copy the resulting binary into `packages/kilo-vscode/bin/kilo` and chmod +x.
+ * 4) Copy the resulting binary into `packages/kilo-vscode/bin/<command>` and chmod +x.
  *
  * This script is intended to be run from `packages/kilo-vscode` as part of build/package.
  */
@@ -38,7 +40,7 @@ const sandboxDir = join(packagesDir, "kilo-sandbox")
 const rootFile = join(repoDir, "package.json")
 
 const targetBinDir = join(kiloVscodeDir, "bin")
-const binName = process.platform === "win32" ? "kilo.exe" : "kilo"
+const binName = process.platform === "win32" ? `${Brand.command}.exe` : Brand.command
 const targetBinPath = join(targetBinDir, binName)
 const versionFile = join(kiloVscodeDir, "node_modules", ".kilo-cli-version")
 
@@ -182,9 +184,13 @@ async function writeVersion(kind: "compiled" | "wrapper") {
   await Bun.write(versionFile, JSON.stringify({ input, target: platformTag(), kind }) + "\n")
 }
 
-function platformTag(): string {
+function platform(): string {
   const os = process.platform === "win32" ? "windows" : process.platform
-  return `cli-${os}-${process.arch}`
+  return `${os}-${process.arch}`
+}
+
+function platformTag(): string {
+  return `cli-${platform()}`
 }
 
 async function findKiloBinaryInOpencodeDist(): Promise<string | null> {
@@ -196,9 +202,8 @@ async function findKiloBinaryInOpencodeDist(): Promise<string | null> {
     return null
   }
 
-  // Prefer the binary matching the current platform (e.g. cli-darwin-arm64)
-  const tag = platformTag()
-  const preferred = join(distDir, `@kilocode`, tag, "bin", binName)
+  // Prefer the binary matching the current platform (e.g. @tucode/cli-darwin-arm64)
+  const preferred = join(distDir, `${Brand.cli}-${platform()}`, "bin", binName)
   try {
     statSync(preferred)
     if (!hasTreeSitterResources(preferred) || !hasKiloSandboxWorker(preferred)) return null
@@ -209,7 +214,7 @@ async function findKiloBinaryInOpencodeDist(): Promise<string | null> {
 
   if (compiledOnly) return null
 
-  // Fallback: find any dist/**/bin/kilo or kilo.exe
+  // Fallback: find the binary in any dist/**/bin
   const queue = [distDir]
   while (queue.length) {
     const dir = queue.pop()
@@ -228,7 +233,7 @@ async function findKiloBinaryInOpencodeDist(): Promise<string | null> {
         queue.push(p)
         continue
       }
-      if (e.isFile() && (e.name === "kilo" || e.name === "kilo.exe") && basename(dirname(p)) === "bin") {
+      if (e.isFile() && e.name === binName && basename(dirname(p)) === "bin") {
         if (!hasTreeSitterResources(p) || !hasKiloSandboxWorker(p)) continue
         return p
       }
@@ -265,7 +270,7 @@ async function ensureBuiltBinary(): Promise<string> {
   const built = await findKiloBinaryInOpencodeDist()
   if (!built) {
     throw new Error(
-      `CLI build completed but no binary was found in ${join(opencodeDir, "dist")} (expected dist/**/bin/kilo).`,
+      `CLI build completed but no binary was found in ${join(opencodeDir, "dist")} (expected dist/**/bin/${binName}).`,
     )
   }
   return built

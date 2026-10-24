@@ -1,6 +1,7 @@
 import { createSignal, onCleanup } from "solid-js"
 import type { Accessor } from "solid-js"
 import type { SlashCommandInfo, WebviewMessage, ExtensionMessage } from "../types/messages"
+import { Brand } from "../../../src/brand"
 
 export const SLASH_PATTERN = /^\/(\S*)$/
 
@@ -135,7 +136,7 @@ export function useSlashCommand(
       description: "Open help documentation",
       hints: [],
       action: () => {
-        vscode.postMessage({ type: "openExternal", url: "https://kilo.ai/docs" })
+        vscode.postMessage({ type: "openExternal", url: Brand.repository })
       },
     },
     {
@@ -198,14 +199,6 @@ export function useSlashCommand(
       hints: [],
       action: () => {
         vscode.postMessage({ type: "openSettingsPanel" })
-      },
-    },
-    {
-      name: "remote",
-      description: "Toggle remote control",
-      hints: [],
-      action: () => {
-        vscode.postMessage({ type: "toggleRemote" })
       },
     },
     {

@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "No disponible",
   "provider.anaconda.state.unsupported": "Anaconda Desktop no es compatible con {{platform}}.",
   "provider.anaconda.state.notInstalled":
-    "Instala Anaconda Desktop en este equipo y luego vuelve aquí. Kilo no ejecuta el instalador por ti.",
+    "Instala Anaconda Desktop en este equipo y luego vuelve aquí. TU Code no ejecuta el instalador por ti.",
   "provider.anaconda.state.notRunning":
     "Abre Anaconda Desktop, completa la configuración e inicia sesión, luego elige Comprobar de nuevo.",
   "provider.anaconda.state.invalidConfig":
     "La configuración de Anaconda Desktop está incompleta. Abre Desktop, completa la configuración y reinícialo si es necesario.",
-  "provider.anaconda.state.signedOut": "Abre Anaconda Desktop e inicia sesión antes de conectar Kilo.",
+  "provider.anaconda.state.signedOut": "Abre Anaconda Desktop e inicia sesión antes de conectar TU Code.",
   "provider.anaconda.state.unauthorized":
-    "Kilo no pudo acceder a Anaconda Desktop. Abre Desktop, inicia sesión de nuevo y reinícialo si es necesario.",
+    "TU Code no pudo acceder a Anaconda Desktop. Abre Desktop, inicia sesión de nuevo y reinícialo si es necesario.",
   "provider.anaconda.state.unavailable":
     "Anaconda Desktop aún no responde. Ábrelo y espera a que la aplicación termine de iniciarse.",
   "provider.anaconda.state.noModel":
@@ -31,7 +31,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "El servidor de inferencia activo aún no está en buen estado. Compruébalo en Anaconda Desktop y reinicia el servidor si es necesario.",
   "provider.anaconda.state.ready":
-    "Kilo encontró un servidor local de generación de texto en buen estado y puede importar su configuración de conexión actual.",
+    "TU Code encontró un servidor local de generación de texto en buen estado y puede importar su configuración de conexión actual.",
   "provider.anaconda.server": "Servidor de inferencia activo",
   "provider.anaconda.context": "Ventana de contexto",
   "provider.anaconda.contextValue": "{{count}} tokens",
@@ -48,7 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "Continuar de todos modos",
   "provider.anaconda.action.manage": "Administrar / Actualizar",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop actualizado",
-  "provider.anaconda.toast.refreshed.description": "El servidor local activo y los modelos están actualizados en Kilo.",
+  "provider.anaconda.toast.refreshed.description": "El servidor local activo y los modelos están actualizados en TU Code.",
   "settings.providers.note.anacondaDesktop": "Ejecuta un modelo servido localmente por Anaconda Desktop.",
   "settings.providers.tag.local": "Local",
 } as const
@@ -98,7 +98,7 @@ export const dict = {
   "revert.banner.workspace.enableSnapshots": "Activar instantáneas",
   "revert.disabled.agentBusy": "Espera a que el agente termine",
   "revert.error.body":
-    "Puede que el repositorio esté en uso. Inténtalo de nuevo o consulta los registros de Kilo para más detalles.",
+    "Puede que el repositorio esté en uso. Inténtalo de nuevo o consulta los registros de TU Code para más detalles.",
   "command.session.compact": "Compactar sesión",
   "command.session.export": "Exportar transcripción de la sesión",
 
@@ -123,7 +123,7 @@ export const dict = {
   "provider.connect.status.waiting": "Esperando autorización...",
   "provider.connect.status.failed": "Autorización fallida: {{error}}",
   "provider.connect.apiKey.description":
-    "Introduce tu clave API de {{provider}} para conectar tu cuenta y usar modelos de {{provider}} en Kilo.",
+    "Introduce tu clave API de {{provider}} para conectar tu cuenta y usar modelos de {{provider}} en TU Code.",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -147,14 +147,14 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": "Visita ",
   "provider.connect.oauth.code.visit.link": "este enlace",
   "provider.connect.oauth.code.visit.suffix":
-    " para obtener tu código de autorización para conectar tu cuenta y usar modelos de {{provider}} en Kilo.",
+    " para obtener tu código de autorización para conectar tu cuenta y usar modelos de {{provider}} en TU Code.",
   "provider.connect.oauth.code.label": "Código de autorización {{method}}",
   "provider.connect.oauth.code.placeholder": "Código de autorización",
   "provider.connect.oauth.code.required": "El código de autorización es obligatorio",
   "provider.connect.oauth.auto.visit.prefix": "Visita ",
   "provider.connect.oauth.auto.visit.link": "este enlace",
   "provider.connect.oauth.auto.visit.suffix":
-    " e introduce el código a continuación para conectar tu cuenta y usar modelos de {{provider}} en Kilo.",
+    " e introduce el código a continuación para conectar tu cuenta y usar modelos de {{provider}} en TU Code.",
   "provider.connect.oauth.auto.confirmationCode": "Código de confirmación",
   "provider.connect.toast.connected.title": "{{provider}} conectado",
   "provider.connect.toast.connected.description": "Los modelos de {{provider}} ahora están disponibles para usar.",
@@ -237,9 +237,9 @@ export const dict = {
   "prompt.action.sandbox.enable": "Activar sandbox",
   "prompt.action.sandbox.disable": "Desactivar sandbox",
   "prompt.action.sandbox.enabled":
-    "Sandbox activado. Los comandos de shell del agente están limitados a los directorios del proyecto y de Kilo.",
+    "Sandbox activado. Los comandos de shell del agente están limitados a los directorios del proyecto y de TU Code.",
   "prompt.action.sandbox.disabled":
-    "Sandbox desactivado. Haz clic para limitar las escrituras de los comandos de shell del agente a los directorios del proyecto y de Kilo.",
+    "Sandbox desactivado. Haz clic para limitar las escrituras de los comandos de shell del agente a los directorios del proyecto y de TU Code.",
   "prompt.action.sandbox.status.enabled": "Sandbox activado",
   "prompt.action.sandbox.status.disabled": "Sandbox desactivado",
   "prompt.action.sandbox.filesystem": "Sistema de archivos",
@@ -248,7 +248,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "Bloqueada",
   "prompt.action.sandbox.network.allowed": "Permitida",
   "prompt.action.sandbox.unrestricted": "Sin restricciones",
-  "prompt.action.sandbox.description.enabled": "Las escrituras se limitan a los directorios del proyecto y de Kilo.",
+  "prompt.action.sandbox.description.enabled": "Las escrituras se limitan a los directorios del proyecto y de TU Code.",
   "prompt.action.sandbox.description.escalation":
     "Las reglas de permisos y la aprobación automática se aplican dentro de la sandbox. Los comandos que deben salir de ella siempre preguntan.",
   "prompt.action.sandbox.description.disabled":
@@ -264,7 +264,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "Transcribiendo... Haz clic para cancelar.",
   "speechToText.tooltip.error": "Falló la entrada de voz. Haz clic para borrar.",
   "speechToText.error.title": "Falló la entrada de voz",
-  "speechToText.error.loginRequired": "Inicia sesión en Kilo para usar la entrada de voz.",
+  "speechToText.error.loginRequired": "Inicia sesión en TU Code para usar la entrada de voz.",
   "speechToText.error.emptyTranscript": "No se detectó voz.",
 
   "prompt.toast.promptSendFailed.title": "Fallo al enviar prompt",
@@ -309,7 +309,7 @@ export const dict = {
     "Esto ejecuta todo el comando con las restricciones de sistema de archivos y de red eliminadas, solo para este comando. Git debe escribir en .git, que es de solo lectura en la sandbox y está fuera del árbol de trabajo en un worktree vinculado. Las reglas de permiso de Bash y la aprobación automática nunca aprueban esta solicitud automáticamente.",
   "ui.permission.manageAutoApprove": "Gestionar reglas de aprobación automática",
   "ui.permission.reject": "Rechazar",
-  "ui.permission.feedbackPlaceholder": "Dile a Kilo qué debe hacer de otra forma",
+  "ui.permission.feedbackPlaceholder": "Dile a TU Code qué debe hacer de otra forma",
   "ui.permission.feedbackHint": "Enter para rechazar, Esc para cancelar",
   "ui.permission.doomLoop.prompt": "Se detectó un posible bucle en la herramienta {{tool}}. ¿Continuar ejecutando?",
   "ui.permission.doomLoop.rule": "Continuar llamadas a {{tool}}",
@@ -356,7 +356,7 @@ export const dict = {
   "session.messages.loadEarlier": "Cargar mensajes anteriores",
   "session.messages.loading": "Cargando mensajes...",
 
-  "sidebar.topBar.label": "Navegación de Kilo Code",
+  "sidebar.topBar.label": "Navegación de TU Code",
   "sidebar.topBar.newTask": "Nueva Tarea",
   "sidebar.topBar.history": "Historial",
   "sidebar.topBar.agentManager": "Agent Manager",
@@ -459,10 +459,10 @@ export const dict = {
   "settings.indexing.provider.title": "Proveedor de embeddings",
   "settings.indexing.provider.description":
     "Elige el proveedor utilizado para generar embeddings para búsqueda semántica.",
-  "settings.indexing.kiloModel.title": "Preajuste de modelo de Kilo",
-  "settings.indexing.kiloModel.description": "Elige un modelo de embeddings alojado por Kilo compatible.",
-  "settings.indexing.kiloSignIn.title": "Se requiere iniciar sesión en Kilo",
-  "settings.indexing.kiloSignIn.description": "Inicia sesión en Kilo para usar embeddings alojados.",
+  "settings.indexing.kiloModel.title": "Preajuste de modelo de TU Code",
+  "settings.indexing.kiloModel.description": "Elige un modelo de embeddings alojado por TU Code compatible.",
+  "settings.indexing.kiloSignIn.title": "Se requiere iniciar sesión en TU Code",
+  "settings.indexing.kiloSignIn.description": "Inicia sesión en TU Code para usar embeddings alojados.",
   "settings.indexing.model.title": "Modelo de embeddings",
   "settings.indexing.model.description":
     "Anular el modelo de embeddings predeterminado para el proveedor seleccionado.",
@@ -579,12 +579,12 @@ export const dict = {
   "settings.config.status.loadedLegacy": "configuración heredada cargada",
   "settings.config.status.notLoaded": "no cargado",
   "settings.config.status.create": "no encontrado - crear este archivo",
-  "settings.config.title": "Abrir archivo de configuración Kilo {{scope}}",
+  "settings.config.title": "Abrir archivo de configuración TU Code {{scope}}",
   "settings.config.placeholder":
     "Los archivos de configuración se combinan en orden; los archivos marcados como cargados afectan actualmente a los ajustes.",
   "settings.config.noWorkspace":
-    "Abre una carpeta de espacio de trabajo para editar el archivo de configuración Kilo local.",
-  "settings.config.openFailed": "Error al abrir el archivo de configuración Kilo {{scope}}: {{message}}",
+    "Abre una carpeta de espacio de trabajo para editar el archivo de configuración TU Code local.",
+  "settings.config.openFailed": "Error al abrir el archivo de configuración TU Code {{scope}}: {{message}}",
   "settings.config.source.xdg": "Configuración global XDG",
   "settings.config.source.homeKilo": "Configuración .kilo de Home",
   "settings.config.source.homeKilocode": "Configuración .kilocode de Home",
@@ -637,17 +637,12 @@ export const dict = {
   "session.tabs.switcher.scheduled": "Programado",
   "session.tabs.pinHint": "Mayús+clic para fijar o dejar de fijar",
   "session.tab.local": "Local",
-  "session.tab.cloud": "Nube",
   "session.tab.worktree": "Árbol de trabajo",
-  "session.cloud.repoOnly": "Solo este repositorio",
-  "session.cloud.import": "Importar desde la nube",
   "feedback.button": "Comentarios y soporte",
   "feedback.dialog.message":
     "Nos encantaría escuchar tus comentarios o ayudarte con cualquier problema que estés experimentando.",
   "feedback.dialog.github": "Reportar un problema en GitHub",
-  "feedback.dialog.discord": "Unirse a nuestra comunidad de Discord",
-  "feedback.dialog.support": "Atención al cliente",
-  "workStyle.onboarding.welcome": "Te damos la bienvenida a Kilo",
+  "workStyle.onboarding.welcome": "Te damos la bienvenida a TU Code",
   "workStyle.onboarding.title": "Elige cómo quieres trabajar",
   "workStyle.onboarding.settingsNote": "Puedes cambiar estas opciones en cualquier momento en",
   "workStyle.onboarding.settings": "Configuración.",
@@ -657,7 +652,7 @@ export const dict = {
   "workStyle.choice.visibility": "Visibilidad",
   "workStyle.choice.human-in-the-loop.eyebrow": "Supervisión humana",
   "workStyle.choice.human-in-the-loop.title": "Revisar primero",
-  "workStyle.choice.human-in-the-loop.description": "Kilo se detiene y te muestra su plan mientras trabaja.",
+  "workStyle.choice.human-in-the-loop.description": "TU Code se detiene y te muestra su plan mientras trabaja.",
   "workStyle.choice.human-in-the-loop.permissions": "Pide permiso antes de editar archivos o ejecutar comandos.",
   "workStyle.choice.human-in-the-loop.bash": "Pide permiso para ejecutar todos los comandos del terminal.",
   "workStyle.choice.human-in-the-loop.visibility":
@@ -670,18 +665,13 @@ export const dict = {
   "workStyle.choice.autonomous.bash": "Puede ejecutar comandos en el terminal del espacio de trabajo sin aprobación.",
   "workStyle.choice.autonomous.visibility":
     "Contrae los detalles de las herramientas, con una vista previa compacta del razonamiento.",
-  "session.cloud.import.title": "Importar desde la nube",
-  "session.cloud.import.placeholder": "ID de sesión, URL o comando kilo import",
-  "session.cloud.import.button": "Importar",
-  "session.cloud.import.invalid": "Formato de ID de sesión no válido",
-  "session.cloud.import.legacy": "Esta parece ser una sesión heredada que ya no es compatible.",
   "session.cloud.import.failed": "Error al importar la sesión de la nube",
 
   "deviceAuth.toast.urlCopied": "URL copiada al portapapeles",
   "deviceAuth.toast.codeCopied": "Código copiado al portapapeles",
   "deviceAuth.toast.errorCopied": "Error copiado al portapapeles",
   "deviceAuth.status.initiating": "Iniciando sesión...",
-  "deviceAuth.title": "Iniciar sesión en Kilo Code",
+  "deviceAuth.title": "Iniciar sesión en TU Code",
   "deviceAuth.step1": "Paso 1: Abre esta URL",
   "deviceAuth.action.copyUrl": "Copiar URL",
   "deviceAuth.action.openBrowser": "Abrir navegador",
@@ -703,7 +693,6 @@ export const dict = {
   "common.reloadDescription": "Recargar configuración, habilidades, agentes y comandos desde el disco",
 
   "profile.title": "Perfil",
-  "profile.notLoggedIn": "No conectado",
   "profile.organization.title": "Organización",
   "profile.organization.signinTitle": "Iniciar sesión en {{org}}",
   "profile.organization.signedIn": "Sesión iniciada como {{email}} ({{role}})",
@@ -711,15 +700,12 @@ export const dict = {
   "profile.organization.gateway":
     "Las llamadas a modelos de {{providers}} pasan por la puerta de enlace de tu organización.",
   "profile.organization.managed":
-    "{{org}} administra Kilo en este dispositivo. Inicia sesión con la cuenta de tu organización.",
+    "{{org}} administra TU Code en este dispositivo. Inicia sesión con la cuenta de tu organización.",
   "profile.organization.connect": "Iniciar sesión en una organización autoalojada",
   "profile.organization.url": "URL del servidor",
   "profile.organization.action.signin": "Iniciar sesión",
   "profile.organization.action.signout": "Cerrar sesión",
   "profile.organization.error": "Falló la última actualización de la política: {{error}}",
-  "profile.action.login": "Iniciar sesión con Kilo Code",
-  "profile.balance.title": "Saldo",
-  "profile.balance.refresh": "Actualizar saldo",
   "profile.usage.title": "Planes y uso",
   "profile.usage.description": "Cuota y saldos del plan actual",
   "profile.usage.refresh": "Actualizar uso del proveedor",
@@ -757,15 +743,12 @@ export const dict = {
   "profile.usage.status.unlimited": "Ilimitado",
   "profile.usage.status.notInPlan": "No incluido en el plan",
   "profile.usage.status.exhausted": "Agotado",
-  "profile.action.dashboard": "Panel",
-  "profile.action.topUp": "Recargar",
   "profile.pass.subscribe": "Obtén Kilo Pass para añadir créditos y ganar bonificaciones",
   "profile.pass.bonus": "Bonificación",
   "profile.pass.usage": "Uso de este mes",
   "profile.pass.paid": "Pagado",
   "profile.pass.meter": "Uso mensual de Kilo Pass",
   "profile.pass.renews": "Se renueva",
-  "profile.action.logout": "Cerrar sesión",
 
   "settings.agentBehaviour.title": "Comportamiento del agente",
   "settings.autoApprove.title": "Aprobación automática",
@@ -785,12 +768,12 @@ export const dict = {
 
   "settings.experimental.title": "Experimental",
   "settings.language.title": "Idioma",
-  "settings.aboutKiloCode.title": "Acerca de Kilo Code",
+  "settings.aboutKiloCode.title": "Acerca de TU Code",
 
   "session.messages.welcome":
-    "Kilo Code es un asistente de programación con IA. Pídele que cree funcionalidades, corrija errores o explique tu código.",
+    "TU Code es un asistente de programación con IA. Pídele que cree funcionalidades, corrija errores o explique tu código.",
   "session.workspaceScope.description":
-    "El chat de Kilo solo usa «{{folder}}», la primera carpeta de este espacio de trabajo.",
+    "El chat de TU Code solo usa «{{folder}}», la primera carpeta de este espacio de trabajo.",
   "session.workspaceScope.alternatives":
     "Para trabajar con otra carpeta, ábrela en su propia ventana o añádela como proyecto en Agent Manager.",
   "session.workspaceScope.dismiss": "Ocultar aviso sobre el alcance del espacio de trabajo",
@@ -836,7 +819,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "Considerando siguientes pasos...",
 
   "dialog.model.noProviders": "Sin proveedores",
-  "dialog.model.unavailable": "Modelos de Kilo no disponibles",
+  "dialog.model.unavailable": "Modelos de TU Code no disponibles",
 
   "prompt.placeholder.connecting": "Conectando al servidor...",
   "prompt.placeholder.error": "Conexión fallida. Revisa el panel de salida o reinicia la extensión.",
@@ -879,11 +862,11 @@ export const dict = {
   "settings.aboutKiloCode.importSettings": "Importar",
   "settings.aboutKiloCode.importSettings.invalidJson":
     "Archivo JSON no válido. Seleccione un archivo de ajustes válido.",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "El archivo no contiene ajustes válidos de Kilo.",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "El archivo no contiene ajustes válidos de TU Code.",
   "settings.aboutKiloCode.importSettings.tooLarge":
     "El archivo es demasiado grande. Los archivos de ajustes deben ser menores de 1 MB.",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "Este archivo fue exportado desde una versión más reciente de Kilo. Algunos ajustes podrían ignorarse.",
+    "Este archivo fue exportado desde una versión más reciente de TU Code. Algunos ajustes podrían ignorarse.",
   "settings.aboutKiloCode.importSettings.success":
     "Ajustes importados. Revise los cambios anteriores y luego haga clic en Guardar.",
 
@@ -899,7 +882,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.skills": "Habilidades",
 
   "settings.browser.description":
-    "Configura la automatización de navegador integrada basada en Playwright. Kilo puede navegar, interactuar y capturar pantallas de páginas web en tus sesiones.",
+    "Configura la automatización de navegador integrada basada en Playwright. TU Code puede navegar, interactuar y capturar pantallas de páginas web en tus sesiones.",
   "settings.browser.enable.title": "Activar automatización del navegador",
   "settings.browser.enable.description":
     "Activar el navegador de Agent Manager específico de cada sesión para aplicaciones locales y páginas HTTPS públicas.",
@@ -930,10 +913,10 @@ export const dict = {
     "Reproducir sonidos cuando las sesiones finalicen, se produzca un error o se requiera tu intervención",
   "settings.notifications.workbench.title": "Activar las notificaciones de VS Code",
   "settings.notifications.workbench.description":
-    "Mostrar notificaciones de VS Code cuando Kilo complete una tarea o requiera tu intervención",
+    "Mostrar notificaciones de VS Code cuando TU Code complete una tarea o requiera tu intervención",
   "settings.notifications.os.title": "Activar las notificaciones del sistema operativo",
   "settings.notifications.os.description":
-    "Mostrar alertas de notificación nativas del sistema operativo cuando Kilo complete una tarea o requiera tu intervención mientras VS Code no está activo.",
+    "Mostrar alertas de notificación nativas del sistema operativo cuando TU Code complete una tarea o requiera tu intervención mientras VS Code no está activo.",
   "settings.notifications.testSound": "Probar",
   "settings.notifications.testOS": "Probar",
   "settings.notifications.testOS.testing": "Enviando notificación de prueba…",
@@ -956,7 +939,7 @@ export const dict = {
   "settings.experimental.batch.description": "Habilitar procesamiento por lotes de llamadas a herramientas",
   "settings.experimental.imageGeneration.title": "Generación de imágenes",
   "settings.experimental.imageGeneration.description": "Habilitar generación de imágenes con IA",
-  "settings.agentBehaviour.sharedAgentBoard.title": "Kilo Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "Comparte un tablero entre una sesión principal y sus subagentes de tareas, incluidos los subagentes anidados. Úsalo para intentos de solución en paralelo o trabajos complementarios, no para todas las tareas.",
   "settings.experimental.imageGenerationModel.title": "Modelo de imagen",
@@ -972,12 +955,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "Clave de API de voz a texto",
   "settings.models.speechToTextApiKey.description":
-    "Token de portador que se envía a la URL base de transcripción propia. Se guarda en tu archivo de configuración de Kilo.",
+    "Token de portador que se envía a la URL base de transcripción propia. Se guarda en tu archivo de configuración de TU Code.",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "Habilita e inicia sesión en el proveedor Kilo para usar Speech to Text, o define abajo una URL base de transcripción propia.",
+    "Habilita e inicia sesión en el proveedor TU Code para usar Speech to Text, o define abajo una URL base de transcripción propia.",
   "settings.models.speechToText.remoteDescription":
-    "La entrada de voz no está disponible en ventanas remotas. Abre Kilo en una ventana local para usar el micrófono.",
+    "La entrada de voz no está disponible en ventanas remotas. Abre TU Code en una ventana local para usar el micrófono.",
   "settings.models.speechToTextModel.title": "Modelo de voz a texto",
   "settings.models.speechToTextModel.description":
     "Elige el modelo de transcripción de Kilo Gateway para la entrada de voz.",
@@ -1106,7 +1089,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "Variables pasadas al proceso del servidor MCP.",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "Déjelo en Automático a menos que el servidor requiera un cliente preregistrado. Un secreto de cliente se almacena en su archivo de configuración de Kilo.",
+    "Déjelo en Automático a menos que el servidor requiera un cliente preregistrado. Un secreto de cliente se almacena en su archivo de configuración de TU Code.",
   "settings.agentBehaviour.editMcp.oauth.mode": "Modo",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "Automático",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "Desactivado",
@@ -1147,7 +1130,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "Compatibilidad con Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "Cargar archivos de Claude Code",
   "settings.agentBehaviour.claudeCompat.description":
-    "Carga las instrucciones y habilidades de CLAUDE.md desde tu directorio de configuración de Claude Code en las sesiones. Activa esta opción si quieres que Kilo utilice tus instrucciones y habilidades de Claude Code. Requiere reiniciar.",
+    "Carga las instrucciones y habilidades de CLAUDE.md desde tu directorio de configuración de Claude Code en las sesiones. Activa esta opción si quieres que TU Code utilice tus instrucciones y habilidades de Claude Code. Requiere reiniciar.",
   "settings.agentBehaviour.mcpDetail.command": "Comando",
   "settings.agentBehaviour.mcpDetail.args": "Argumentos",
   "settings.agentBehaviour.mcpDetail.env": "Entorno",
@@ -1174,7 +1157,7 @@ export const dict = {
     "Enruta las llamadas a herramientas MCP a través de un entorno de ejecución JavaScript confinado con descubrimiento de herramientas bajo demanda, en lugar de exponer cada herramienta MCP directamente. Ahorra contexto cuando hay muchas herramientas MCP conectadas.",
   "settings.sandboxing.enabled.title": "Sandbox",
   "settings.sandboxing.enabled.description":
-    "Ejecutar los comandos de shell del agente dentro de un sandbox a nivel de sistema operativo que restringe las escrituras a los directorios de estado del proyecto y de Kilo",
+    "Ejecutar los comandos de shell del agente dentro de un sandbox a nivel de sistema operativo que restringe las escrituras a los directorios de estado del proyecto y de TU Code",
 
   "settings.autoApprove.description":
     "Defina cómo se permite la ejecución de las herramientas. La mayoría de las herramientas tienen como valor predeterminado Permitir. doom_loop y external_directory tienen como valor predeterminado Preguntar.",
@@ -1222,7 +1205,7 @@ export const dict = {
   "settings.checkpoints.enable.description": "Crear puntos de control antes de editar archivos",
   "settings.autoCleanup.enable.title": "Habilitar limpieza automática de sesiones",
   "settings.autoCleanup.enable.description":
-    "Elimina automáticamente el historial de sesiones antiguo tras una cantidad fija de días, en todos los proyectos y en todos los clientes de Kilo de esta máquina, no solo en esta ventana. Las sesiones en ejecución y las sesiones con una bifurcación reciente nunca se eliminan. La eliminación es permanente.",
+    "Elimina automáticamente el historial de sesiones antiguo tras una cantidad fija de días, en todos los proyectos y en todos los clientes de TU Code de esta máquina, no solo en esta ventana. Las sesiones en ejecución y las sesiones con una bifurcación reciente nunca se eliminan. La eliminación es permanente.",
   "settings.autoCleanup.defaultRetention.title": "Mantener sesiones durante (días)",
   "settings.autoCleanup.defaultRetention.description":
     "Cuánto tiempo se conserva el historial de sesiones antes de que la limpieza automática lo elimine.",
@@ -1242,7 +1225,7 @@ export const dict = {
     "Eliminando sesiones: {{processed}}/{{total}} procesadas ({{deleted}} eliminadas, {{failed}} fallidas)",
   "settings.autoCleanup.runNow": "Ejecutar limpieza ahora",
   "settings.autoCleanup.runNow.confirm":
-    "¿Eliminar permanentemente las sesiones caducadas en todos los proyectos y en todos los clientes de Kilo de esta máquina?",
+    "¿Eliminar permanentemente las sesiones caducadas en todos los proyectos y en todos los clientes de TU Code de esta máquina?",
   "settings.autoCleanup.stop": "Detener limpieza",
   "settings.autoCleanup.progress.cancelling": "Deteniendo la limpieza de sesiones...",
   "settings.autoCleanup.lastRun.cancelled": "interrumpida",
@@ -1276,7 +1259,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "Inspeccionar",
   "chat.memory.project.disabled": "Memoria del proyecto desactivada",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use Kilo.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
   "chat.memory.command.failed": "Error en el comando de memoria",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1313,7 +1296,7 @@ export const dict = {
   "settings.display.username.description": "Nombre de usuario personalizado en conversaciones",
   "settings.display.fontSize.title": "Tamaño de fuente",
   "settings.display.fontSize.description":
-    "Ajusta el tamaño de fuente de la webview UI de Kilo de forma independiente a VS Code.",
+    "Ajusta el tamaño de fuente de la webview UI de TU Code de forma independiente a VS Code.",
   "settings.display.reasoningDisplay.title": "Bloques de razonamiento",
   "settings.display.reasoningDisplay.description":
     "Elige cómo empiezan los bloques de razonamiento. Expandidos muestra el texto completo, Vista previa lo limita a una vista previa breve con desplazamiento, y Encabezado muestra solo el título y el indicador de streaming hasta que lo abras.",
@@ -1464,7 +1447,7 @@ export const dict = {
     "Archivos modificados en tu árbol de trabajo pero que aún no están en el área de preparación, más archivos no rastreados (nuevos).",
   "diffViewer.source.session.label": "Sesión",
   "diffViewer.source.session.tooltip":
-    "Archivos modificados por Kilo durante la sesión actual, basado en snapshots por turno. Se reinicia al empezar una nueva sesión.",
+    "Archivos modificados por TU Code durante la sesión actual, basado en snapshots por turno. Se reinicia al empezar una nueva sesión.",
   "diffViewer.group.session": "Sesión",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "Publicar en GitHub",
@@ -1474,7 +1457,7 @@ export const dict = {
   "diffViewer.comment.openPR": "Abrir pull request",
   "diffViewer.comment.localChanges": "Cambios locales",
   "diffViewer.comment.prChanges": "Cambios del PR",
-  "diffViewer.comment.sendToKilo": "Enviar a Kilo",
+  "diffViewer.comment.sendToKilo": "Enviar a TU Code",
   "diffViewer.comment.sendToGithub": "Enviar a GitHub #{{number}}",
   "diffViewer.comment.chooseDestination": "Elegir destino",
   "diffViewer.notice.snapshotsDisabled":
@@ -1506,11 +1489,11 @@ export const dict = {
     "Usa el Google Chrome instalado para el Navegador integrado. Desactívalo solo si ya hay instalado un navegador Playwright Chromium compatible.",
   "settings.experimental.browserLinks.title": "Abrir enlaces en",
   "settings.experimental.browserLinks.description":
-    "Elige dónde se abren los enlaces web desde los chats de Kilo. Requiere el Navegador integrado.",
+    "Elige dónde se abren los enlaces web desde los chats de TU Code. Requiere el Navegador integrado.",
   "settings.experimental.browserLinks.external": "Navegador del sistema",
   "settings.experimental.browserLinks.integrated": "Navegador integrado",
   "chat.search.searchingHistory": "Buscando en mensajes anteriores…",
   "browserTab.noSession":
     "Abre el navegador desde una sesión para previsualizar una aplicación local o una página HTTPS pública.",
-  "browserTab.disabled": "El navegador integrado está desactivado. Actívalo en Ajustes de Kilo > Experimental.",
+  "browserTab.disabled": "El navegador integrado está desactivado. Actívalo en Ajustes de TU Code > Experimental.",
 }

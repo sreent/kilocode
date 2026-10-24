@@ -1,5 +1,5 @@
 ---
-"kilo-code": minor
+"tu-code": minor
 "@kilocode/kilo-jetbrains": minor
 ---
 

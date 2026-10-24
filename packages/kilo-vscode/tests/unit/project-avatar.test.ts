@@ -3,6 +3,7 @@ import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 import { avatar, origin, owner } from "../../src/agent-manager/project/avatar"
+import { Brand } from "../../src/brand"
 
 function repo(url: string) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "avatar-"))
@@ -31,8 +32,8 @@ describe("project avatar", () => {
   it("serves a cached avatar from disk as a data URL", () => {
     const cache = fs.mkdtempSync(path.join(os.tmpdir(), "avatar-cache-"))
     process.env.XDG_CACHE_HOME = cache
-    fs.mkdirSync(path.join(cache, "kilo", "project-avatars"), { recursive: true })
-    fs.writeFileSync(path.join(cache, "kilo", "project-avatars", "cached-org.png"), "png")
+    fs.mkdirSync(path.join(cache, Brand.command, "project-avatars"), { recursive: true })
+    fs.writeFileSync(path.join(cache, Brand.command, "project-avatars", "cached-org.png"), "png")
     expect(avatar(repo("git@github.com:Cached-Org/x.git"))).toBe(
       `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
     )

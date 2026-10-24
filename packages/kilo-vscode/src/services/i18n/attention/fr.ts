@@ -1,12 +1,12 @@
 export const dict = {
-  "kilocode:attention.done": "Kilo a terminé la tâche.",
-  "kilocode:attention.question": "Kilo a besoin de votre réponse.",
-  "kilocode:attention.permission": "Kilo a besoin d'une autorisation.",
-  "kilocode:attention.error": "Kilo a arrêté la tâche en raison d'une erreur.",
+  "kilocode:attention.done": "TU Code a terminé la tâche.",
+  "kilocode:attention.question": "TU Code a besoin de votre réponse.",
+  "kilocode:attention.permission": "TU Code a besoin d'une autorisation.",
+  "kilocode:attention.error": "TU Code a arrêté la tâche en raison d'une erreur.",
   "kilocode:attention.show": "Afficher",
   "kilocode:attention.workspace": "Espace de travail",
   "kilocode:attention.session": "Session",
-  "kilocode:attention.test": "Ceci est une notification de test de Kilo Code.",
+  "kilocode:attention.test": "Ceci est une notification de test de TU Code.",
   "kilocode:attention.unsupported":
     "Les notifications du système d'exploitation ne sont pas prises en charge sur cette plateforme.",
   "kilocode:attention.identity":

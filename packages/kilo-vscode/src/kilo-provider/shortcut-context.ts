@@ -20,7 +20,7 @@ function readKeybindings(file: string): unknown {
 
 /** Extension keybindings with the user's keybindings.json applied, for the current platform. */
 export function keybindings(ctx?: vscode.ExtensionContext) {
-  const ext = vscode.extensions.getExtension("kilocode.kilo-code")
+  const ext = vscode.extensions.getExtension("tucode.tu-code")
   const defaults = ext?.packageJSON?.contributes?.keybindings ?? []
   const user = files(ctx)
     .map(readKeybindings)

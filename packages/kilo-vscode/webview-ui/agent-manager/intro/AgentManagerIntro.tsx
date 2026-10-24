@@ -7,6 +7,7 @@ import type { SessionInfo } from "../../src/types/messages"
 import { WelcomeEmptyState, KiloLogo } from "../../src/components/chat/WelcomeEmptyState"
 import { IntroGraph } from "./IntroGraph"
 import "./intro.css"
+import { Brand } from "../../../src/brand"
 
 interface IntroProps {
   base: string
@@ -172,7 +173,7 @@ function Introduction(props: IntroProps) {
           size="small"
           icon="link"
           onClick={() => {
-            vscode.postMessage({ type: "openExternal", url: "https://kilo.ai/docs/automate/agent-manager-workflows" })
+            vscode.postMessage({ type: "openExternal", url: `${Brand.docs}/automate/agent-manager-workflows.md` })
           }}
         >
           {t("agentManager.intro.guide")}

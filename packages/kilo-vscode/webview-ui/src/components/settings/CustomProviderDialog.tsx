@@ -36,6 +36,7 @@ import type {
 } from "./CustomProviderModelCard"
 import { validateCustomProvider } from "./CustomProviderValidation"
 import type { FormErrors, FormState, HeaderRow } from "./CustomProviderValidation"
+import { Brand } from "../../../../src/brand"
 const DEBOUNCE_MS = 500
 const SEARCH_DEBOUNCE_MS = 150
 
@@ -574,13 +575,13 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
             <div style={{ "font-size": "var(--kilo-font-size-14)", color: "var(--text-base)" }}>
               {language.t("provider.custom.description.prefix")}
               <a
-                href="https://kilo.ai/docs/ai-providers#custom-provider"
+                href={`${Brand.docs}/ai-providers/index.md`}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   vscode.postMessage({
                     type: "openExternal",
-                    url: "https://kilo.ai/docs/ai-providers#custom-provider",
+                    url: `${Brand.docs}/ai-providers/index.md`,
                   })
                 }}
               >

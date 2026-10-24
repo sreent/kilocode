@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Watches packages/opencode/src/ for changes and rebuilds the CLI binary,
- * then copies it into packages/kilo-vscode/bin/kilo.
+ * then copies it into packages/kilo-vscode/bin/<command> (brand/brand.json's command).
  *
  * Used during development so the VS Code extension always has an up-to-date
  * CLI backend without manual rebuild steps.
@@ -10,13 +10,14 @@ import { watch, chmodSync } from "node:fs"
 import { join, relative } from "node:path"
 import { $ } from "bun"
 import { copySandboxResources, copyTreeSitterResources } from "../src/services/cli-backend/cli-resources"
+import { Brand } from "../src/brand"
 
 const kiloVscodeDir = join(import.meta.dir, "..")
 const packagesDir = join(kiloVscodeDir, "..")
 const opencodeDir = join(packagesDir, "opencode")
 const opencodeSrcDir = join(opencodeDir, "src")
 const targetBinDir = join(kiloVscodeDir, "bin")
-const targetBinPath = join(targetBinDir, "kilo")
+const targetBinPath = join(targetBinDir, Brand.command)
 
 let building = false
 let pending = false
@@ -27,7 +28,7 @@ function log(msg: string) {
 }
 
 function sourceBinaryPath(): string {
-  return join(opencodeDir, "dist", `@kilocode/cli-${process.platform}-${process.arch}`, "bin", "kilo")
+  return join(opencodeDir, "dist", `${Brand.cli}-${process.platform}-${process.arch}`, "bin", Brand.command)
 }
 
 async function rebuild() {
@@ -63,7 +64,7 @@ async function rebuild() {
     chmodSync(targetBinPath, 0o755)
 
     const elapsed = ((performance.now() - start) / 1000).toFixed(1)
-    log(`Binary updated (${elapsed}s): ${relative(packagesDir, source)} -> bin/kilo`)
+    log(`Binary updated (${elapsed}s): ${relative(packagesDir, source)} -> bin/${Brand.command}`)
   } catch (err) {
     log(`ERROR: ${err instanceof Error ? err.message : String(err)}`)
   } finally {

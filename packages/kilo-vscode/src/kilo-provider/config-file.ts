@@ -1,6 +1,7 @@
 import { existsSync } from "fs"
 import * as os from "os"
 import * as path from "path"
+import { Brand } from "../brand"
 
 export type Scope = "global" | "local"
 
@@ -60,7 +61,7 @@ function ensure(list: Entry[], file: string, source: Source) {
 }
 
 export function globalFiles() {
-  const root = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), "kilo")
+  const root = path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), Brand.command)
   const base = GLOBAL.map((file) => row(path.join(root, file), "sourceXdg")).filter((item) => item.exists)
   const dirs = HOME.flatMap((dir) => {
     const base = path.join(os.homedir(), dir)

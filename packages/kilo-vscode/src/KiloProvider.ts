@@ -180,7 +180,7 @@ import type { KiloProviderOptions } from "./kilo-provider/options"
 import { watchRestore } from "./kilo-provider/prompt-focus"
 import type { ProjectRef, SessionRef, WorktreeRef } from "./agent-manager/project/route"
 import { indexingConsentStore, registeredProjects } from "./indexing-consent"
-import { fetchKiloEmbeddingModelCatalog } from "@kilocode/kilo-gateway"
+import { EMPTY_KILO_EMBEDDING_MODEL_CATALOG } from "@kilocode/kilo-gateway"
 import { fetchImageModels } from "./image-generation/models"
 import { fetchSpeechToTextModels } from "./speech-to-text/catalog"
 import { SPEECH_TO_TEXT_MODELS } from "./speech-to-text/models"
@@ -434,7 +434,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private readonly org = createOrgRouter(() => this.authCtx)
   private isWebviewReady = false
   private readonly extensionVersion =
-    vscode.extensions.getExtension("kilocode.kilo-code")?.packageJSON?.version ?? "unknown"
+    vscode.extensions.getExtension("tucode.tu-code")?.packageJSON?.version ?? "unknown"
   private cachedProvidersMessage: unknown = null
   /** Directory the cached provider payload was loaded for, so recovery is keyed to the active project. */
   private cachedProvidersDirectory: string | null = null
@@ -3367,8 +3367,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   private async fetchAndSendKiloEmbeddingModels(): Promise<void> {
-    const catalog = await fetchKiloEmbeddingModelCatalog()
-    const message = { type: "kiloEmbeddingModelsLoaded", catalog }
+    // TU Code has no Kilo Gateway, so there are no Kilo embedding models to load.
+    const message = { type: "kiloEmbeddingModelsLoaded", catalog: EMPTY_KILO_EMBEDDING_MODEL_CATALOG }
     this.cachedKiloEmbeddingModelsMessage = message
     this.postMessage(message)
   }
@@ -5209,14 +5209,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    */
   private async handleResetAllSettings(): Promise<void> {
     const confirmed = await vscode.window.showWarningMessage(
-      "Reset all Kilo Code extension settings to defaults?",
+      "Reset all TU Code extension settings to defaults?",
       { modal: true },
       "Reset",
     )
     if (confirmed !== "Reset") return
 
     const prefix = "kilo-code.new."
-    const ext = vscode.extensions.getExtension("kilocode.kilo-code")
+    const ext = vscode.extensions.getExtension("tucode.tu-code")
     const properties = ext?.packageJSON?.contributes?.configuration?.properties as Record<string, unknown> | undefined
     if (!properties) return
 
@@ -5258,7 +5258,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // Re-fetch notifications to reflect cleared dismissed IDs
     await this.fetchAndSendNotifications()
 
-    vscode.window.showInformationMessage("Kilo Code settings have been reset to defaults.")
+    vscode.window.showInformationMessage("TU Code settings have been reset to defaults.")
   }
 
   /**
@@ -6257,7 +6257,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       styleUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", `${bundle}.css`)),
       iconsBaseUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "assets", "icons")),
       workerUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "shiki-worker.js")),
-      title: "Kilo Code",
+      title: "TU Code",
       port: this.connectionService.getServerInfo()?.port,
       extraStyles: `.container { height: 100vh; }`,
       // Dedicated single-purpose panels (Settings, Profile, Sub-Agent Viewer)

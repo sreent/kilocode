@@ -102,11 +102,11 @@ export const dict = {
   "agentManager.orphans.sizeUnknown": "unknown",
   "agentManager.orphans.dialogTitle": "Leftover worktree folders",
   "agentManager.orphans.helpIntro":
-    "Kilo keeps every worktree it creates inside the .kilo/worktrees folder of this repository. The folders below are in that folder, but git does not list any of them as a worktree, so nothing is using them anymore.",
+    "TU Code keeps every worktree it creates inside the .kilo/worktrees folder of this repository. The folders below are in that folder, but git does not list any of them as a worktree, so nothing is using them anymore.",
   "agentManager.orphans.helpCheckout":
     "A folder flagged as containing a git checkout still has a .git entry inside and may hold uncommitted work. Those are left unselected, so open one and check it before you delete it.",
   "agentManager.orphans.helpCauses":
-    "Leftovers usually come from a deletion that was interrupted, a worktree removed outside Kilo, or a tool that wrote into the folder after it was removed. Deletions that are still running are not listed here.",
+    "Leftovers usually come from a deletion that was interrupted, a worktree removed outside TU Code, or a tool that wrote into the folder after it was removed. Deletions that are still running are not listed here.",
   "agentManager.orphans.helpDelete":
     "Deleting removes the selected folders from disk for good, without going through the Trash. No branch and no active worktree is touched. Sizes are what each folder takes up on disk right now.",
   "agentManager.orphans.helpMore": "Show more",
@@ -317,7 +317,7 @@ export const dict = {
   "agentManager.review.sendToChat": "Send to chat",
   "agentManager.pr.comment.title": "Comments",
   "agentManager.pr.copyLink": "Copy PR link",
-  "agentManager.pr.checks.fix": "Fix with Kilo",
+  "agentManager.pr.checks.fix": "Fix with TU Code",
   "agentManager.pr.checks.terminal": "Send failures to terminal",
   "agentManager.pr.checks.feedback": "CI feedback",
   "agentManager.pr.checks.title": "Checks",
@@ -348,8 +348,8 @@ export const dict = {
   "agentManager.pr.checks.tally.skipped.other": "{{count}} skipped",
   "agentManager.pr.checks.tally.success.one": "{{count}} passed",
   "agentManager.pr.checks.tally.success.other": "{{count}} passed",
-  "agentManager.pr.fixWithKilo": "Fix with Kilo",
-  "agentManager.pr.fixWithKiloCount": "Fix {{count}} with Kilo",
+  "agentManager.pr.fixWithKilo": "Fix with TU Code",
+  "agentManager.pr.fixWithKiloCount": "Fix {{count}} with TU Code",
   "agentManager.pr.comment.unresolvedCount": "{{count}} unresolved",
   "agentManager.pr.comment.unresolvedThread": "{{count}} unresolved review thread",
   "agentManager.pr.comment.unresolvedThreads": "{{count}} unresolved review threads",
@@ -403,7 +403,7 @@ export const dict = {
   "agentManager.pr.timeline.earlier": "Show earlier activity",
   "agentManager.pr.conversation.dismiss": "Dismiss",
   "agentManager.pr.conversation.restore": "Restore",
-  "agentManager.pr.conversation.sendAll": "Fix {{count}} with Kilo",
+  "agentManager.pr.conversation.sendAll": "Fix {{count}} with TU Code",
   "agentManager.pr.conversation.sendAllToTerminal": "Send {{count}} to terminal",
   "agentManager.pr.summary.title": "PR Summary",
   "agentManager.pr.summary.checksPassing": "All checks passing",
@@ -431,7 +431,7 @@ export const dict = {
   "agentManager.pr.merge.draft": "Draft pull request",
   "agentManager.pr.merge.checking": "Checking mergeability",
   "agentManager.pr.merge.ready": "Ready to merge",
-  "agentManager.pr.merge.fix": "Fix with Kilo",
+  "agentManager.pr.merge.fix": "Fix with TU Code",
   "agentManager.pr.merge.update": "Update branch",
   "agentManager.pr.merge.button": "{{method}}",
   "agentManager.pr.merge.autoButton": "Enable auto-merge",
@@ -514,9 +514,9 @@ export const dict = {
   "agentManager.import.noBranchesFound": "No branches found.",
   "agentManager.import.noBranchesHint": "Paste a PR URL above or create a new worktree.",
   "agentManager.import.failed": "Import failed",
-  "agentManager.caffeination.toggle": "Keep computer awake while Kilo agents work",
-  "agentManager.caffeination.armed": "Keep-awake mode enabled for Kilo agents; click to disable",
-  "agentManager.caffeination.active": "Keeping computer awake while Kilo agents work",
+  "agentManager.caffeination.toggle": "Keep computer awake while TU Code agents work",
+  "agentManager.caffeination.armed": "Keep-awake mode enabled for TU Code agents; click to disable",
+  "agentManager.caffeination.active": "Keeping computer awake while TU Code agents work",
   "agentManager.caffeination.unavailable": "Keep-awake mode is unavailable on this platform",
 
   "agentManager.pr.error.gh_auth.title": "GitHub authentication required",
@@ -526,7 +526,7 @@ export const dict = {
   "agentManager.intro.title": "Parallel tasks. Separate worktrees.",
   "agentManager.intro.subtitle":
     "A worktree is a separate folder and branch for a task. Your agents can work side by side without editing the same files.",
-  "agentManager.intro.graph.agent": "Kilo agent",
+  "agentManager.intro.graph.agent": "TU Code agent",
   "agentManager.intro.graph.pr": "Pull request",
   "agentManager.intro.stage1.title": "Your repository",
   "agentManager.intro.stage1.text": "Local files stay unchanged",
@@ -538,9 +538,9 @@ export const dict = {
   "agentManager.intro.stage4.title": "Bring changes back when you are ready",
   "agentManager.intro.stage4.text":
     "Ask the agent in each worktree to open a pull request. Or use Apply in the diff panel to copy changes to Local.",
-  "agentManager.intro.updateTitle": "Resolve conflicts with Kilo",
+  "agentManager.intro.updateTitle": "Resolve conflicts with TU Code",
   "agentManager.intro.updateText":
-    "Before applying changes to Local or merging a pull request, run /update-from-base in that worktree's session. Kilo merges the latest base changes and resolves conflicts there first.",
+    "Before applying changes to Local or merging a pull request, run /update-from-base in that worktree's session. TU Code merges the latest base changes and resolves conflicts there first.",
   "agentManager.intro.prDetection":
     "PR badges update automatically for each worktree branch (GitHub CLI sign-in required).",
   "agentManager.intro.checksRunning": "Checks running",

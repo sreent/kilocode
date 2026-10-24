@@ -3,6 +3,7 @@ import os from "node:os"
 import path from "node:path"
 import fs from "node:fs/promises"
 import { locate, poolDir, poolHome } from "../../src/agent-manager/pool/home"
+import { Brand } from "../../src/brand"
 
 const dirs: string[] = []
 const xdg = process.env.XDG_DATA_HOME
@@ -22,9 +23,9 @@ afterEach(async () => {
 describe("worktree pool home", () => {
   it("lives next to the Kilo CLI data and honors XDG_DATA_HOME", () => {
     process.env.XDG_DATA_HOME = path.join(os.tmpdir(), "data")
-    expect(poolHome()).toBe(path.join(os.tmpdir(), "data", "kilo", "worktree-pool"))
+    expect(poolHome()).toBe(path.join(os.tmpdir(), "data", Brand.command, "worktree-pool"))
     delete process.env.XDG_DATA_HOME
-    expect(poolHome()).toBe(path.join(os.homedir(), ".local", "share", "kilo", "worktree-pool"))
+    expect(poolHome()).toBe(path.join(os.homedir(), ".local", "share", Brand.command, "worktree-pool"))
   })
 
   it("gives every repository a stable, readable directory", async () => {

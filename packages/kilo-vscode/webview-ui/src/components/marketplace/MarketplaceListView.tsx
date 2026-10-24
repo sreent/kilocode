@@ -17,6 +17,7 @@ import { useVSCode } from "../../context/vscode"
 import { filterItems, hasRelevantItems, retain } from "./utils"
 import { ItemCard } from "./ItemCard"
 import { MarketplaceContribute } from "./MarketplaceContribute"
+import { Brand } from "../../../../src/brand"
 
 interface StatusOption {
   value: string
@@ -144,9 +145,7 @@ export const MarketplaceListView = (props: Props) => {
         <button
           type="button"
           class="link"
-          onClick={() =>
-            vscode.postMessage({ type: "openExternal", url: "https://kilo.ai/docs/customize/marketplace" })
-          }
+          onClick={() => vscode.postMessage({ type: "openExternal", url: `${Brand.docs}/customize/marketplace.md` })}
         >
           {t("marketplace.intro.learnMore")}
         </button>

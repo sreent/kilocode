@@ -2,9 +2,6 @@
 // Keys here will override any matching keys from upstream translations
 export const dict = {
   // Kilo Gateway provider translations
-  "provider.connect.kiloGateway.byok.prefix": "Voor meer gebruiksstatistieken, gebruik ",
-  "provider.connect.kiloGateway.byok.link": "BYOK via Kilo's Gateway",
-  "provider.connect.kiloGateway.byok.suffix": ".",
 
   // Provider settings translations
   "settings.providers.group.recommended": "Aanbevolen",
@@ -39,18 +36,18 @@ export const dict = {
   "marketplace.install.destination": "Installatielocatie",
   "marketplace.install.includedSkills": "Meegeleverde skills",
   "marketplace.install.about.mcp":
-    "Een MCP-server geeft Kilo extra hulpmiddelen om met externe diensten of lokale programma's te werken.",
+    "Een MCP-server geeft TU Code extra hulpmiddelen om met externe diensten of lokale programma's te werken.",
   "marketplace.install.about.agent": "Een agent voegt een herbruikbare rol toe met eigen instructies en machtigingen.",
   "marketplace.install.about.skill":
-    "Een vaardigheid voegt taakspecifieke instructies en bronnen toe die Kilo indien nodig kan laden.",
+    "Een vaardigheid voegt taakspecifieke instructies en bronnen toe die TU Code indien nodig kan laden.",
   "marketplace.install.mcp.warning":
-    "MCP-servers kunnen lokale opdrachten uitvoeren of verbinding maken met externe diensten. Kilo vraagt toestemming voordat hun hulpmiddelen worden gebruikt, tenzij je machtigingen dit automatisch toestaan.",
+    "MCP-servers kunnen lokale opdrachten uitvoeren of verbinding maken met externe diensten. TU Code vraagt toestemming voordat hun hulpmiddelen worden gebruikt, tenzij je machtigingen dit automatisch toestaan.",
   "marketplace.install.project.warning":
     "Projectbestanden kunnen aan versiebeheer worden toegevoegd. Sla hier geen geheimen op, tenzij de configuratie naar een omgevingsvariabele verwijst.",
   "marketplace.install.learnMore": "Lees hoe installaties vanuit Marketplace werken",
   "marketplace.install.learnMcp": "Meer informatie over MCP",
   "marketplace.install.about.plugin":
-    "Een plugin voegt aangepaste hulpmiddelen en integraties toe aan Kilo. Plugins worden uitgevoerd met volledige machtigingen.",
+    "Een plugin voegt aangepaste hulpmiddelen en integraties toe aan TU Code. Plugins worden uitgevoerd met volledige machtigingen.",
   "marketplace.install.plugin.warning":
     "Plugins voeren code uit met volledige machtigingen. Ze kunnen je bestanden lezen en wijzigen, opdrachten uitvoeren en toegang krijgen tot je inloggegevens en netwerk. Installeer alleen plugins die je vertrouwt.",
   "marketplace.intro":
@@ -127,7 +124,7 @@ export const dict = {
     "Wacht tot de snapshot klaar is. Volgende beurten zijn snel zodra de eerste snapshot is gemaakt.",
   "snapshot.slowRepo.answer.disable": "Uitschakelen voor dit project",
   "snapshot.slowRepo.answer.disable.description":
-    "Zet Kilo-snapshots uit voor dit project. Je verliest ongedaan maken/opnieuw doen van Kilo-wijzigingen, maar git blijft alles volgen.",
+    "Zet TU Code-snapshots uit voor dit project. Je verliest ongedaan maken/opnieuw doen van TU Code-wijzigingen, maar git blijft alles volgen.",
 
   // Edit-tool header and shell-tool section labels
   "ui.messagePart.openInDiffViewer": "Openen in Diff-weergave",

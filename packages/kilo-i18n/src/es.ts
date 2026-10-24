@@ -1,8 +1,5 @@
 export const dict = {
   // Kilo Gateway provider translations
-  "provider.connect.kiloGateway.byok.prefix": "Para más estadísticas de uso, utiliza ",
-  "provider.connect.kiloGateway.byok.link": "BYOK a través de Kilo's Gateway",
-  "provider.connect.kiloGateway.byok.suffix": ".",
 
   // Provider settings translations
   "settings.providers.group.recommended": "Recomendados",
@@ -37,18 +34,18 @@ export const dict = {
   "marketplace.install.destination": "Destino de la instalación",
   "marketplace.install.includedSkills": "Habilidades incluidas",
   "marketplace.install.about.mcp":
-    "Un servidor MCP proporciona a Kilo herramientas adicionales para trabajar con servicios externos o programas locales.",
+    "Un servidor MCP proporciona a TU Code herramientas adicionales para trabajar con servicios externos o programas locales.",
   "marketplace.install.about.agent": "Un agente añade un rol reutilizable con sus propias instrucciones y permisos.",
   "marketplace.install.about.skill":
-    "Una habilidad añade instrucciones y recursos específicos para tareas que Kilo puede cargar cuando sea necesario.",
+    "Una habilidad añade instrucciones y recursos específicos para tareas que TU Code puede cargar cuando sea necesario.",
   "marketplace.install.mcp.warning":
-    "Los servidores MCP pueden ejecutar comandos locales o conectarse a servicios externos. Kilo pedirá permiso antes de usar sus herramientas, a menos que tus permisos lo permitan automáticamente.",
+    "Los servidores MCP pueden ejecutar comandos locales o conectarse a servicios externos. TU Code pedirá permiso antes de usar sus herramientas, a menos que tus permisos lo permitan automáticamente.",
   "marketplace.install.project.warning":
     "Los archivos del proyecto pueden añadirse al control de versiones. No guardes secretos aquí, a menos que la configuración haga referencia a una variable de entorno.",
   "marketplace.install.learnMore": "Descubre cómo funcionan las instalaciones de Marketplace",
   "marketplace.install.learnMcp": "Más información sobre MCP",
   "marketplace.install.about.plugin":
-    "Un complemento añade herramientas e integraciones personalizadas a Kilo. Los complementos se ejecutan con todos los permisos.",
+    "Un complemento añade herramientas e integraciones personalizadas a TU Code. Los complementos se ejecutan con todos los permisos.",
   "marketplace.install.plugin.warning":
     "Los complementos ejecutan código con todos los permisos. Pueden leer y modificar tus archivos, ejecutar comandos y acceder a tus credenciales y a tu red. Instala solo complementos en los que confíes.",
   "marketplace.intro":
@@ -125,7 +122,7 @@ export const dict = {
     "Sigue esperando hasta que termine la instantánea. Los turnos siguientes serán rápidos una vez creada la instantánea inicial.",
   "snapshot.slowRepo.answer.disable": "Desactivar para este proyecto",
   "snapshot.slowRepo.answer.disable.description":
-    "Apaga las instantáneas de Kilo para este proyecto. Perderás deshacer/rehacer de los cambios de Kilo, pero git seguirá rastreando todo.",
+    "Apaga las instantáneas de TU Code para este proyecto. Perderás deshacer/rehacer de los cambios de TU Code, pero git seguirá rastreando todo.",
 
   // Edit-tool header and shell-tool section labels
   "ui.messagePart.openInDiffViewer": "Abrir en el visor de diferencias",

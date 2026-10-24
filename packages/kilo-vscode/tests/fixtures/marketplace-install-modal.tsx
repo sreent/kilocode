@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { Window } from "happy-dom"
 import type { ExtensionMessage, WebviewMessage } from "../../webview-ui/src/types/messages"
 import type { MarketplaceItem, McpMarketplaceItem } from "../../webview-ui/src/types/marketplace"
+import { Brand } from "../../src/brand"
 
 const window = new Window({ url: "https://kilo.test" })
 const errors: unknown[] = []
@@ -142,7 +143,7 @@ try {
   const global = document.querySelector<HTMLInputElement>('input[value="global"]')
   assert.ok(global)
   global.click()
-  assert.equal(document.querySelector(".install-modal-destination code")?.textContent, "~/.config/kilo/")
+  assert.equal(document.querySelector(".install-modal-destination code")?.textContent, `~/.config/${Brand.command}/`)
   complete({ filePath: "/custom/config/tui.json" })
   assert.equal(document.querySelector(".install-modal-result-path"), null)
   const request = messages.findLast((message) => message.type === "installMarketplaceItem")
@@ -160,7 +161,7 @@ try {
   assert.equal(document.querySelector(".install-modal-result-path"), null)
 
   await mount("")
-  assert.equal(document.querySelector(".install-modal-destination code")?.textContent, "~/.config/kilo/")
+  assert.equal(document.querySelector(".install-modal-destination code")?.textContent, `~/.config/${Brand.command}/`)
   assert.equal(document.querySelector('input[value="project"]'), null)
   complete({})
   assert.equal(document.querySelector(".install-modal-result-path"), null)
@@ -180,7 +181,10 @@ try {
   assert.equal(document.querySelector(".marketplace-badge-skills")?.textContent, "Includes skills")
   for (const skill of mcp.skills) assert.equal(document.body.innerHTML.includes(skill.content), false)
   document.querySelector<HTMLInputElement>('input[value="global"]')!.click()
-  assert.equal(document.querySelector(".install-modal-destination code")?.textContent, "~/.config/kilo/kilo.json")
+  assert.equal(
+    document.querySelector(".install-modal-destination code")?.textContent,
+    `~/.config/${Brand.command}/kilo.json`,
+  )
   assert.deepEqual(
     Array.from(section.querySelectorAll("code"), (node) => node.textContent),
     ["~/.kilo/skills/query-workflow/", "~/.kilo/skills/data-checks/"],
