@@ -8,6 +8,7 @@ import { can } from "@organization/protocol/roles"
 import { instant, type StreamTarget } from "@organization/protocol/schema"
 import * as Crypto from "../crypto"
 import { ServerConfig } from "../config"
+import { charge } from "../pricing"
 import { RequestContext } from "../request"
 import { Store, type Stream } from "../store"
 import { Streams } from "../streams"
@@ -213,25 +214,35 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
           const limit = (yield* Clock.currentTimeMillis) + day
           // The gateway meters its providers' calls itself; a client's own report of them would count twice.
           const routed = new Set((yield* store.gateway.list(scope.org.id)).map((row) => row.id))
+          // Clients price calls at catalog rates; the org's own prices replace them.
+          const prices = yield* store.price.list(scope.org.id)
+          const rule = (provider: string, model: string) =>
+            prices.find((item) => item.provider === provider && item.model === model) ??
+            prices.find((item) => item.provider === provider && item.model === "*")
           const accepted = yield* store.usage.record(
             scope.org.id,
             caller.user.id,
             ctx.payload.records
               .filter((row) => !routed.has(row.provider))
-              .map((row) => ({
-                id: row.id,
-                at: Math.min(row.at, limit),
-                session: row.session,
-                project: row.project,
-                provider: row.provider,
-                model: row.model,
-                input: row.tokens.input,
-                output: row.tokens.output,
-                reasoning: row.tokens.reasoning,
-                read: row.tokens.cache.read,
-                write: row.tokens.cache.write,
-                cost: row.cost,
-              })),
+              .map((row) => {
+                const tokens = {
+                  input: row.tokens.input,
+                  output: row.tokens.output,
+                  reasoning: row.tokens.reasoning,
+                  read: row.tokens.cache.read,
+                  write: row.tokens.cache.write,
+                }
+                return {
+                  id: row.id,
+                  at: Math.min(row.at, limit),
+                  session: row.session,
+                  project: row.project,
+                  provider: row.provider,
+                  model: row.model,
+                  ...tokens,
+                  cost: charge({ rule: rule(row.provider, row.model), listed: row.cost, tokens }),
+                }
+              }),
           )
           return { accepted }
         }),

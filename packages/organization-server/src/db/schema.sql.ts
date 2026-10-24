@@ -13,7 +13,17 @@ import {
   uniqueIndex,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core"
-import type { GatewayKind, ModelAccess, Policy, Role, SsoProtocol, StreamTarget } from "@organization/protocol/schema"
+import type {
+  GatewayAuth,
+  GatewayKind,
+  GatewayModel,
+  ModelAccess,
+  Policy,
+  Rates,
+  Role,
+  SsoProtocol,
+  StreamTarget,
+} from "@organization/protocol/schema"
 
 const roles = sql`('owner', 'admin', 'member', 'billing_manager')`
 
@@ -311,16 +321,97 @@ export const GatewayProviderTable = pgTable(
     id: text().notNull(),
     kind: text().$type<GatewayKind>().notNull(),
     base: text().notNull(),
-    // Sealed with ORGANIZATION_SECRET (AES-256-GCM); never stored in clear text.
+    // How the gateway signs in upstream; null for what the kind expects (protocol defaultAuth).
+    auth: jsonb().$type<GatewayAuth>(),
+    // Sealed with ORGANIZATION_SECRET (AES-256-GCM); never stored in clear text. The API key, the
+    // AWS secret access key or the service account's JSON key, as `auth` says; empty for none.
     secret: text().notNull(),
     hint: text().notNull(),
+    // Extra upstream headers: values sealed as JSON, names in clear for admins.
+    headers: text(),
+    names: jsonb().$type<string[]>().notNull().default([]),
+    query: jsonb().$type<Record<string, string>>().notNull().default({}),
+    // What clients show for a provider they don't know.
+    name: text(),
+    models: jsonb().$type<GatewayModel[]>().notNull().default([]),
     created: bigint({ mode: "number" }).notNull(),
     updated: bigint({ mode: "number" }).notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.id] }),
-    check("gateway_providers_kind", sql`${table.kind} in ('anthropic', 'openai', 'openai-compatible')`),
+    check(
+      "gateway_providers_kind",
+      sql`${table.kind} in ('anthropic', 'openai', 'openai-compatible', 'bedrock', 'vertex')`,
+    ),
   ],
+)
+
+// Calls through the gateway in the current minute, per member, so rate limits hold across replicas.
+// Rows from earlier minutes are swept.
+export const GatewayWindowTable = pgTable(
+  "gateway_windows",
+  {
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    user: text()
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    // The window's first millisecond.
+    start: bigint({ mode: "number" }).notNull(),
+    requests: integer().notNull().default(0),
+    tokens: bigint({ mode: "number" }).notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.org, table.user, table.start] })],
+)
+
+// Every call through the gateway, refused or relayed, kept for the policy's retention.
+export const GatewayCallTable = pgTable(
+  "gateway_calls",
+  {
+    id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    user: text().references(() => UserTable.id, { onDelete: "set null" }),
+    at: bigint({ mode: "number" }).notNull(),
+    provider: text().notNull(),
+    model: text(),
+    method: text().notNull(),
+    path: text().notNull(),
+    status: integer().notNull(),
+    code: text(),
+    latency: integer().notNull().default(0),
+    input: bigint({ mode: "number" }).notNull().default(0),
+    output: bigint({ mode: "number" }).notNull().default(0),
+    reasoning: bigint({ mode: "number" }).notNull().default(0),
+    cache_read: bigint({ mode: "number" }).notNull().default(0),
+    cache_write: bigint({ mode: "number" }).notNull().default(0),
+    cost: doublePrecision().notNull().default(0),
+    session: text(),
+    project: text(),
+    ip: text(),
+    // Kept only while the policy's gateway.log.bodies is on, and cut to a fixed size.
+    request: text(),
+    response: text(),
+  },
+  (table) => [index("gateway_calls_org_at").on(table.org, table.at)],
+)
+
+// The organization's own rates for a provider's models; model "*" covers all of them.
+export const PriceTable = pgTable(
+  "prices",
+  {
+    org: text()
+      .notNull()
+      .references(() => OrgTable.id, { onDelete: "cascade" }),
+    provider: text().notNull(),
+    model: text().notNull(),
+    rates: jsonb().$type<Rates>(),
+    // Percent off the catalog's rates.
+    discount: doublePrecision(),
+  },
+  (table) => [primaryKey({ columns: [table.org, table.provider, table.model] })],
 )
 
 // Destinations that receive every new audit event (SIEM webhooks, syslog), with delivery state.

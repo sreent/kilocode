@@ -37,6 +37,7 @@ const groups: ReadonlyArray<Group> = [
     label: "Insight",
     items: [
       { path: "/usage", label: "Usage" },
+      { path: "/gateway/calls", label: "Gateway call log", requires: "gateway.read" },
       { path: "/audit", label: "Audit log", requires: "audit.read" },
       { path: "/streams", label: "Audit streaming", requires: "audit.read" },
     ],

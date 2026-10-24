@@ -437,7 +437,7 @@ describe("gateway relay", () => {
     )
     const res = await relay("anthropic/messages", { token: env.owner.token, body: { model: "claude-sonnet-4" } })
     expect(res.status).toBe(503)
-    expect((await res.json()).error.message).toContain("needs to enter it again")
+    expect((await res.json()).error.message).toContain("needs to enter them again")
     expect(upstream.seen).toHaveLength(0)
   })
 

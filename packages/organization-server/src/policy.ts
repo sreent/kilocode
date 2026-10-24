@@ -1,6 +1,14 @@
 import { Effect } from "effect"
 import { normalize, target } from "@organization/protocol/match"
-import type { BudgetStatus, Effective, Mode, ModelAccess, Policy, Role } from "@organization/protocol/schema"
+import {
+  gatewayApi,
+  type BudgetStatus,
+  type Effective,
+  type Mode,
+  type ModelAccess,
+  type Policy,
+  type Role,
+} from "@organization/protocol/schema"
 import type { Org, Store } from "./store"
 
 // How long a client may use an effective policy before polling again (seconds).
@@ -76,7 +84,13 @@ export const effective = Effect.fn("Policy.effective")(function* (
       groups: groups.map((row) => ({ name: row.name, models: store.group.access(row) })),
       modes: yield* store.mode.list(input.org.id),
       budgets: yield* store.budget.status(input.org.id, input.user.id),
-      gateway: (yield* store.gateway.list(input.org.id)).map((row) => ({ id: row.id, kind: row.kind })),
+      // Clients speak each provider's API to the gateway; Bedrock and Vertex serve Claude through
+      // Anthropic's. A provider clients don't know comes with its name and models.
+      gateway: (yield* store.gateway.list(input.org.id)).map((row) => ({
+        id: row.id,
+        kind: gatewayApi(row.kind),
+        ...(row.models.length > 0 ? { name: row.name ?? row.id, models: row.models } : {}),
+      })),
     }),
   } satisfies Effective
 })

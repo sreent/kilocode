@@ -21,7 +21,7 @@ import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/ht
 import { OrganizationClient } from "@organization/protocol/client"
 import { DeviceError } from "@organization/protocol/errors"
 import { overBudget, refusal as mcpRefusal } from "@organization/protocol/match"
-import { Effective, UsageRecord } from "@organization/protocol/schema"
+import { Effective, UsageRecord, type GatewayModel, type GatewayApi } from "@organization/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Global } from "@opencode-ai/core/global"
@@ -98,6 +98,28 @@ const environment = EffectConfig.all({
     EffectConfig.orElse(() => EffectConfig.succeed(false)),
   ),
 })
+
+// The SDK a gateway provider's clients use, by the API the gateway speaks for it.
+const sdk: Record<GatewayApi, string> = {
+  anthropic: "@ai-sdk/anthropic",
+  openai: "@ai-sdk/openai",
+  "openai-compatible": "@ai-sdk/openai-compatible",
+}
+
+// A gateway model as client config. Unknown limits stay 0, which clients read as unknown.
+function configured(model: GatewayModel) {
+  return {
+    name: model.name ?? model.id,
+    ...(model.context !== undefined || model.output !== undefined
+      ? { limit: { context: model.context ?? 0, output: model.output ?? 0 } }
+      : {}),
+    ...(model.reasoning !== undefined ? { reasoning: model.reasoning } : {}),
+    ...(model.attachments
+      ? { attachment: true, modalities: { input: ["text" as const, "image" as const, "pdf" as const] } }
+      : {}),
+    ...(model.cost ? { cost: { ...model.cost } } : {}),
+  }
+}
 
 export type Settings = {
   readonly url: string
@@ -519,10 +541,23 @@ export const layer = Layer.effect(
       if (!enrolled?.token) return
       for (const route of policy.gateway.providers) {
         const current = cfg.provider?.[route.id]
+        // Providers clients don't know, such as LiteLLM or Claude on Bedrock, arrive with their
+        // name and models, and use the SDK for the API the gateway speaks for them.
+        const defined = route.models
+          ? {
+              name: route.name ?? route.id,
+              npm: sdk[route.kind],
+              models: {
+                ...current?.models,
+                ...Object.fromEntries(route.models.map((model) => [model.id, configured(model)])),
+              },
+            }
+          : {}
         cfg.provider = {
           ...cfg.provider,
           [route.id]: {
             ...current,
+            ...defined,
             options: { ...current?.options, baseURL: `${enrolled.url}/gateway/${route.id}`, apiKey: enrolled.token },
           },
         }

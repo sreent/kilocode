@@ -11,7 +11,10 @@ import {
   ModelAccess,
   Policy,
   type BudgetStatus,
+  type GatewayAuth,
   type GatewayKind,
+  type GatewayModel,
+  type Price,
   type Role,
   type StreamTarget,
   type UsageBy,
@@ -24,7 +27,9 @@ import {
   BudgetTable,
   DeviceTable,
   DomainTable,
+  GatewayCallTable,
   GatewayProviderTable,
+  GatewayWindowTable,
   GroupMemberTable,
   GroupTable,
   InviteTable,
@@ -33,6 +38,7 @@ import {
   ModeTable,
   OrgTable,
   PolicyTable,
+  PriceTable,
   SsoTable,
   StreamTable,
   TokenTable,
@@ -65,6 +71,8 @@ export type SamlConnection = Connection & {
 }
 export type Sso = (OidcConnection | SamlConnection) & { readonly org: string; readonly updated: number }
 export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
+export type GatewayCall = typeof GatewayCallTable.$inferSelect
+export type PriceRule = typeof PriceTable.$inferSelect
 export type Stream = typeof StreamTable.$inferSelect
 
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
@@ -821,6 +829,12 @@ const make = Effect.gen(function* () {
     yield* db.delete(DeviceTable).where(lt(DeviceTable.expires, time - day))
     yield* db.delete(LoginTable).where(lt(LoginTable.created, time - day))
     yield* db.delete(AssertionTable).where(lt(AssertionTable.expires, time))
+    yield* db.delete(GatewayWindowTable).where(lt(GatewayWindowTable.start, time - 60 * 60 * 1000))
+    // Each org keeps its gateway log for its own policy's retention, 30 days by default.
+    yield* db.execute(sql`
+      delete from gateway_calls c
+      where c.at < ${time} - ${day}::bigint * coalesce(
+        (select (p.data -> 'gateway' -> 'log' ->> 'retention')::bigint from policies p where p.org = c.org), 30)`)
     if (retention == null) return 0
     return yield* audit.prune(time - retention)
   }, Effect.orDie)
@@ -955,11 +969,22 @@ const make = Effect.gen(function* () {
     get: Effect.fn("Store.gateway.get")(function* (orgID: string, id: string) {
       return (yield* db.select().from(GatewayProviderTable).where(where(orgID, id)).limit(1))[0]
     }, Effect.orDie),
-    // `secret` is already sealed.
+    // `secret` and `headers` are already sealed.
     set: Effect.fn("Store.gateway.set")(function* (
       orgID: string,
       id: string,
-      input: { kind: GatewayKind; base: string; secret: string; hint: string },
+      input: {
+        kind: GatewayKind
+        base: string
+        auth: GatewayAuth | null
+        secret: string
+        hint: string
+        headers: string | null
+        names: string[]
+        query: Record<string, string>
+        name: string | null
+        models: GatewayModel[]
+      },
     ) {
       const time = yield* now
       return (yield* db
@@ -977,6 +1002,118 @@ const make = Effect.gen(function* () {
         .where(where(orgID, id))
         .returning({ id: GatewayProviderTable.id }))[0]
       return row !== undefined
+    }, Effect.orDie),
+  }
+
+  const price = {
+    list: Effect.fn("Store.price.list")(function* (orgID: string) {
+      return yield* db
+        .select()
+        .from(PriceTable)
+        .where(eq(PriceTable.org, orgID))
+        .orderBy(asc(PriceTable.provider), asc(PriceTable.model))
+    }, Effect.orDie),
+    replace: Effect.fn("Store.price.replace")(function* (orgID: string, prices: ReadonlyArray<Price>) {
+      yield* db.transaction(() =>
+        Effect.gen(function* () {
+          yield* db.delete(PriceTable).where(eq(PriceTable.org, orgID))
+          if (prices.length === 0) return
+          yield* db.insert(PriceTable).values(
+            prices.map((item) => ({
+              org: orgID,
+              provider: item.provider,
+              model: item.model,
+              rates: item.rates ?? null,
+              discount: item.discount ?? null,
+            })),
+          )
+        }),
+      )
+    }, Effect.orDie),
+    // The rule for one model: its own, else the provider's "*".
+    rule: Effect.fn("Store.price.rule")(function* (orgID: string, provider: string, model: string) {
+      const rows = yield* db
+        .select()
+        .from(PriceTable)
+        .where(
+          and(eq(PriceTable.org, orgID), eq(PriceTable.provider, provider), inArray(PriceTable.model, [model, "*"])),
+        )
+      return rows.find((row) => row.model === model) ?? rows.find((row) => row.model === "*")
+    }, Effect.orDie),
+  }
+
+  // Fixed one-minute windows, counted in the database so every replica sees the same totals.
+  const rate = {
+    // Counts a call into the window and returns the window's totals with it.
+    hit: Effect.fn("Store.rate.hit")(function* (orgID: string, userID: string, start: number) {
+      return (yield* db
+        .insert(GatewayWindowTable)
+        .values({ org: orgID, user: userID, start, requests: 1 })
+        .onConflictDoUpdate({
+          target: [GatewayWindowTable.org, GatewayWindowTable.user, GatewayWindowTable.start],
+          set: { requests: sql`${GatewayWindowTable.requests} + 1` },
+        })
+        .returning({ requests: GatewayWindowTable.requests, tokens: GatewayWindowTable.tokens }))[0]!
+    }, Effect.orDie),
+    spend: Effect.fn("Store.rate.spend")(function* (orgID: string, userID: string, start: number, tokens: number) {
+      yield* db
+        .insert(GatewayWindowTable)
+        .values({ org: orgID, user: userID, start, tokens })
+        .onConflictDoUpdate({
+          target: [GatewayWindowTable.org, GatewayWindowTable.user, GatewayWindowTable.start],
+          set: { tokens: sql`${GatewayWindowTable.tokens} + ${tokens}` },
+        })
+    }, Effect.orDie),
+  }
+
+  const call = {
+    record: Effect.fn("Store.call.record")(function* (row: typeof GatewayCallTable.$inferInsert) {
+      return (yield* db.insert(GatewayCallTable).values(row).returning({ id: GatewayCallTable.id }))[0]!.id
+    }, Effect.orDie),
+    list: Effect.fn("Store.call.list")(function* (input: {
+      org: string
+      from: number
+      to: number
+      user?: string
+      provider?: string
+      failed?: boolean
+      before?: number
+      limit: number
+    }) {
+      const { request: _request, response: _response, ...columns } = getColumns(GatewayCallTable)
+      return yield* db
+        .select({
+          ...columns,
+          email: UserTable.email,
+          bodies: sql<boolean>`(${GatewayCallTable.request} is not null or ${GatewayCallTable.response} is not null)`,
+        })
+        .from(GatewayCallTable)
+        .leftJoin(UserTable, eq(UserTable.id, GatewayCallTable.user))
+        .where(
+          and(
+            eq(GatewayCallTable.org, input.org),
+            gte(GatewayCallTable.at, input.from),
+            lt(GatewayCallTable.at, input.to),
+            input.user ? eq(GatewayCallTable.user, input.user) : undefined,
+            input.provider ? eq(GatewayCallTable.provider, input.provider) : undefined,
+            input.failed === undefined
+              ? undefined
+              : input.failed
+                ? or(gte(GatewayCallTable.status, 400), sql`${GatewayCallTable.code} is not null`)
+                : and(lt(GatewayCallTable.status, 400), isNull(GatewayCallTable.code)),
+            input.before ? lt(GatewayCallTable.id, input.before) : undefined,
+          ),
+        )
+        .orderBy(desc(GatewayCallTable.id))
+        .limit(input.limit)
+    }, Effect.orDie),
+    get: Effect.fn("Store.call.get")(function* (orgID: string, id: number) {
+      return (yield* db
+        .select({ ...getColumns(GatewayCallTable), email: UserTable.email })
+        .from(GatewayCallTable)
+        .leftJoin(UserTable, eq(UserTable.id, GatewayCallTable.user))
+        .where(and(eq(GatewayCallTable.org, orgID), eq(GatewayCallTable.id, id)))
+        .limit(1))[0]
     }, Effect.orDie),
   }
 
@@ -1177,6 +1314,9 @@ const make = Effect.gen(function* () {
     audit,
     usage,
     gateway,
+    price,
+    rate,
+    call,
     stream,
     budget,
     sweep,

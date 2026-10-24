@@ -18,7 +18,8 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 | Guardrails | Org rules appended to every system prompt; session sharing, vendor session sync and product analytics off unless the org enables them |
 | Audit log | Every administrative and sign-in event, filterable by action, actor and date, cursor-paged, CSV export, configurable retention |
 | Audit streaming | New audit events pushed to SIEMs as they happen: HMAC-signed HTTPS webhooks or RFC 5424 syslog over TLS, in order, at least once, resuming after outages |
-| LLM gateway | Routes chosen providers (Anthropic, OpenAI, OpenAI-compatible) through the server, which holds the org's API keys, enforces model policy and budgets on every call and meters usage from the responses |
+| LLM gateway | Routes chosen providers through the server, which holds the org's credentials, enforces model policy, budgets and per-member rate limits on every call, meters usage from the responses and logs each call. Upstreams: Anthropic, OpenAI, Azure OpenAI, any OpenAI-compatible server or gateway (LiteLLM, vLLM, Ollama, OpenRouter, Portkey), and Claude on Amazon Bedrock and Google Vertex AI |
+| Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
 | Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
@@ -77,7 +78,7 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ORGANIZATION_DATABASE_POOL` | `10` | Connections each server opens to `ORGANIZATION_DATABASE_URL` |
 | `ORGANIZATION_DATA` | `./data` | Data directory. The embedded database lives in `postgres/` inside it |
 | `ORGANIZATION_DB` | `<ORGANIZATION_DATA>/enterprise.db` | The SQLite database of earlier versions, copied in on first start ([upgrading](#upgrading-from-sqlite)) |
-| `ORGANIZATION_SECRET` | unset | Key material for encrypting SSO client secrets and gateway API keys at rest (AES-256-GCM). Required before SSO or the gateway can be configured; keep it stable |
+| `ORGANIZATION_SECRET` | unset | Key material for encrypting SSO client secrets and gateway credentials at rest (AES-256-GCM). Required before SSO or the gateway can be configured; keep it stable |
 | `ORGANIZATION_TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so audit entries record `X-Forwarded-For` |
 | `ORGANIZATION_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
 | `ORGANIZATION_MODELS_URL` | `https://models.dev/api.json` | Model price catalog the gateway meters with, as a URL or a local file path in models.dev's format. Empty turns pricing off |
@@ -166,19 +167,55 @@ SCIM never rewrites the email or name of an account that another organization al
 
 ## LLM gateway
 
-Client-side enforcement stops honest mistakes, but a person with an API key can always use it from some other tool. The gateway closes that gap for the providers it routes: the organization's key stays on the server, and people reach the provider only through it.
+Client-side enforcement stops honest mistakes, but a person with an API key can always use it from some other tool. The gateway closes that gap for the providers it routes: the organization's credentials stay on the server, and people reach the provider only through it.
 
-1. Set `ORGANIZATION_SECRET`, then add providers under Governance → LLM gateway, or with `PUT /api/v1/orgs/{org}/gateway/providers/{id}` and `{ "kind": "anthropic", "base": "https://api.anthropic.com/v1", "key": "sk-ant-..." }`. The id is the client's provider id (`anthropic`, `openai`, `openrouter`, ...), and `base` includes the API version path.
-2. Signed-in clients pick the routes up with the policy. Each routed provider's requests go to `<server>/gateway/<id>/...` with the person's organization token as the API key; nobody needs, or sees, the provider key.
+1. Set `ORGANIZATION_SECRET`, then add providers under Governance → LLM gateway, or with `PUT /api/v1/orgs/{org}/gateway/providers/{id}` and `{ "kind": "anthropic", "base": "https://api.anthropic.com/v1", "key": "sk-ant-..." }`. `base` includes the API version path.
+2. Signed-in clients pick the routes up with the policy. Each routed provider's requests go to `<server>/gateway/<id>/...` with the person's organization token as the API key; nobody needs, or sees, the provider's credentials.
 3. Turn on **Only allow gateway providers** (`"gateway": { "exclusive": true }` in the policy) and clients refuse every other provider.
 
-| `kind` | Relayed endpoints | Metered from |
-|---|---|---|
-| `anthropic` | `POST /messages`, `POST /messages/count_tokens`, `GET /models` | `usage` in the message, or `message_start` and `message_delta` events |
-| `openai` | `POST /responses`, `POST /chat/completions`, `GET /models` | `usage` in the response, or the `response.completed` event |
-| `openai-compatible` | `POST /chat/completions`, `GET /models` | the final chunk's `usage`; the gateway adds `stream_options.include_usage` to streamed calls |
+A provider id clients already know (`anthropic`, `openai`, `openrouter`, ...) routes that provider; its models and prices come from the models.dev catalog. Any other id defines a provider of its own: give it a `name` and its `models`, and clients list them under that name.
 
-On every call the gateway checks the token, membership and the member's effective model policy, refuses with `402` once a budget is spent, swaps in the org key and relays the response as it streams. Only content, version, beta and user-agent headers are relayed upstream; only content type, request ids, `retry-after` and rate-limit headers come back. Usage is recorded with `source: "gateway"` when the response ends, including when the client hangs up. It is priced from `ORGANIZATION_MODELS_URL` with the same arithmetic the CLI uses, or at the price the upstream reports, as OpenRouter does. Usage clients report for a routed provider is dropped, so nothing counts twice.
+| `kind` | Clients speak | Relayed endpoints | Metered from |
+|---|---|---|---|
+| `anthropic` | Anthropic Messages | `POST /messages`, `POST /messages/count_tokens`, `GET /models` | `usage` in the message, or `message_start` and `message_delta` events |
+| `openai` | OpenAI | `POST /responses`, `POST /chat/completions`, `GET /models` | `usage` in the response, or the `response.completed` event |
+| `openai-compatible` | OpenAI Chat Completions | `POST /chat/completions`, `GET /models` | the final chunk's `usage`; the gateway adds `stream_options.include_usage` to streamed calls |
+| `bedrock` | Anthropic Messages | `POST /messages`; `GET /models` from the provider's model list | Claude's own usage events, translated from Bedrock's event stream |
+| `vertex` | Anthropic Messages | `POST /messages`, `POST /messages/count_tokens`; `GET /models` from the model list | Claude's own usage events |
+
+### Credentials, headers and query parameters
+
+`auth` says how the gateway signs in upstream; `key` carries the secret, which is stored encrypted and never returned. Changing to another kind of credential needs its secret again.
+
+| `auth` | Sends | Secret (`key`) |
+|---|---|---|
+| `{ "type": "bearer" }` (default, except as below) | `Authorization: Bearer <key>` | API key |
+| `{ "type": "header", "name": "x-api-key" }` (default for `anthropic`) | the key in that header | API key |
+| `{ "type": "none" }` | nothing | none |
+| `{ "type": "aws", "region": "us-east-1", "access_key": "AKIA..." }` | an AWS Signature Version 4 | the secret access key |
+| `{ "type": "google" }` (default for `vertex`) | a Google access token, exchanged and cached | the service account's JSON key |
+
+`headers` adds headers to every call, such as another gateway's own key; their values are encrypted too, and an update that leaves `headers` out keeps them. `query` adds query parameters, such as Azure's `api-version`.
+
+Examples:
+
+- **LiteLLM**, vLLM, Ollama or any OpenAI-compatible server: `{ "kind": "openai-compatible", "base": "https://litellm.example.com/v1", "key": "<virtual key>", "name": "LiteLLM", "models": [{ "id": "claude-sonnet" }, { "id": "gpt-4o-mini" }] }`. **Import from upstream** in the console fills `models` from the server's own `/models` list (`POST .../providers/{id}/discover`). LiteLLM's `x-litellm-response-cost` header prices the calls it reports.
+- **Portkey** or **Cloudflare AI Gateway**: the same, with the gateway's own key in `headers` (`x-portkey-api-key`, `cf-aig-authorization`).
+- **Azure OpenAI**: `{ "kind": "openai", "base": "https://<resource>.openai.azure.com/openai/v1", "auth": { "type": "header", "name": "api-key" }, "key": "<key>", "models": [{ "id": "<deployment>" }] }`. Use an id other than `azure`, which is the client's own Azure provider.
+- **Claude on Amazon Bedrock**: `{ "kind": "bedrock", "base": "https://bedrock-runtime.us-east-1.amazonaws.com", "auth": { "type": "aws", "region": "us-east-1", "access_key": "AKIA..." }, "key": "<secret access key>", "models": [{ "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0", "context": 200000, "cost": { "input": 3, "output": 15 } }] }`. A Bedrock API key works too, as `{ "type": "bearer" }`. The IAM user needs `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream`.
+- **Claude on Google Vertex AI**: `{ "kind": "vertex", "base": "https://us-east5-aiplatform.googleapis.com/v1/projects/<project>/locations/us-east5", "key": "<service account JSON>", "models": [{ "id": "claude-sonnet-4-5@20250929" }] }`. The service account needs the Vertex AI User role. Gemini through Vertex's OpenAI-compatible endpoint is an `openai-compatible` provider with `{ "type": "google" }`.
+
+Bedrock and Vertex providers need their model list, since clients don't know their model ids. Clients send Anthropic Messages requests; the gateway moves the model into the URL and the API version and beta flags into the body, signs the call, and turns Bedrock's binary event stream back into Anthropic's server-sent events. Bedrock's and Vertex's errors reach clients as Anthropic error bodies.
+
+### Every call
+
+On every call the gateway checks the token, membership and the member's effective model policy, refuses with `402` once a budget is spent and with `429` past a rate limit, signs in upstream, and relays the response as it streams. Only content, version, beta and user-agent headers are relayed upstream; only content type, request ids, `retry-after` and rate-limit headers come back. Usage is recorded with `source: "gateway"` when the response ends, including when the client hangs up. Usage clients report for a routed provider is dropped, so nothing counts twice.
+
+**Prices.** A call is priced by the first that applies: the organization's own price for the model (Governance → LLM gateway → Prices, or `PUT /api/v1/orgs/{org}/prices`), what the upstream reports (OpenRouter, LiteLLM), the provider's model list, then `ORGANIZATION_MODELS_URL` with the same arithmetic the CLI uses. An organization price is either rates per million tokens or a discount off the catalog price, for one model or for all of a provider's (`"model": "*"`). Organization prices apply to usage clients report as well.
+
+**Rate limits.** `"gateway": { "limits": { "requests": 60, "tokens": 400000 } }` in the policy caps each member per minute; tokens count input and output, cache and reasoning included. The counts live in the database, so every replica enforces the same totals. A call past a limit gets `429` with `retry-after`.
+
+**Call log.** Every call is logged, refused ones too: who made it, the model, the status and the reason the gateway refused it, tokens, cost and time taken (Insight → Gateway call log, or `GET /api/v1/orgs/{org}/gateway/calls`). With `"gateway": { "log": { "bodies": true } }`, the first 64 KB of each request and response are kept too, so admins can read prompts and answers; turn it on only where that is allowed. The log is kept for `log.retention` days, 30 by default.
 
 ## Policy reference
 
@@ -200,7 +237,11 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
   "instructions": "Never paste customer data or credentials into prompts.",
   "share": "disabled",
   "telemetry": { "product": false },
-  "gateway": { "exclusive": false }
+  "gateway": {
+    "exclusive": false,
+    "limits": { "requests": 60, "tokens": 400000 },
+    "log": { "bodies": false, "retention": 30 }
+  }
 }
 ```
 
@@ -210,7 +251,7 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 - **MCP rules** match the server's target, its URL or its full command line, never its name, because users choose names freely.
 - **`permission`** uses the same format as the CLI's `permission` config. Deny rules become hard rules; allow and ask rules override user config but not a user's session approvals.
 - **`share`** controls session sharing and syncing sessions to the upstream vendor's cloud. **`telemetry.product`** controls the upstream product analytics. Both default to off.
-- **`gateway.exclusive`** makes clients refuse every provider the [LLM gateway](#llm-gateway) does not route.
+- **`gateway.exclusive`** makes clients refuse every provider the [LLM gateway](#llm-gateway) does not route. **`gateway.limits`** caps each member's gateway requests and tokens per minute, and **`gateway.log`** sets whether the call log keeps bodies and for how many days.
 
 Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
 

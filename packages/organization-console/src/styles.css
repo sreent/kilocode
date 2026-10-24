@@ -506,6 +506,10 @@ body {
   min-height: 24rem;
 }
 
+.kilo-console .truncate.narrow {
+  max-width: 14rem;
+}
+
 .kilo-console .truncate {
   display: inline-block;
   max-width: 22rem;
@@ -741,6 +745,69 @@ body {
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--card) 72%, transparent);
   padding: 0.625rem;
+}
+
+/* ---- row editors: headers, query parameters, models, prices -------------------------------- */
+
+.kilo-console .edit-group {
+  display: grid;
+  gap: 0.5rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.kilo-console .edit-group > legend {
+  color: var(--text-strong);
+  font-weight: 500;
+  padding: 0;
+}
+
+.kilo-console .edit-group > .hint {
+  color: var(--text-weaker);
+  font-size: var(--font-size-small);
+  margin: 0;
+}
+
+.kilo-console .edit-rows {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.kilo-console .edit-row {
+  display: grid;
+  grid-template-columns: var(--columns);
+  gap: 0.5rem;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--card) 72%, transparent);
+  padding: 0.625rem;
+}
+
+.kilo-console .edit-row.inner {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.kilo-console .edit-row > .ui-field,
+.kilo-console .edit-row.inner > .ui-field {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.kilo-console .edit-row > .ui-field > span,
+.kilo-console .edit-row.inner > .ui-field > span {
+  color: var(--text-weaker);
+  font-size: var(--font-size-small);
+  font-weight: 400;
+}
+
+.kilo-console .row-actions.start {
+  justify-content: flex-start;
 }
 
 /* ---- secrets, copy fields, code ------------------------------------------------------------ */
@@ -1003,7 +1070,8 @@ body {
     text-align: center;
   }
 
-  .kilo-console .budget-row {
+  .kilo-console .budget-row,
+  .kilo-console .edit-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1021,7 +1089,8 @@ body {
     display: none;
   }
 
-  .kilo-console .budget-row {
+  .kilo-console .budget-row,
+  .kilo-console .edit-row {
     grid-template-columns: 1fr;
   }
 }

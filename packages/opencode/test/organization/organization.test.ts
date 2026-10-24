@@ -365,6 +365,66 @@ describe("sign-in", () => {
 })
 
 describe("LLM gateway", () => {
+  test("providers clients don't know arrive with their name, models and SDK", async () => {
+    const litellm = {
+      kind: "openai-compatible",
+      base: "https://litellm.acme.internal/v1",
+      key: "sk-litellm-virtual-key",
+      name: "LiteLLM",
+      models: [
+        {
+          id: "claude-sonnet",
+          name: "Claude Sonnet",
+          context: 200000,
+          output: 64000,
+          reasoning: true,
+          attachments: true,
+        },
+        { id: "llama-70b", cost: { input: 0.5, output: 0.8 } },
+      ],
+    }
+    const bedrock = {
+      kind: "bedrock",
+      base: "https://bedrock-runtime.us-east-1.amazonaws.com",
+      auth: { type: "bearer" },
+      key: "bedrock-api-key",
+      models: [{ id: "us.anthropic.claude-sonnet-4-5-20250929-v1:0", context: 200000 }],
+    }
+    expect((await cp.admin("PUT", "/gateway/providers/litellm", litellm)).status).toBe(200)
+    expect((await cp.admin("PUT", "/gateway/providers/bedrock-claude", bedrock)).status).toBe(200)
+    try {
+      const dev = await cp.join("custom@acme.com", "member")
+      signin(dev.token)
+      const organization = await client()
+      const cfg: Config.Info = {}
+      await run(organization.overlay(cfg))
+      expect(cfg.provider?.litellm).toEqual({
+        name: "LiteLLM",
+        npm: "@ai-sdk/openai-compatible",
+        models: {
+          "claude-sonnet": {
+            name: "Claude Sonnet",
+            limit: { context: 200000, output: 64000 },
+            reasoning: true,
+            attachment: true,
+            modalities: { input: ["text", "image", "pdf"] },
+          },
+          "llama-70b": { name: "llama-70b", cost: { input: 0.5, output: 0.8 } },
+        },
+        options: { baseURL: `${cp.url}/gateway/litellm`, apiKey: dev.token },
+      })
+      // Claude on Bedrock is reached through Anthropic's API at the gateway.
+      expect(cfg.provider?.["bedrock-claude"]).toMatchObject({
+        name: "bedrock-claude",
+        npm: "@ai-sdk/anthropic",
+        models: { "us.anthropic.claude-sonnet-4-5-20250929-v1:0": { limit: { context: 200000, output: 0 } } },
+      })
+    } finally {
+      await cp.admin("DELETE", "/gateway/providers/litellm")
+      await cp.admin("DELETE", "/gateway/providers/bedrock-claude")
+    }
+  })
+
   test("routed providers call the control plane with the organization token and are metered there", async () => {
     expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
     const route = { kind: "openai-compatible", base: "https://openrouter.ai/api/v1", key: "sk-or-org-key-0123456789" }

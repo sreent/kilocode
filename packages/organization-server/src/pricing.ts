@@ -1,6 +1,7 @@
 export * as Pricing from "./pricing"
 
 import { Clock, Context, Effect, Layer, Option, Schema, Semaphore } from "effect"
+import type { Rates } from "@organization/protocol/schema"
 import { HttpClient, HttpClientRequest } from "effect/unstable/http"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { ServerConfig } from "./config"
@@ -75,8 +76,22 @@ export function catalog(data: unknown): Catalog {
   return result
 }
 
+// What a call cost under the organization's own prices: its rates when it set some, else the
+// catalog's price (or what the upstream charged) less its discount.
+export function charge(input: {
+  readonly rule: { readonly rates: Rates | null; readonly discount: number | null } | undefined
+  readonly listed: number
+  readonly tokens: Tokens
+}) {
+  if (input.rule?.rates) return price(input.rule.rates, input.tokens)
+  const discount = input.rule?.discount ?? 0
+  return Math.max(0, input.listed * (1 - discount / 100))
+}
+
 export interface Interface {
-  // What a call cost, or 0 when the model has no price.
+  // A model's catalog rates, if the catalog prices it.
+  readonly rates: (provider: string, model: string) => Effect.Effect<Cost | undefined>
+  // What a call cost at catalog rates, or 0 when the model has no price.
   readonly cost: (provider: string, model: string, tokens: Tokens) => Effect.Effect<number>
   // Reloads the catalog; on failure the previous one stays in use.
   readonly refresh: () => Effect.Effect<void>
@@ -89,6 +104,7 @@ export class Service extends Context.Service<Service, Interface>()("@organizatio
     return Layer.succeed(
       this,
       this.of({
+        rates: (provider, model) => Effect.succeed(prices.get(`${provider}/${model}`)),
         cost: (provider, model, tokens) => Effect.succeed(price(prices.get(`${provider}/${model}`), tokens)),
         refresh: () => Effect.void,
       }),
@@ -140,12 +156,16 @@ export const layer = Layer.effect(
       yield* Effect.logInfo("loaded model prices").pipe(Effect.annotateLogs({ source, models: prices.size }))
     })
 
-    const cost = Effect.fn("Pricing.cost")(function* (provider: string, model: string, tokens: Tokens) {
+    const rates = Effect.fn("Pricing.rates")(function* (provider: string, model: string) {
       yield* lock.withPermit(load(false))
-      return price(state.prices.get(`${provider}/${model}`), tokens)
+      return state.prices.get(`${provider}/${model}`)
     })
 
-    return Service.of({ cost, refresh: () => lock.withPermit(load(true)) })
+    const cost = Effect.fn("Pricing.cost")(function* (provider: string, model: string, tokens: Tokens) {
+      return price(yield* rates(provider, model), tokens)
+    })
+
+    return Service.of({ rates, cost, refresh: () => lock.withPermit(load(true)) })
   }),
 )
 

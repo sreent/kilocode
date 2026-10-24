@@ -8,7 +8,7 @@ import * as Crypto from "../crypto"
 import { effective } from "../policy"
 import { ServerConfig } from "../config"
 import { RequestContext } from "../request"
-import { Store } from "../store"
+import { Store, type PriceRule } from "../store"
 import { changed, delta } from "./shared"
 
 export const GovernanceHandler = HttpApiBuilder.group(Api, "organization.governance", (handlers) =>
@@ -123,5 +123,33 @@ export const GovernanceHandler = HttpApiBuilder.group(Api, "organization.governa
           return { budgets: yield* store.budget.list(scope.org.id) }
         }),
       )
+      .handle(
+        "prices.get",
+        Effect.fn(function* () {
+          const scope = yield* Membership
+          return { prices: (yield* store.price.list(scope.org.id)).map(price) }
+        }),
+      )
+      .handle(
+        "prices.update",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const rows = ctx.payload.prices
+          if (new Set(rows.map((row) => `${row.provider}/${row.model}`)).size !== rows.length)
+            return yield* new InvalidRequestError({ message: "each provider and model may have one price" })
+          const before = (yield* store.price.list(scope.org.id)).map(price)
+          yield* store.price.replace(scope.org.id, rows)
+          const after = (yield* store.price.list(scope.org.id)).map(price)
+          yield* audit("price.update", scope.org.id, { before, after })
+          return { prices: after }
+        }),
+      )
   }),
 )
+
+const price = (row: PriceRule) => ({
+  provider: row.provider,
+  model: row.model,
+  ...(row.rates ? { rates: row.rates } : {}),
+  ...(row.discount !== null ? { discount: row.discount } : {}),
+})

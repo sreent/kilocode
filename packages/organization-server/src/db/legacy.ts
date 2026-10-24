@@ -16,6 +16,7 @@ import {
   BudgetTable,
   DeviceTable,
   DomainTable,
+  GatewayCallTable,
   GatewayProviderTable,
   GroupMemberTable,
   GroupTable,
@@ -25,6 +26,7 @@ import {
   ModeTable,
   OrgTable,
   PolicyTable,
+  PriceTable,
   SsoTable,
   StreamTable,
   TokenTable,
@@ -57,6 +59,8 @@ const tables: ReadonlyArray<PgTable> = [
   UsageTable,
   BudgetTable,
   GatewayProviderTable,
+  GatewayCallTable,
+  PriceTable,
   StreamTable,
 ]
 
@@ -94,9 +98,12 @@ const fill = <E>(db: Database.Db, read: (table: PgTable) => Effect.Effect<Readon
         for (let i = 0; i < rows.length; i += 500) yield* db.insert(table).values(rows.slice(i, i + 500))
         total += rows.length
       }
-      // Copied audit ids keep their values; new ones continue after them.
+      // Copied audit and gateway call ids keep their values; new ones continue after them.
       yield* db.execute(
         sql`select setval(pg_get_serial_sequence('audit', 'id'), coalesce((select max(id) from audit), 0) + 1, false)`,
+      )
+      yield* db.execute(
+        sql`select setval(pg_get_serial_sequence('gateway_calls', 'id'), coalesce((select max(id) from gateway_calls), 0) + 1, false)`,
       )
       return total
     }),

@@ -6,6 +6,7 @@ import { Effect, Schema } from "effect"
 const Text = Schema.String.check(Schema.isMinLength(1))
 const Count = Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0))
 const Whole = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))
+const Positive = Schema.Int.check(Schema.isGreaterThan(0))
 const Time = Schema.Finite
 const list = <S extends Schema.Top>(item: S) => Schema.Array(item).pipe(Schema.withDecodingDefault(Effect.succeed([])))
 
@@ -154,6 +155,21 @@ export const Policy = Schema.Struct({
   gateway: Schema.Struct({
     // Only providers routed through the gateway may be used; clients refuse every other provider.
     exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+    // Per member and minute, across replicas. Unset means unlimited.
+    limits: Schema.Struct({
+      requests: Schema.optional(Positive),
+      // Input and output tokens, cache and reasoning included.
+      tokens: Schema.optional(Positive),
+    }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+    // Every call is logged with who made it, the model, the outcome, tokens and cost. With
+    // `bodies`, what was sent and received is kept too, so prompts become readable to admins.
+    log: Schema.Struct({
+      bodies: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+      // Days the log is kept.
+      retention: Whole.check(Schema.isBetween({ minimum: 1, maximum: 3650 })).pipe(
+        Schema.withDecodingDefault(Effect.succeed(30)),
+      ),
+    }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Policy = typeof Policy.Type
@@ -417,23 +433,109 @@ export const Suborg = Schema.Struct({ ...Org.fields, members: Count, spent: Coun
 
 // ---- LLM gateway --------------------------------------------------------------------------
 
-// The API an upstream speaks. It decides which endpoints the gateway forwards and how it reads
-// token usage from responses.
-export const GatewayKind = Schema.Literals(["anthropic", "openai", "openai-compatible"])
+// What a provider's upstream is. anthropic, openai and openai-compatible upstreams get requests as
+// clients send them; LiteLLM, vLLM, Azure OpenAI and other gateways are among them. bedrock and
+// vertex serve Claude: clients send Anthropic Messages requests, and the gateway turns them into
+// Amazon Bedrock or Google Vertex AI calls.
+export const GatewayKind = Schema.Literals(["anthropic", "openai", "openai-compatible", "bedrock", "vertex"])
 export type GatewayKind = typeof GatewayKind.Type
+
+// The API clients speak to the gateway for a provider.
+export const GatewayApi = Schema.Literals(["anthropic", "openai", "openai-compatible"])
+export type GatewayApi = typeof GatewayApi.Type
+
+export const gatewayApi = (kind: GatewayKind): GatewayApi =>
+  kind === "bedrock" || kind === "vertex" ? "anthropic" : kind
 
 // A client provider id ("anthropic", "openrouter"): clients send that provider's requests here.
 export const ProviderID = Schema.String.check(
   Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
 )
 
+// A header the gateway may add to upstream requests. Framing and connection headers belong to the
+// HTTP client.
+const UpstreamHeader = Schema.String.check(
+  Schema.isPattern(
+    /^(?!(host|content-length|content-encoding|transfer-encoding|connection|keep-alive|upgrade|te|trailer|proxy-[a-z0-9-]*)$)[a-z0-9][a-z0-9-]{0,63}$/i,
+    { message: "must be a header name, other than a framing or connection header" },
+  ),
+)
+
+// How the gateway signs in to the upstream. The secret part, an API key, an AWS secret access key
+// or a Google service account's JSON key, is write-only and stored sealed.
+export const GatewayAuth = Schema.Union([
+  // Authorization: Bearer <key>: OpenAI and the servers compatible with it, and Bedrock API keys.
+  Schema.Struct({ type: Schema.Literal("bearer") }),
+  // The key in a header of its own: x-api-key for Anthropic, api-key for Azure OpenAI.
+  Schema.Struct({ type: Schema.Literal("header"), name: UpstreamHeader }),
+  // No credential, for an upstream on a private network that trusts this server.
+  Schema.Struct({ type: Schema.Literal("none") }),
+  // AWS Signature Version 4 with an IAM access key; the secret is its secret access key.
+  Schema.Struct({
+    type: Schema.Literal("aws"),
+    region: Schema.String.check(
+      Schema.isPattern(/^[a-z]{2}(-[a-z]+)+-[0-9]$/, { message: "must be an AWS region like us-east-1" }),
+    ),
+    access_key: Schema.String.check(
+      Schema.isPattern(/^[A-Z0-9]{16,128}$/, { message: "must be an AWS access key id" }),
+    ),
+  }),
+  // A Google Cloud service account; the secret is its JSON key.
+  Schema.Struct({ type: Schema.Literal("google") }),
+])
+export type GatewayAuth = typeof GatewayAuth.Type
+
+// What an upstream expects when an admin doesn't say.
+export const defaultAuth = (kind: GatewayKind): GatewayAuth =>
+  kind === "anthropic"
+    ? { type: "header", name: "x-api-key" }
+    : kind === "vertex"
+      ? { type: "google" }
+      : { type: "bearer" }
+
+// Prices per million tokens.
+export const Rates = Schema.Struct({
+  input: Count,
+  output: Count,
+  cache_read: Schema.optional(Count),
+  cache_write: Schema.optional(Count),
+})
+export type Rates = typeof Rates.Type
+
+// A model of a provider clients don't know, such as LiteLLM's aliases or Bedrock's model ids.
+// Clients list these, and the gateway prices calls with `cost`.
+export const GatewayModel = Schema.Struct({
+  id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  name: Schema.optional(Schema.String.check(Schema.isMaxLength(200))),
+  // Context window and longest output, in tokens.
+  context: Schema.optional(Positive),
+  output: Schema.optional(Positive),
+  reasoning: Schema.optional(Schema.Boolean),
+  // Whether it reads images and PDFs.
+  attachments: Schema.optional(Schema.Boolean),
+  cost: Schema.optional(Rates),
+})
+export type GatewayModel = typeof GatewayModel.Type
+
 export const GatewayProvider = Schema.Struct({
   id: Schema.String,
   kind: GatewayKind,
-  // Upstream base URL, including the API version path (https://api.anthropic.com/v1).
+  // Upstream base URL, including the API version path (https://api.anthropic.com/v1). For bedrock,
+  // the runtime endpoint (https://bedrock-runtime.us-east-1.amazonaws.com); for vertex, the project
+  // and location (https://us-east5-aiplatform.googleapis.com/v1/projects/p/locations/us-east5).
   base: Schema.String,
-  // The key's last characters, so admins can tell keys apart. The key itself is write-only.
+  auth: GatewayAuth,
+  // Tells credentials apart without revealing them: a key's last characters, an AWS access key id's,
+  // a service account's email. The secret itself is write-only.
   hint: Schema.String,
+  // Names of the extra headers sent upstream, such as a gateway's own key. Values are write-only.
+  headers: Schema.Array(Schema.String),
+  // Extra query parameters sent upstream, such as Azure's api-version.
+  query: Schema.Record(Schema.String, Schema.String),
+  // The name and models clients show for a provider they don't know. Empty for providers they do
+  // (anthropic, openai, openrouter), whose models come from the models.dev catalog.
+  name: Schema.NullOr(Schema.String),
+  models: Schema.Array(GatewayModel),
   created: Time,
   updated: Time,
 })
@@ -441,8 +543,22 @@ export const GatewayProvider = Schema.Struct({
 export const GatewayProviderInput = Schema.Struct({
   kind: GatewayKind,
   base: Schema.String.check(Schema.isPattern(/^https?:\/\/[^\s?#]+$/, { message: "must be an http(s) URL" })),
-  // Required for a new provider; omit it to keep the current key.
-  key: Schema.optional(Text.check(Schema.isMaxLength(4096))),
+  // Defaults to what the upstream kind expects: x-api-key for anthropic, a service account for
+  // vertex, a bearer key otherwise.
+  auth: Schema.optional(GatewayAuth),
+  // The secret `auth` uses. Required for a new provider and whenever the credential changes; omit
+  // it to keep the current one.
+  key: Schema.optional(Text.check(Schema.isMaxLength(16_384))),
+  // Replaces every extra header when given; omit it to keep them.
+  headers: Schema.optional(Schema.Record(UpstreamHeader, Schema.String.check(Schema.isMaxLength(4096)))),
+  query: Schema.Record(
+    Schema.String.check(Schema.isPattern(/^[A-Za-z0-9._~-]{1,64}$/, { message: "must be a query parameter name" })),
+    Schema.String.check(Schema.isMaxLength(1024)),
+  ).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  name: Schema.optional(Schema.NullOr(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)))),
+  models: Schema.Array(GatewayModel)
+    .check(Schema.isMaxLength(1000))
+    .pipe(Schema.withDecodingDefault(Effect.succeed([]))),
 })
 
 export const Gateway = Schema.Struct({
@@ -451,8 +567,73 @@ export const Gateway = Schema.Struct({
   providers: Schema.Array(GatewayProvider),
 })
 
-// What a client needs to route a provider through the gateway.
-export const GatewayRoute = Schema.Struct({ id: Schema.String, kind: GatewayKind })
+// Models an upstream lists, for an admin to pick from.
+export const GatewayDiscovery = Schema.Struct({
+  models: Schema.Array(Schema.Struct({ id: Schema.String, name: Schema.optional(Schema.String) })),
+})
+
+// What a client needs to route a provider through the gateway. `name` and `models` are set for
+// providers clients don't know.
+export const GatewayRoute = Schema.Struct({
+  id: Schema.String,
+  kind: GatewayApi,
+  name: Schema.optional(Schema.String),
+  models: Schema.optional(Schema.Array(GatewayModel)),
+})
+
+// One call through the gateway, refused or relayed.
+export const GatewayCall = Schema.Struct({
+  id: Schema.Finite,
+  at: Time,
+  user: Schema.NullOr(Schema.Struct({ id: Schema.String, email: Schema.String })),
+  provider: Schema.String,
+  model: Schema.NullOr(Schema.String),
+  method: Schema.String,
+  path: Schema.String,
+  status: Schema.Int,
+  // Why the gateway refused or failed the call: model_not_allowed, budget_exceeded, rate_limited,
+  // upstream_unreachable and so on. Null when the upstream answered.
+  code: Schema.NullOr(Schema.String),
+  // Milliseconds until the response ended.
+  latency: Count,
+  tokens: Schema.Struct({ input: Count, output: Count, reasoning: Count, read: Count, write: Count }),
+  cost: Count,
+  session: Schema.NullOr(Schema.String),
+  project: Schema.NullOr(Schema.String),
+  ip: Schema.NullOr(Schema.String),
+  // Whether what was sent and received was kept.
+  bodies: Schema.Boolean,
+})
+export type GatewayCall = typeof GatewayCall.Type
+
+export const GatewayCallPage = Schema.Struct({ calls: Schema.Array(GatewayCall), next: Schema.NullOr(Schema.Finite) })
+
+export const GatewayCallDetail = Schema.Struct({
+  ...GatewayCall.fields,
+  request: Schema.NullOr(Schema.String),
+  response: Schema.NullOr(Schema.String),
+})
+
+// ---- prices -------------------------------------------------------------------------------
+
+// The organization's own rates for a provider's models, replacing the catalog's: negotiated
+// prices, or prices for models the catalog doesn't have. They apply to gateway-metered and
+// client-reported usage alike.
+export const Price = Schema.Struct({
+  provider: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  // A model id, or "*" for every model of the provider.
+  model: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(300)),
+  // Either rates per million tokens, or a percentage off the catalog's rates.
+  rates: Schema.optional(Rates),
+  discount: Schema.optional(Count.check(Schema.isLessThanOrEqualTo(100))),
+}).check(
+  Schema.makeFilter((price) => (price.rates === undefined) !== (price.discount === undefined), {
+    message: "must set either rates or a discount",
+  }),
+)
+export type Price = typeof Price.Type
+
+export const Prices = Schema.Struct({ prices: Schema.Array(Price).check(Schema.isMaxLength(2000)) })
 
 // ---- device login (RFC 8628) --------------------------------------------------------------
 

@@ -3,7 +3,16 @@ import { Schema } from "effect"
 import { OpenApi } from "effect/unstable/httpapi"
 import { Api } from "../src/api"
 import { allows, dollars, normalize, overBudget, refusal, target } from "../src/match"
-import { Effective, GatewayProviderInput, Mode, Policy, UsageRecord } from "../src/schema"
+import {
+  defaultAuth,
+  Effective,
+  gatewayApi,
+  GatewayProviderInput,
+  Mode,
+  Policy,
+  Price,
+  UsageRecord,
+} from "../src/schema"
 
 describe("schemas", () => {
   test("an empty policy decodes to the secure defaults", () => {
@@ -13,7 +22,7 @@ describe("schemas", () => {
       permission: {},
       share: "disabled",
       telemetry: { product: false },
-      gateway: { exclusive: false },
+      gateway: { exclusive: false, limits: {}, log: { bodies: false, retention: 30 } },
     })
   })
 
@@ -41,9 +50,55 @@ describe("schemas", () => {
     expect(decode({ kind: "anthropic", base: "https://api.anthropic.com/v1" })).toEqual({
       kind: "anthropic",
       base: "https://api.anthropic.com/v1",
+      query: {},
+      models: [],
     })
     expect(() => decode({ kind: "anthropic", base: "https://api.anthropic.com/v1?x=1" })).toThrow(/URL/)
-    expect(() => decode({ kind: "bedrock", base: "https://example.com" })).toThrow()
+    expect(() => decode({ kind: "azure", base: "https://example.com" })).toThrow()
+  })
+
+  test("gateway credentials and extra headers are validated", () => {
+    const decode = Schema.decodeUnknownSync(GatewayProviderInput)
+    const base = { kind: "bedrock", base: "https://bedrock-runtime.us-east-1.amazonaws.com" }
+    expect(
+      decode({ ...base, auth: { type: "aws", region: "us-gov-west-1", access_key: "AKIAIOSFODNN7EXAMPLE" } }).auth,
+    ).toEqual({ type: "aws", region: "us-gov-west-1", access_key: "AKIAIOSFODNN7EXAMPLE" })
+    expect(() =>
+      decode({ ...base, auth: { type: "aws", region: "us east", access_key: "AKIAIOSFODNN7EXAMPLE" } }),
+    ).toThrow(/region/)
+    expect(() => decode({ ...base, auth: { type: "aws", region: "us-east-1", access_key: "secret" } })).toThrow(
+      /access key/,
+    )
+    const openai = { kind: "openai-compatible", base: "https://litellm.internal/v1" }
+    expect(decode({ ...openai, headers: { "x-portkey-api-key": "pk" } }).headers).toEqual({ "x-portkey-api-key": "pk" })
+    // The HTTP client owns framing and the connection; letting a header override them could
+    // smuggle requests.
+    for (const name of ["host", "Content-Length", "transfer-encoding", "proxy-authorization"])
+      expect(() => decode({ ...openai, headers: { [name]: "x" } })).toThrow(/header/)
+    expect(() => decode({ ...openai, query: { "a b": "1" } })).toThrow(/query/)
+  })
+
+  test("a price sets either rates or a discount", () => {
+    const decode = Schema.decodeUnknownSync(Price)
+    expect(decode({ provider: "anthropic", model: "*", discount: 15 })).toEqual({
+      provider: "anthropic",
+      model: "*",
+      discount: 15,
+    })
+    expect(() => decode({ provider: "anthropic", model: "*" })).toThrow(/either rates or a discount/)
+    expect(() => decode({ provider: "anthropic", model: "*", discount: 15, rates: { input: 1, output: 2 } })).toThrow(
+      /either rates or a discount/,
+    )
+    expect(() => decode({ provider: "anthropic", model: "*", discount: 120 })).toThrow()
+  })
+
+  test("Bedrock and Vertex providers speak Anthropic's API to clients", () => {
+    expect(gatewayApi("bedrock")).toBe("anthropic")
+    expect(gatewayApi("vertex")).toBe("anthropic")
+    expect(gatewayApi("openai-compatible")).toBe("openai-compatible")
+    expect(defaultAuth("anthropic")).toEqual({ type: "header", name: "x-api-key" })
+    expect(defaultAuth("vertex")).toEqual({ type: "google" })
+    expect(defaultAuth("openai")).toEqual({ type: "bearer" })
   })
 
   test("invalid policies are rejected with a path to the problem", () => {

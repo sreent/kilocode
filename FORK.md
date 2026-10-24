@@ -85,14 +85,14 @@ The organization features use the same stack and conventions as the rest of Kilo
 | Org rules | System prompt of every request | |
 | Budgets | Before every request | Spend refreshes after each usage upload |
 | Usage | Each LLM call (step) | Batched every 15 s, spooled to disk when offline, de-duplicated by the server |
-| Gateway providers | Last config layer | Their base URL becomes `<server>/gateway/<id>` and their API key the organization token; with `gateway.exclusive`, every other provider is refused |
+| Gateway providers | Last config layer | Their base URL becomes `<server>/gateway/<id>` and their API key the organization token; a provider clients don't know (LiteLLM, Claude on Bedrock or Vertex) is defined from the name and models the server sends; with `gateway.exclusive`, every other provider is refused |
 
 The policy is fetched at startup (waiting at most 5 s), refreshed every 5 minutes with an ETag, and cached on disk.
 
 - **Offline:** a cached policy keeps applying for up to 7 days. After that it's treated as missing, so cutting off the organization server can't pin a lenient old policy.
 - **Revoked tokens and suspended members:** the policy is dropped immediately rather than kept stale.
 
-Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. For providers routed through the organization server's [LLM gateway](packages/organization-server/README.md#llm-gateway), the server enforces model access and budgets on every call and meters usage itself, because only the server holds the provider keys.
+Client-side enforcement guards against mistakes and drift, not against a user who controls their own machine and runs some other tool. For providers routed through the organization server's [LLM gateway](packages/organization-server/README.md#llm-gateway), the server enforces model access, budgets and rate limits on every call, meters usage itself and logs each call, because only the server holds the provider credentials. The gateway reaches Anthropic, OpenAI, Azure OpenAI, any OpenAI-compatible server or gateway (LiteLLM among them), and Claude on Amazon Bedrock and Google Vertex AI.
 
 ### Client configuration
 
@@ -150,11 +150,10 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 
 ## Roadmap
 
-1. **LLM gateway, next steps.** The gateway relays Anthropic, OpenAI and OpenAI-compatible APIs today. Next: Bedrock, Vertex and Azure OpenAI upstreams, per-org price overrides for negotiated rates, rate limits, and request logging for audits.
-2. **Rebranding and distribution** (see above).
-3. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).
-4. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
-5. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
-6. **Live policy reload** of the model list in running clients, without a restart.
-7. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
-8. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.
+1. **Rebranding and distribution** (see above).
+2. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).
+3. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
+4. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
+5. **Live policy reload** of the model list in running clients, without a restart.
+6. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
+7. **Provider data filters.** Filter providers by data policy (training on prompts, retention, region), like Kilo's provider filters.

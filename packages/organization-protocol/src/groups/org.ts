@@ -13,6 +13,9 @@ import {
   Domain,
   Effective,
   Gateway,
+  GatewayCallDetail,
+  GatewayCallPage,
+  GatewayDiscovery,
   GatewayProvider,
   GatewayProviderInput,
   Group,
@@ -28,6 +31,7 @@ import {
   Org,
   Policy,
   PolicyState,
+  Prices,
   ProviderID,
   Role,
   ScimToken,
@@ -287,6 +291,21 @@ export const GovernanceGroup = HttpApiGroup.make("organization.governance")
       error: failures,
     }).annotate(Requires, "budget.write"),
   )
+  .add(
+    HttpApiEndpoint.get("prices.get", "/api/v1/orgs/:org/prices", {
+      params: org,
+      success: Prices,
+      error: failures,
+    }).annotate(Requires, "usage.read"),
+  )
+  .add(
+    HttpApiEndpoint.put("prices.update", "/api/v1/orgs/:org/prices", {
+      params: org,
+      payload: Prices,
+      success: Prices,
+      error: failures,
+    }).annotate(Requires, "budget.write"),
+  )
   .middleware(OrgScope)
   .middleware(Authorization)
 
@@ -492,6 +511,37 @@ export const GatewayGroup = HttpApiGroup.make("organization.gateway")
       success: HttpApiSchema.NoContent,
       error: failures,
     }).annotate(Requires, "gateway.write"),
+  )
+  .add(
+    // Lists what the upstream offers, using the stored credentials, so an admin can pick models.
+    HttpApiEndpoint.post("gateway.discover", "/api/v1/orgs/:org/gateway/providers/:id/discover", {
+      params: { ...org, id: Schema.String },
+      success: GatewayDiscovery,
+      error: failures,
+    }).annotate(Requires, "gateway.write"),
+  )
+  .add(
+    HttpApiEndpoint.get("gateway.calls", "/api/v1/orgs/:org/gateway/calls", {
+      params: org,
+      query: {
+        user: Schema.optional(Schema.String),
+        provider: Schema.optional(Schema.String),
+        // Only calls the gateway refused or the upstream failed.
+        failed: Schema.optional(Schema.Literals(["true", "false"])),
+        before: Schema.optional(Schema.NumberFromString),
+        limit: Schema.optional(Schema.NumberFromString),
+        ...Window,
+      },
+      success: GatewayCallPage,
+      error: failures,
+    }).annotate(Requires, "gateway.read"),
+  )
+  .add(
+    HttpApiEndpoint.get("gateway.call", "/api/v1/orgs/:org/gateway/calls/:id", {
+      params: { ...org, id: Schema.NumberFromString },
+      success: GatewayCallDetail,
+      error: failures,
+    }).annotate(Requires, "gateway.read"),
   )
   .middleware(OrgScope)
   .middleware(Authorization)
