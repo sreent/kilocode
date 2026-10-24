@@ -156,4 +156,3 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 ## Roadmap
 
 1. **Rebranding and distribution** (see above).
-2. **Deployment templates.** A Helm chart, and templates for managed container platforms. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).

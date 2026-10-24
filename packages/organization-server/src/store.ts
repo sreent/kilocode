@@ -561,8 +561,10 @@ const make = Effect.gen(function* () {
       org: string
       name: string
       ttl?: number
+      // A token the caller generated, such as one an operator configured; otherwise a new one.
+      value?: string
     }) {
-      const value = Crypto.token(input.kind)
+      const value = input.value ?? Crypto.token(input.kind)
       const id = Crypto.id("tok")
       const created = yield* now
       yield* db.insert(TokenTable).values({

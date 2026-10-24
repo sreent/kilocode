@@ -1,0 +1,85 @@
+# Deploy with: gcloud run services replace service.yaml --region us-central1
+# Replace my-project, the region, the image and the Cloud SQL instance with your own.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kilo-organization-server
+spec:
+  template:
+    metadata:
+      annotations:
+        # Audit streams, reports and price updates run between requests, so one instance stays up
+        # with its CPU allocated all the time.
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/startup-cpu-boost: "true"
+        # Cloud SQL, reached through the socket under /cloudsql.
+        run.googleapis.com/cloudsql-instances: my-project:us-central1:kilo-organization
+    spec:
+      serviceAccountName: kilo-organization@my-project.iam.gserviceaccount.com
+      # LLM gateway calls stream for minutes; an hour is Cloud Run's longest.
+      timeoutSeconds: 3600
+      containerConcurrency: 80
+      containers:
+        - name: organization-server
+          image: us-central1-docker.pkg.dev/my-project/kilo/organization-server:0.2.0
+          args: ["serve"]
+          ports:
+            - name: http1
+              containerPort: 8787
+          env:
+            - name: ORGANIZATION_BASE_URL
+              value: https://ai.example.com
+            # Cloud Run's own front end; 2 behind an external Application Load Balancer.
+            - name: ORGANIZATION_TRUST_PROXY
+              value: "1"
+            # Connections per instance; keep maxScale times this under the database's limit.
+            - name: ORGANIZATION_DATABASE_POOL
+              value: "5"
+            - name: ORGANIZATION_BOOTSTRAP_ORG
+              value: Example
+            - name: ORGANIZATION_BOOTSTRAP_SLUG
+              value: example
+            - name: ORGANIZATION_BOOTSTRAP_EMAIL
+              value: admin@example.com
+            - name: ORGANIZATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: kilo-organization-secret
+                  key: latest
+            # postgres://USER:PASSWORD@/DATABASE?host=/cloudsql/my-project:us-central1:kilo-organization
+            - name: ORGANIZATION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kilo-organization-database-url
+                  key: latest
+            - name: ORGANIZATION_BOOTSTRAP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kilo-organization-bootstrap-token
+                  key: latest
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          # Until the database is open and migrated.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8787
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8787
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8787
+            periodSeconds: 10
+            timeoutSeconds: 5

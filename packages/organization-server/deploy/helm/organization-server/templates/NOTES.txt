@@ -1,0 +1,15 @@
+The organization server is starting at {{ .Values.baseUrl | trimSuffix "/" }}; its console is at /admin.
+{{- if .Values.bootstrap.org }}
+
+On its first start it creates {{ .Values.bootstrap.org }} ({{ .Values.bootstrap.slug }}) with {{ .Values.bootstrap.email }} as owner, who signs in to the console with the bootstrap token. Once single sign-on works, revoke that token and remove the bootstrap values.
+{{- else }}
+
+To create the first organization, set bootstrap.org, bootstrap.slug, bootstrap.email and a bootstrap token, then upgrade the release.
+{{- end }}
+{{- if include "organization-server.external" . }}
+
+It keeps its data on your PostgreSQL server; back that up with its own tools.
+{{- else }}
+
+It keeps its data in the embedded database on the {{ .Values.persistence.existingClaim | default (include "organization-server.fullname" .) }} volume, and backs it up into backups/ on the same volume every {{ .Values.backups.hours }} hours. Copy those backups elsewhere, or snapshot the volume. For more than one replica, give it a PostgreSQL server (database.url).
+{{- end }}

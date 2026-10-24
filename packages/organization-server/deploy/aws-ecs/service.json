@@ -1,0 +1,28 @@
+{
+  "cluster": "kilo",
+  "serviceName": "kilo-organization-server",
+  "taskDefinition": "kilo-organization-server",
+  "desiredCount": 2,
+  "launchType": "FARGATE",
+  "platformVersion": "LATEST",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-0123456789abcdef0", "subnet-0fedcba9876543210"],
+      "securityGroups": ["sg-0123456789abcdef0"],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/kilo-organization/0123456789abcdef",
+      "containerName": "organization-server",
+      "containerPort": 8787
+    }
+  ],
+  "healthCheckGracePeriodSeconds": 120,
+  "deploymentConfiguration": {
+    "minimumHealthyPercent": 100,
+    "maximumPercent": 200,
+    "deploymentCircuitBreaker": { "enable": true, "rollback": true }
+  }
+}

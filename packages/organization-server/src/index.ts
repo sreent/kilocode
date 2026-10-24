@@ -5,7 +5,7 @@ import { parseArgs } from "node:util"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { App } from "./app"
 import { Backups } from "./backups"
-import { bootstrap } from "./bootstrap"
+import { bootstrap, first, settings as seed } from "./bootstrap"
 import { ServerConfig } from "./config"
 import { Backup } from "./db/backup"
 import { Embedded } from "./db/embedded"
@@ -135,6 +135,26 @@ if (Exit.isFailure(ready)) {
   await Effect.runPromise(
     Effect.logError("organization server could not start").pipe(
       Effect.annotateLogs({ error: reason(ready.cause) }),
+      Effect.provide(Observability.layer),
+    ),
+  )
+  process.exit(1)
+}
+// The organization ORGANIZATION_BOOTSTRAP_* describe, on a database that has none yet.
+const seeded = await runtime.runPromiseExit(
+  Effect.gen(function* () {
+    const input = yield* seed
+    if (!input) return
+    if (yield* first(input))
+      yield* Effect.logInfo(
+        "created the first organization and its owner, who signs in with ORGANIZATION_BOOTSTRAP_TOKEN",
+      ).pipe(Effect.annotateLogs({ org: input.slug, owner: input.email }))
+  }),
+)
+if (Exit.isFailure(seeded)) {
+  await Effect.runPromise(
+    Effect.logError("organization server could not start").pipe(
+      Effect.annotateLogs({ error: reason(seeded.cause) }),
       Effect.provide(Observability.layer),
     ),
   )

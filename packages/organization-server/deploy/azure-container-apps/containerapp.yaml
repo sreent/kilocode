@@ -1,0 +1,86 @@
+# Deploy with:
+#   az containerapp create --resource-group kilo --name kilo-organization-server --yaml containerapp.yaml
+# Replace the subscription, resource group, environment, identity, registry and vault with your own.
+location: eastus
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization:
+      {}
+properties:
+  managedEnvironmentId: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.App/managedEnvironments/kilo
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 8787
+      transport: http
+      allowInsecure: false
+    registries:
+      - server: kilo.azurecr.io
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+    # Read from Key Vault with the identity above.
+    secrets:
+      - name: organization-secret
+        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/organization-secret
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+      # postgres://USER:PASSWORD@SERVER.postgres.database.azure.com:5432/DATABASE?sslmode=verify-full
+      - name: database-url
+        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/database-url
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+      - name: bootstrap-token
+        keyVaultUrl: https://kilo-vault.vault.azure.net/secrets/bootstrap-token
+        identity: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/kilo/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kilo-organization
+  template:
+    containers:
+      - name: organization-server
+        image: kilo.azurecr.io/organization-server:0.2.0
+        args: ["serve"]
+        env:
+          - name: ORGANIZATION_BASE_URL
+            value: https://ai.example.com
+          # The environment's ingress; add one for each proxy in front of it, such as Front Door.
+          - name: ORGANIZATION_TRUST_PROXY
+            value: "1"
+          - name: ORGANIZATION_DATABASE_POOL
+            value: "10"
+          - name: ORGANIZATION_BOOTSTRAP_ORG
+            value: Example
+          - name: ORGANIZATION_BOOTSTRAP_SLUG
+            value: example
+          - name: ORGANIZATION_BOOTSTRAP_EMAIL
+            value: admin@example.com
+          - name: ORGANIZATION_SECRET
+            secretRef: organization-secret
+          - name: ORGANIZATION_DATABASE_URL
+            secretRef: database-url
+          - name: ORGANIZATION_BOOTSTRAP_TOKEN
+            secretRef: bootstrap-token
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+        probes:
+          # Until the database is open and migrated.
+          - type: Startup
+            httpGet:
+              path: /healthz
+              port: 8787
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          - type: Liveness
+            httpGet:
+              path: /healthz
+              port: 8787
+            periodSeconds: 30
+            timeoutSeconds: 5
+          - type: Readiness
+            httpGet:
+              path: /readyz
+              port: 8787
+            periodSeconds: 10
+            timeoutSeconds: 5
+    # Audit streams, reports and price updates run between requests, so one replica stays up.
+    scale:
+      minReplicas: 1
+      maxReplicas: 5

@@ -69,6 +69,10 @@ Point liveness probes at `GET /healthz`, and readiness probes at `GET /readyz`, 
 
 Always run it behind HTTPS. Tokens and the admin session cookie must not travel in clear text, and the server warns at startup if `ORGANIZATION_BASE_URL` is not `https://` (localhost excepted).
 
+### Kubernetes and managed container platforms
+
+[`deploy/`](deploy/README.md) has a Helm chart, and templates for AWS ECS on Fargate, Google Cloud Run and Azure Container Apps. Where running `bootstrap` beside the server is awkward, as on those platforms, the `ORGANIZATION_BOOTSTRAP_*` settings create the first organization when the server starts on an empty database.
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -88,6 +92,8 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ORGANIZATION_RATE_LIMIT` | `600` | [Requests a minute](#rate-limits) each token may make; `0` for no limit |
 | `ORGANIZATION_RATE_LIMIT_ANONYMOUS` | `300` | Requests a minute each client address may make without a token; `0` for no limit |
 | `ORGANIZATION_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
+| `ORGANIZATION_BOOTSTRAP_ORG`, `ORGANIZATION_BOOTSTRAP_SLUG`, `ORGANIZATION_BOOTSTRAP_EMAIL` | unset | The first organization, its slug and its owner, created when the server starts on a database without one |
+| `ORGANIZATION_BOOTSTRAP_TOKEN` | unset | The token that owner signs in with: `korg_` and at least 32 more letters, digits, `-` or `_`, such as `korg_$(openssl rand -hex 32)`. Required with the three above |
 | `ORGANIZATION_MODELS_URL` | `https://models.dev/api.json` | Model price catalog the gateway meters with, as a URL or a local file path in models.dev's format. Empty turns pricing off |
 | `ORGANIZATION_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`; logs are logfmt on stdout |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Also send logs and traces over OTLP (HTTP, JSON); `OTEL_EXPORTER_OTLP_HEADERS` adds headers |
