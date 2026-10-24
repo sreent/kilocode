@@ -19,7 +19,7 @@ abstract class StageRepoCliTask : DefaultTask() {
     @TaskAction
     fun run() {
         val dir = bin.asFile.get()
-        val exe = File(dir, exe())
+        val exe = File(dir, exe(Brand.COMMAND))
         if (!exe.isFile) {
             throw GradleException(
                 "Repo CLI binary not found at ${exe.absolutePath}. Run ./gradlew :backend:buildRepoCli " +
@@ -34,7 +34,9 @@ abstract class StageRepoCliTask : DefaultTask() {
             dir.walkTopDown()
                 .filter { it.isFile }
                 .forEach { file ->
-                    val name = "$platform/bin/${file.relativeTo(dir).invariantSeparatorsPath}"
+                    // The plugin runs the CLI as bin/kilo, whatever the build named its binary.
+                    val path = if (file == exe) exe("kilo") else file.relativeTo(dir).invariantSeparatorsPath
+                    val name = "$platform/bin/$path"
                     zip.putNextEntry(ZipEntry(name))
                     file.inputStream().use { it.copyTo(zip) }
                     zip.closeEntry()
@@ -42,7 +44,8 @@ abstract class StageRepoCliTask : DefaultTask() {
         }
     }
 
-    private fun exe() = if (System.getProperty("os.name").lowercase().contains("windows")) "kilo.exe" else "kilo"
+    private fun exe(name: String) =
+        if (System.getProperty("os.name").lowercase().contains("windows")) "$name.exe" else name
 
     private fun platform(): String {
         val os = System.getProperty("os.name").lowercase()
