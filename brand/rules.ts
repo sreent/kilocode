@@ -187,7 +187,8 @@ export function rules(b: Brand): Rule[] {
           ),
     },
     {
-      // Changesets name the extension by its package name, which is the extension's name.
+      // Changesets name the extension by its package name, which is the extension's name, and link
+      // release notes to the repository's pull requests. Their text becomes the release notes.
       name: "Changesets",
       files: [
         ".changeset/config.json",
@@ -195,7 +196,12 @@ export function rules(b: Brand): Rule[] {
         "script/upstream/opencode-changesets.ts",
         "script/upstream/opencode-changesets.test.ts",
       ],
-      apply: (text) => text.replaceAll('"kilo-code"', JSON.stringify(b.vscode.name)),
+      apply: (text, file) => {
+        const named = text
+          .replaceAll('"kilo-code"', JSON.stringify(b.vscode.name))
+          .replace(/("repo": )"Kilo-Org\/kilocode"/, `$1"${b.repository.replace("https://github.com/", "")}"`)
+        return file.endsWith(".md") ? product(named, b) : named
+      },
     },
     {
       // The product's full name in the extension's own strings and the tests that check them. Other

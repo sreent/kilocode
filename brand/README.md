@@ -25,8 +25,8 @@ Run it after every merge from Kilo upstream, then review the diff. It's safe to 
 
 What users see:
 
-- The product name in text people read: CLI help and tips, agent prompts, VS Code and JetBrains strings in every language.
-- Identities: the VS Code manifest (publisher, name, display name, repository) and the extension ID in code.
+- The product name in text people read: CLI help and tips, agent prompts, VS Code and JetBrains strings in every language, and release notes (changesets).
+- Identities: the VS Code manifest (publisher, name, display name, repository), the extension ID in code, and the JetBrains plugin's ID, name, vendor and description.
 - The Dockerfile, the installer script, and the icons in VS Code, JetBrains and the admin console.
 - Generated constants, for code that can't import `brand.json` itself:
   - `packages/kilo-vscode/src/brand.ts`
@@ -35,7 +35,7 @@ What users see:
 
 The CLI imports `brand.json` directly (`@/tucode/brand`), so it needs no rewriting.
 
-What stays Kilo's: internal names (`KILO_*` variables, `kilo.json`, `.kilo` folders, code identifiers, setting keys), and the names of Kilo's own services where they're still mentioned ("Kilo Gateway"). Keeping these keeps upstream merges small.
+What stays Kilo's: internal names (`KILO_*` variables, `kilo.json`, `.kilo` folders, code identifiers, setting keys), and the names of Kilo's own services where they're still mentioned ("Kilo Gateway", "Kilo account"). Keeping these keeps upstream merges small. Any other "Kilo" becomes TU Code, so text that means Kilo itself, such as a release note, names the service.
 
 ## Before publishing
 
