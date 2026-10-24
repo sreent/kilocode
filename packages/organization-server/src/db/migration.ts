@@ -32,3 +32,14 @@ export function apply(db: Database.Db, input: ReadonlyArray<Migration> = migrati
     }),
   )
 }
+
+/** The migrations an existing database still needs; none for a new one, which has nothing to lose. */
+export function pending(db: Database.Db, input: ReadonlyArray<Migration> = migrations) {
+  return Effect.gen(function* () {
+    const found = yield* db.execute<{ found: boolean }>(sql`SELECT to_regclass('migration') IS NOT NULL AS found`)
+    if (!found[0]?.found) return []
+    const rows = yield* db.execute<{ id: string }>(sql`SELECT id FROM ${sql.identifier("migration")}`)
+    const done = new Set(rows.map((row) => row.id))
+    return input.filter((migration) => !done.has(migration.id)).map((migration) => migration.id)
+  })
+}

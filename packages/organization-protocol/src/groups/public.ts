@@ -1,11 +1,18 @@
 import { Schema } from "effect"
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
-import { DeviceError, ForbiddenError, InvalidRequestError, NotFoundError } from "../errors"
+import { DeviceError, ForbiddenError, InvalidRequestError, NotFoundError, UnavailableError } from "../errors"
 import { DeviceGrant, DeviceStart, Signin } from "../schema"
 
-export const HealthGroup = HttpApiGroup.make("organization.health").add(
-  HttpApiEndpoint.get("health.get", "/healthz", { success: Schema.Struct({ ok: Schema.Literal(true) }) }),
-)
+// Liveness answers while the process runs; readiness also needs the database to answer, so load
+// balancers and orchestrators send no traffic to a server that would fail it.
+export const HealthGroup = HttpApiGroup.make("organization.health")
+  .add(HttpApiEndpoint.get("health.get", "/healthz", { success: Schema.Struct({ ok: Schema.Literal(true) }) }))
+  .add(
+    HttpApiEndpoint.get("health.ready", "/readyz", {
+      success: Schema.Struct({ ok: Schema.Literal(true) }),
+      error: UnavailableError,
+    }),
+  )
 
 // Unauthenticated sign-in flows: RFC 8628 device authorization and invite acceptance.
 export const SigninGroup = HttpApiGroup.make("organization.signin")

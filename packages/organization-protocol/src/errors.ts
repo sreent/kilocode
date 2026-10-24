@@ -32,6 +32,20 @@ export class ConflictError extends Schema.TaggedErrorClass<ConflictError>()(
   { httpApiStatus: 409 },
 ) {}
 
+// Too many requests from one token or address. The response's Retry-After says when to try again.
+export class RateLimitError extends Schema.TaggedErrorClass<RateLimitError>()(
+  "RateLimitError",
+  { message: Schema.String },
+  { httpApiStatus: 429 },
+) {}
+
+// The server can't serve requests: its database doesn't answer.
+export class UnavailableError extends Schema.TaggedErrorClass<UnavailableError>()(
+  "UnavailableError",
+  { message: Schema.String },
+  { httpApiStatus: 503 },
+) {}
+
 // RFC 8628 §3.5 token endpoint errors, which clients branch on by `error`. An ErrorClass rather than
 // a tagged one, so the body is exactly `{ "error": ... }` as the RFC specifies.
 export class DeviceError extends Schema.ErrorClass<DeviceError>("DeviceError")(

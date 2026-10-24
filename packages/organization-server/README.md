@@ -65,7 +65,7 @@ docker run -d -p 8787:8787 -v organization-data:/data \
   -e ORGANIZATION_BASE_URL=https://ai.acme.com -e ORGANIZATION_SECRET organization-server
 ```
 
-Point liveness and readiness probes at `GET /healthz`. A bind-mounted data directory must be writable by uid 65532. The embedded database opens in one process at a time, so run `bootstrap` while the server is stopped; while it runs, `bootstrap` exits with an error saying so. To run several containers, give them all `ORGANIZATION_DATABASE_URL` instead ([storage and high availability](#storage-and-high-availability)).
+Point liveness probes at `GET /healthz`, and readiness probes at `GET /readyz`, which also checks the database. A bind-mounted data directory must be writable by uid 65532. The embedded database opens in one process at a time, so run `bootstrap` while the server is stopped; while it runs, `bootstrap` exits with an error saying so. To run several containers, give them all `ORGANIZATION_DATABASE_URL` instead ([storage and high availability](#storage-and-high-availability)).
 
 Always run it behind HTTPS. Tokens and the admin session cookie must not travel in clear text, and the server warns at startup if `ORGANIZATION_BASE_URL` is not `https://` (localhost excepted).
 
@@ -79,28 +79,41 @@ Always run it behind HTTPS. Tokens and the admin session cookie must not travel 
 | `ORGANIZATION_DATABASE_URL` | unset | A PostgreSQL server to keep everything in, as `postgres://user:password@host:5432/database`. Needed for more than one replica. Unset, the server uses its embedded database |
 | `ORGANIZATION_DATABASE_POOL` | `10` | Connections each server opens to `ORGANIZATION_DATABASE_URL` |
 | `ORGANIZATION_DATA` | `./data` | Data directory. The embedded database lives in `postgres/` inside it |
+| `ORGANIZATION_BACKUP_DIR` | `<ORGANIZATION_DATA>/backups` | Where the embedded database is [backed up](#backups) |
+| `ORGANIZATION_BACKUP_HOURS` | `24` | Hours between backups; `0` takes none on a schedule |
+| `ORGANIZATION_BACKUP_KEEP` | `7` | Backups to keep |
 | `ORGANIZATION_DB` | `<ORGANIZATION_DATA>/enterprise.db` | The SQLite database of earlier versions, copied in on first start ([upgrading](#upgrading-from-sqlite)) |
 | `ORGANIZATION_SECRET` | unset | Key material for encrypting SSO client secrets and gateway credentials at rest (AES-256-GCM). Required before SSO or the gateway can be configured; keep it stable |
-| `ORGANIZATION_TRUST_PROXY` | unset | Set to `1` behind a reverse proxy so audit entries record `X-Forwarded-For` |
+| `ORGANIZATION_TRUST_PROXY` | unset | How many reverse proxies stand in front of the server (`true` for one). Audit entries and [rate limits](#rate-limits) then take the client's address from `X-Forwarded-For`, that many entries from its end |
+| `ORGANIZATION_RATE_LIMIT` | `600` | [Requests a minute](#rate-limits) each token may make; `0` for no limit |
+| `ORGANIZATION_RATE_LIMIT_ANONYMOUS` | `300` | Requests a minute each client address may make without a token; `0` for no limit |
 | `ORGANIZATION_AUDIT_RETENTION_DAYS` | `365` | Audit history to keep; `0` keeps it forever |
 | `ORGANIZATION_MODELS_URL` | `https://models.dev/api.json` | Model price catalog the gateway meters with, as a URL or a local file path in models.dev's format. Empty turns pricing off |
 | `ORGANIZATION_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`; logs are logfmt on stdout |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Also send logs and traces over OTLP (HTTP, JSON); `OTEL_EXPORTER_OTLP_HEADERS` adds headers |
 
-The server also reads a `.env` file from its working directory, a convenient place for these settings; keep it readable only by the service account. Back up the database: it holds the audit log and usage history.
+The server also reads a `.env` file from its working directory, a convenient place for these settings; keep it readable only by the service account.
 
 ## Storage and high availability
 
 Everything is kept in PostgreSQL, embedded in the server or on a PostgreSQL server.
 
-**Embedded (the default).** Without `ORGANIZATION_DATABASE_URL`, the server runs Postgres in its own process ([PGlite](https://pglite.dev), Postgres compiled to WebAssembly), with its files in `ORGANIZATION_DATA/postgres`. There is nothing else to install. It is for one server: the directory is locked while the server has it open, so a second server, or a `bootstrap` while the server runs, exits with an error instead of corrupting it. A commit is on disk before the request that made it completes. To back it up, stop the server and copy the directory, or snapshot the volume.
+**Embedded (the default).** Without `ORGANIZATION_DATABASE_URL`, the server runs Postgres in its own process ([PGlite](https://pglite.dev), Postgres compiled to WebAssembly), with its files in `ORGANIZATION_DATA/postgres`. There is nothing else to install. It is for one server: the directory is locked while the server has it open, so a second server, or a `bootstrap` while the server runs, exits with an error instead of corrupting it. A commit is on disk before the request that made it completes. The server [backs it up](#backups) itself.
 
-**A PostgreSQL server, for high availability.** Point every server at the same database with `ORGANIZATION_DATABASE_URL` (PostgreSQL 14 or later; a managed service such as Amazon RDS, Cloud SQL or Azure Database for PostgreSQL works), give them all the same `ORGANIZATION_SECRET` and `ORGANIZATION_BASE_URL`, and put them behind a load balancer that checks `GET /healthz`. Back up and replicate the database with your usual Postgres tooling.
+**A PostgreSQL server, for high availability.** Point every server at the same database with `ORGANIZATION_DATABASE_URL` (PostgreSQL 14 or later; a managed service such as Amazon RDS, Cloud SQL or Azure Database for PostgreSQL works), give them all the same `ORGANIZATION_SECRET` and `ORGANIZATION_BASE_URL`, and put them behind a load balancer that checks `GET /readyz`. Back up and replicate the database with your usual Postgres tooling.
 
 - Any server handles any request, with no session affinity. Sign-ins keep their state in the database, so an SSO sign-in or a device login can start on one server and finish on another.
 - Servers apply database migrations as they start, one at a time under an advisory lock, so they can start together. A server that can't reach or open its database exits at startup with the reason.
 - Each audit stream is delivered by one server at a time, which holds a one-minute lease on it. If that server stops in the middle of a delivery, another sends the batch again when the lease runs out. Audit events get their ids in commit order, so a stream never passes over one that commits late.
 - Checks that guard a write, such as keeping an organization's last owner, run in one transaction under a database-wide lock, so two servers can't both pass them.
+
+### Backups
+
+A server on the embedded database backs it up itself: every 24 hours (`ORGANIZATION_BACKUP_HOURS`), before an upgrade migrates it, and when it receives `SIGUSR2` (`docker kill --signal=USR2 <container>`, `systemctl kill -s USR2 <unit>`, or on Kubernetes `kubectl debug -it <pod> --image=busybox --target=<container> -- kill -USR2 1`). Backups go to `ORGANIZATION_BACKUP_DIR`, `backups/` in the data directory unless set, which keeps the newest 7 (`ORGANIZATION_BACKUP_KEEP`). Each one is a gzipped tarball of the database's files at one moment, readable only by the server's user, and holds everything the server keeps: its secrets sealed with `ORGANIZATION_SECRET`, the audit log and usage. Requests wait while one is taken, about a tenth of a second for a small database. Copy backups somewhere else too, such as object storage: one on the database's own volume doesn't survive losing it.
+
+With the server stopped, `organization-server backup [--out <file>]` takes one, and `organization-server restore <file>` replaces the database with one. A restore checks the file is a backup of this database first, and moves the database it replaces aside instead of deleting it. When the server starts on a backup from an earlier version, it migrates it as on any upgrade. To move to a PostgreSQL server from a backup, restore it, then [move](#moving-to-a-postgresql-server).
+
+A PostgreSQL server is backed up with its own tools: `pg_dump`, or a managed service's snapshots and point-in-time recovery.
 
 ### Upgrading from SQLite
 
@@ -373,6 +386,7 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 | `/api/v1/orgs/{org}/suborgs` | Sub-organizations |
 | `/scim/v2/...` | SCIM 2.0 |
 | `GET /healthz` | Liveness |
+| `GET /readyz` | Readiness: the server and its database answer |
 
 ## Security model
 
@@ -385,6 +399,14 @@ All endpoints take `Authorization: Bearer <token>` and return JSON. The contract
 - The browser session cookie is `HttpOnly`, `Secure` on HTTPS, and `SameSite=Lax`. Every cookie-authenticated write must carry a same-origin `Origin` header.
 - The admin console is served with a strict Content Security Policy and renders all data as text.
 - CSV exports neutralise spreadsheet formulas.
+
+## Rate limits
+
+Each token may make 600 requests a minute (`ORGANIZATION_RATE_LIMIT`), and each client address 300 without one (`ORGANIZATION_RATE_LIMIT_ANONYMOUS`), a minute's worth at once at most. Beyond that, requests get a `429` with `Retry-After`: in the API's error format, in SCIM's for identity providers, and as a page in the browser. Health checks, the console's files and the [LLM gateway](#llm-gateway) aren't counted; the policy's `gateway.limits` sets the gateway's per-member limits. Each server counts on its own, so with several behind a load balancer a client can reach the limit on each.
+
+Behind a reverse proxy, set `ORGANIZATION_TRUST_PROXY` to how many proxies there are, or every client shares the proxy's address. Each proxy appends the address it saw to `X-Forwarded-For`, so the server reads the client's that many entries from the end and never trusts the entries before it, which the client wrote itself.
+
+The page where people enter a device sign-in code also allows each address 20 wrong codes in 10 minutes (RFC 8628 §5.1): plenty for typos, nothing like the billions a guesser would need.
 
 ## Limits of client-side enforcement
 

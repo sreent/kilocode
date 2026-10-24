@@ -761,12 +761,16 @@ export const layer = Layer.effect(
           return yield* keep(pending.url, pending.org, exit.value.access_token)
         }
         const error = exit.cause.reasons.find((reason) => reason._tag === "Fail")?.error
-        // Transient network errors are retried until the code expires.
-        if (!(error instanceof DeviceError) || error.error === "authorization_pending") continue
-        if (error.error === "slow_down") {
+        // Polling too fast, this client or every client at its address: wait longer between polls.
+        if (
+          Predicate.isTagged(error, "RateLimitError") ||
+          (error instanceof DeviceError && error.error === "slow_down")
+        ) {
           interval += 5
           continue
         }
+        // Transient network errors are retried until the code expires.
+        if (!(error instanceof DeviceError) || error.error === "authorization_pending") continue
         if (current()) device.pending = undefined
         if (error.error === "access_denied") return yield* new SigninError({ message: "Sign-in was denied." })
         return yield* new SigninError({ message: `Sign-in failed: ${error.error}` })

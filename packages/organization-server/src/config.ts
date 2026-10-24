@@ -11,8 +11,11 @@ export interface Info {
   readonly base: string
   // Key material for sealing secrets at rest (ORGANIZATION_SECRET). SSO cannot be configured without it.
   readonly secret: string | undefined
-  // Trust X-Forwarded-For for audit IPs when running behind a reverse proxy.
-  readonly proxy: boolean
+  // How many reverse proxies stand in front of the server. Each appends the address it saw to
+  // X-Forwarded-For, so the client's is that many entries from the end; 0 trusts no header.
+  readonly proxy: number
+  // Requests per minute each token, and each client address without a token, may make; 0 for no limit.
+  readonly limits: { readonly token: number; readonly anonymous: number }
   // Audit history older than this is pruned (milliseconds); undefined keeps it forever.
   readonly retention: number | undefined
   // DNS TXT lookup used for domain verification; injectable for tests.
@@ -28,6 +31,12 @@ export class Service extends Context.Service<Service, Info>()("@organization/Ser
 }
 
 export const port = Config.port("ORGANIZATION_PORT").pipe(Config.withDefault(8787))
+
+// A count of proxies, or true for one.
+const proxies = Config.int("ORGANIZATION_TRUST_PROXY").pipe(
+  Config.orElse(() => Config.boolean("ORGANIZATION_TRUST_PROXY").pipe(Config.map(Number))),
+  Config.withDefault(0),
+)
 
 // Where to listen; only the entrypoint needs it. The database is configured in db/database.ts.
 export const listen = Config.all({
@@ -45,7 +54,9 @@ export const layer = Layer.effect(
       port,
       base: Config.string("ORGANIZATION_BASE_URL").pipe(Config.option),
       secret: Config.string("ORGANIZATION_SECRET").pipe(Config.option),
-      proxy: Config.boolean("ORGANIZATION_TRUST_PROXY").pipe(Config.withDefault(false)),
+      proxy: proxies,
+      limit: Config.int("ORGANIZATION_RATE_LIMIT").pipe(Config.withDefault(600)),
+      anonymous: Config.int("ORGANIZATION_RATE_LIMIT_ANONYMOUS").pipe(Config.withDefault(300)),
       // 0 (or anything non-positive) keeps audit history forever.
       retention: Config.int("ORGANIZATION_AUDIT_RETENTION_DAYS").pipe(Config.withDefault(365)),
       // Set it empty to turn pricing off, e.g. on servers without internet access.
@@ -54,7 +65,8 @@ export const layer = Layer.effect(
     return Service.of({
       base: Option.getOrElse(env.base, () => `http://localhost:${env.port}`).replace(/\/$/, ""),
       secret: Option.getOrUndefined(env.secret) || undefined,
-      proxy: env.proxy,
+      proxy: Math.max(0, env.proxy),
+      limits: { token: Math.max(0, env.limit), anonymous: Math.max(0, env.anonymous) },
       retention: env.retention > 0 ? env.retention * day : undefined,
       txt,
       models: env.models.trim() || undefined,

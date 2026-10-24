@@ -93,7 +93,9 @@ export async function setup(overrides: Partial<ServerConfig.Info> = {}, options:
   const config: ServerConfig.Info = {
     base,
     secret: "test-secret",
-    proxy: false,
+    proxy: 0,
+    // Tests make many requests in a row; the rate limit tests turn limits on.
+    limits: { token: 0, anonymous: 0 },
     retention: undefined,
     txt: () => Effect.succeed([]),
     models: undefined,
