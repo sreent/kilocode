@@ -44,8 +44,9 @@ Changes to upstream files are kept to one-line calls into the organization modul
 
 | Upstream file | Hook |
 |---|---|
-| `packages/opencode/src/config/config.ts` | Apply the org policy as the last config layer, above user, project, managed and env config |
-| `packages/opencode/src/provider/provider.ts` | Drop models outside the user's effective model access |
+| `packages/opencode/src/config/config.ts` | Apply the org policy as the last config layer, above user, project, managed and env config; reload it when the policy changes |
+| `packages/opencode/src/provider/provider.ts` | Drop models outside the user's effective model access, rebuild the list when the policy changes, and say why a refused model is missing |
+| `packages/tui/src/context/sync.tsx` | Refetch providers and agents on a config update, which a policy change sends |
 | `packages/opencode/src/mcp/index.ts` | Refuse MCP servers outside the allowlist or on the blocklist; every connection path passes here |
 | `packages/opencode/src/permission/index.ts` | Add org deny rules to the hard ruleset of every permission ask |
 | `packages/opencode/src/plugin/index.ts` | Always load the organization plugin, even with `KILO_DISABLE_DEFAULT_PLUGINS` |
@@ -77,7 +78,7 @@ The organization features use the same stack and conventions as the rest of Kilo
 | Policy | Enforced at | Notes |
 |---|---|---|
 | Sign-in required | Before every LLM request | Set by a managed `organization.json`; users can't remove it without admin rights on their machine |
-| Model access | Model list at load time, and again before every request | A request to a newly blocked model is refused even before the list refreshes |
+| Model access | Model list at load time and whenever the policy changes, and again before every request | A request to a newly blocked model is refused even before the list refreshes |
 | Data policy | Same as model access | Providers whose recorded terms fall short of the org's filters (training, retention, regions) are refused with the reason; OpenRouter-compatible providers get the filters as routing preferences on every request |
 | MCP allow/block | Every MCP connection | Matched on the server URL or command line, not its name |
 | Tool permission denies | Hard ruleset, plus the config layer | No saved approval, session rule or "allow everything" mode overrides them |
@@ -89,6 +90,8 @@ The organization features use the same stack and conventions as the rest of Kilo
 | Gateway providers | Last config layer | Their base URL becomes `<server>/gateway/<id>` and their API key the organization token; a provider clients don't know (LiteLLM, Claude on Bedrock or Vertex) is defined from the name and models the server sends; with `gateway.exclusive`, every other provider is refused |
 
 The policy is fetched at startup (waiting at most 5 s), refreshed every 5 minutes with an ETag, and cached on disk.
+
+- **Live changes:** when a refresh brings a policy that changes what clients see, running clients rebuild their model list, org agents and config without a restart, and the TUI, VS Code and JetBrains refetch them. A session whose model was taken away is told why. MCP servers the org adds or removes connect or disconnect at the next start; the allowlist and blocklist already apply to every new connection.
 
 - **Offline:** a cached policy keeps applying for up to 7 days. After that it's treated as missing, so cutting off the organization server can't pin a lenient old policy.
 - **Revoked tokens and suspended members:** the policy is dropped immediately rather than kept stale.
@@ -155,5 +158,4 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 2. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).
 3. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
 4. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
-5. **Live policy reload** of the model list in running clients, without a restart.
-6. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.
+5. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.

@@ -269,7 +269,7 @@ class KiloBackendWorkspaceTest {
     }
 
     @Test
-    fun `config updated SSE refreshes workspace warnings`() = runBlocking {
+    fun `config updated SSE refreshes workspace warnings`(): Unit = runBlocking {
         mock.warnings = """[{"path":".kilo/kilo.json","message":"Invalid JSON","detail":"CloseBraceExpected"}]"""
 
         val app = setup()
@@ -287,6 +287,31 @@ class KiloBackendWorkspaceTest {
         withTimeout(5_000) {
             ws.state.first { it is KiloWorkspaceState.Ready && it.warnings.isEmpty() }
         }
+    }
+
+    @Test
+    fun `config updated SSE refreshes providers and agents in place`() = runBlocking {
+        mock.providers = PROVIDERS_JSON
+        mock.agents = """[{"name":"code","mode":"primary","permission":[],"options":{}}]"""
+        val app = setup()
+        val ws = ready(app)
+        loaded(ws)
+
+        assertEquals(1, (ws.state.value as KiloWorkspaceState.Ready).providers.providers.size)
+
+        // An organization policy change took the provider away and added an org agent.
+        mock.providers = """{"all":[],"default":{},"connected":[],"failed":[]}"""
+        mock.agents = """[
+            {"name":"code","mode":"primary","permission":[],"options":{}},
+            {"name":"reviewer","mode":"primary","permission":[],"options":{}}
+        ]"""
+        mock.awaitSseConnection()
+        mock.pushEvent("global.config.updated", """{"type":"global.config.updated"}""")
+
+        val state = withTimeout(5_000) {
+            ws.state.first { it is KiloWorkspaceState.Ready && it.providers.providers.isEmpty() }
+        } as KiloWorkspaceState.Ready
+        assertEquals(listOf("code", "reviewer"), state.agents.agents.map { it.name })
     }
 
     // ------ Error handling ------

@@ -2,7 +2,7 @@
 import path from "path"
 import { Effect } from "effect"
 import type { Hooks, PluginInput } from "@kilocode/plugin"
-import { allows, preferences, withheld } from "@organization/protocol/match"
+import { preferences } from "@organization/protocol/match"
 import { Organization } from "./organization"
 
 // Internal plugin that applies the org policy at request time. Unlike other internal plugins it
@@ -33,13 +33,10 @@ export function OrganizationPlugin(organization: Organization.Interface) {
             if (blocked) return { reason: blocked }
             const policy = yield* organization.current()
             if (!policy) return {}
-            const provider = input.model.providerID
-            const reason =
-              withheld(policy, provider) ??
-              (allows(policy, provider, input.model.id)
-                ? undefined
-                : `The model ${provider}/${input.model.id} is not allowed by your organization's policy.`)
-            return { reason, routing: preferences(policy, provider) }
+            return {
+              reason: yield* organization.explain(input.model.providerID, input.model.id),
+              routing: preferences(policy, input.model.providerID),
+            }
           }),
         )
         if (verdict.reason) throw new Organization.PolicyError(verdict.reason)

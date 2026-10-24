@@ -1841,6 +1841,7 @@ const layer = Layer.effect(
       }),
     )
     yield* ModelsRefresh.watch(state) // kilocode_change
+    yield* organization.follow(state, 1) // kilocode_change - organization: rebuild when the policy changes
 
     const list = Effect.fn("Provider.list")(() => InstanceState.use(state, (s) => s.providers))
 
@@ -2031,6 +2032,21 @@ const layer = Layer.effect(
       return info
     })
 
+    // kilocode_change start - organization: say why, when the org policy took the model away
+    const explained = (providerID: ProviderV2.ID, modelID: ModelV2.ID) =>
+      getModel(providerID, modelID).pipe(
+        Effect.catchTag("ProviderModelNotFoundError", (error) =>
+          organization
+            .explain(providerID, modelID)
+            .pipe(
+              Effect.flatMap((reason) =>
+                Effect.fail(reason ? new ModelNotFoundError({ providerID, modelID, catalogError: reason }) : error),
+              ),
+            ),
+        ),
+      )
+    // kilocode_change end
+
     const getLanguage = Effect.fn("Provider.getLanguage")(function* (model: Model) {
       const s = yield* InstanceState.get(state)
       const envs = yield* env.all()
@@ -2203,7 +2219,9 @@ const layer = Layer.effect(
       }
     })
 
-    return Service.of({ list, getProvider, getModel, getLanguage, closest, getSmallModel, defaultModel })
+    // kilocode_change start - organization: getModel says why a model the policy refuses is missing
+    return Service.of({ list, getProvider, getModel: explained, getLanguage, closest, getSmallModel, defaultModel })
+    // kilocode_change end
   }),
 )
 

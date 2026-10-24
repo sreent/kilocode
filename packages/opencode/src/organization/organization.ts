@@ -16,11 +16,12 @@ import {
   Predicate,
   Schema,
   Scope,
+  ScopedCache,
 } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/http"
 import { OrganizationClient } from "@organization/protocol/client"
 import { DeviceError } from "@organization/protocol/errors"
-import { overBudget, refusal as mcpRefusal } from "@organization/protocol/match"
+import { allows, overBudget, refusal as mcpRefusal, withheld } from "@organization/protocol/match"
 import { Effective, UsageRecord, type GatewayModel, type GatewayApi } from "@organization/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Flag } from "@opencode-ai/core/flag/flag"
@@ -30,8 +31,11 @@ import { httpClient } from "@opencode-ai/core/effect/app-node-platform"
 import { ConfigAgentV1 } from "@opencode-ai/core/v1/config/agent"
 import { ConfigMCPV1 } from "@opencode-ai/core/v1/config/mcp"
 import { ConfigPermissionV1 } from "@opencode-ai/core/v1/config/permission"
+import { GlobalBus } from "@/bus/global"
 import type { Config } from "@/config/config"
 import { ConfigManaged } from "@/config/managed"
+import type { InstanceState } from "@/effect/instance-state"
+import { Event } from "@/server/event"
 
 // Client side of the self-hosted organization server (packages/organization-server).
 //
@@ -187,11 +191,22 @@ export interface Interface {
   readonly refresh: () => Effect.Effect<void>
   /** The policy to enforce, if one is loaded and recent enough to trust. */
   readonly current: () => Effect.Effect<Effective | undefined>
+  /**
+   * Rebuilds a service's per-project state when the policy changes, so running clients pick up
+   * the new model list, org agents and config without a restart. Lower stages rebuild first;
+   * clients are told once every stage has.
+   */
+  readonly follow: <A, E, R>(
+    state: InstanceState.InstanceState<A, E, R>,
+    stage: number,
+  ) => Effect.Effect<void, never, Scope.Scope>
   readonly status: () => Effect.Effect<Status>
   /** Why the agent must not run right now, if it must not. */
   readonly blocked: () => Effect.Effect<string | undefined>
   /** Why an MCP server may not start, if it may not. */
   readonly refusal: (target: Target) => Effect.Effect<string | undefined>
+  /** Why the policy refuses a model, if it does: model access, an exclusive gateway or the data policy. */
+  readonly explain: (provider: string, model: string) => Effect.Effect<string | undefined>
   /** The org permission config; its deny rules are hard rules no approval can override. */
   readonly permission: () => Effect.Effect<ConfigPermissionV1.Info | undefined>
   readonly instructions: () => Effect.Effect<string | undefined>
@@ -373,7 +388,46 @@ export const layer = Layer.effect(
       )
     })
 
+    // ---- live reload -------------------------------------------------------------------------
+
+    const followers = new Set<{ readonly stage: number; readonly rebuild: Effect.Effect<void> }>()
+
+    const follow: Interface["follow"] = (target, stage) =>
+      Effect.acquireRelease(
+        Effect.sync(() => {
+          const entry = { stage, rebuild: ScopedCache.invalidateAll(target.cache) }
+          followers.add(entry)
+          return entry
+        }),
+        (entry) => Effect.sync(() => followers.delete(entry)),
+      ).pipe(Effect.asVoid)
+
+    // What the policy shapes in a running client; spend, the poll interval and the version number
+    // change without changing any of it.
+    const shape = (policy: Effective | undefined) => {
+      if (!policy) return undefined
+      const { budget: _, ttl: __, version: ___, ...rest } = policy
+      return JSON.stringify(rest)
+    }
+
+    const rebuild = Effect.fn("Organization.rebuild")(function* () {
+      for (const entry of [...followers].toSorted((a, b) => a.stage - b.stage))
+        yield* entry.rebuild.pipe(
+          Effect.catchCause((cause) => Effect.logWarning("could not rebuild after a policy change", { cause })),
+        )
+      // The policy is the last config layer, so for clients this is a config change: they refetch
+      // config, providers and agents.
+      GlobalBus.emit("event", { directory: "global", payload: { type: Event.ConfigUpdated.type, properties: {} } })
+      yield* Effect.logInfo("organization policy changed; rebuilt the model list, agents and config")
+    })
+
     const refresh = Effect.fn("Organization.refresh")(function* () {
+      const before = shape(state.policy)
+      yield* pull()
+      if (shape(state.policy) !== before) yield* rebuild()
+    })
+
+    const pull = Effect.fn("Organization.pull")(function* () {
       const cfg = yield* settings()
       if (!cfg?.token || cfg.error) return
       const governance = (yield* client({ url: cfg.url, token: cfg.token }))["organization.governance"]
@@ -467,6 +521,17 @@ export const layer = Layer.effect(
     })
 
     // Matching uses the server's target (URL or command line), never its name, which users choose freely.
+    const explain = Effect.fn("Organization.explain")(function* (provider: string, model: string) {
+      const policy = yield* current()
+      if (!policy) return undefined
+      return (
+        withheld(policy, provider) ??
+        (allows(policy, provider, model)
+          ? undefined
+          : `The model ${provider}/${model} is not allowed by your organization's policy.`)
+      )
+    })
+
     const refusal = Effect.fn("Organization.refusal")(function* (target: Target) {
       if (!(yield* settings())) return undefined
       const policy = yield* current()
@@ -830,9 +895,11 @@ export const layer = Layer.effect(
       ready,
       refresh,
       current,
+      follow,
       status,
       blocked,
       refusal,
+      explain,
       permission,
       instructions,
       overlay,

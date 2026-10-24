@@ -1080,6 +1080,7 @@ const layer = Layer.effect(
         return yield* loadInstanceState(ctx).pipe(Effect.provideService(Git.Service, git), Effect.orDie) // kilocode_change
       }),
     )
+    yield* organization.follow(state, 0) // kilocode_change - organization: rebuild when the policy changes
 
     const get = Effect.fn("Config.get")(function* () {
       // kilocode_change start - reload instance config when global config changed elsewhere
