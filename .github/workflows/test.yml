@@ -99,6 +99,21 @@ jobs:
         run: echo "Only isolated product, documentation, or metadata files changed; general unit tests are unchanged."
       # kilocode_change end
 
+      # kilocode_change start - fork: GitHub-hosted Windows runners keep TEMP on C:, the slow
+      # OS disk, and the checkout on D:. Path tests strip the drive from a temp path and expect
+      # it to resolve on the current drive, the checkout's, and they read a one-letter first
+      # directory as a Git Bash drive (/a/_temp is A:\_temp), so RUNNER_TEMP (D:\a\_temp) won't
+      # do either. Keep temp files in a directory at the root of the checkout drive. This runs
+      # before the Defender step, which then excludes the new TEMP too.
+      - name: Keep temp files on the checkout drive
+        if: matrix.settings.run && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dir = Join-Path ([System.IO.Path]::GetPathRoot($env:GITHUB_WORKSPACE)) "ci-temp"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          "TEMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "TMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      # kilocode_change end
       # kilocode_change start - Defender real-time scanning taxes every process spawn and
       # temp-file write on Windows; the suite spawns hundreds of test processes and builds
       # temp git repos, so exclude the runner's work and temp paths up front. Best effort by
@@ -119,19 +134,6 @@ jobs:
             }
           }
           Write-Host "Defender path exclusions applied: $applied"
-      # kilocode_change end
-      # kilocode_change start - fork: GitHub-hosted Windows runners keep TEMP on C:, the slow
-      # OS disk, and the checkout on D:. Tests that build temp paths and compare them with
-      # normalized ones assume a single drive, so keep temp files on the checkout drive.
-      # RUNNER_TEMP is already excluded from Defender scanning above.
-      - name: Keep temp files on the checkout drive
-        if: matrix.settings.run && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $dir = Join-Path $env:RUNNER_TEMP "tmp"
-          New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          "TEMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "TMP=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       # kilocode_change end
       - name: Checkout repository
         if: matrix.settings.run # kilocode_change
