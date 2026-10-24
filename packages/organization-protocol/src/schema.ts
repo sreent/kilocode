@@ -168,6 +168,11 @@ export const DataPolicy = Schema.Struct({
 })
 export type DataPolicy = typeof DataPolicy.Type
 
+// What clients send to the audit log about the tools the agent runs: nothing, which tool ran on
+// what (a file, a site, a program) and how it went, or that and the tool's input too.
+export const ToolAudit = Schema.Literals(["off", "summary", "inputs"])
+export type ToolAudit = typeof ToolAudit.Type
+
 export const Policy = Schema.Struct({
   models: Schema.Struct({
     // Org-wide ceiling. A bare provider id ("openai") blocks all of its models; anything with a
@@ -217,6 +222,10 @@ export const Policy = Schema.Struct({
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
   // Which providers may see the organization's data, judged by the terms recorded for each.
   data: DataPolicy.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  audit: Schema.Struct({
+    // Tool runs clients add to the audit log, and so to audit streams. Off unless an org opts in.
+    tools: ToolAudit.pipe(Schema.withDecodingDefault(Effect.succeed("off" as const))),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Policy = typeof Policy.Type
 
@@ -320,6 +329,26 @@ export const UsageRecord = Schema.Struct({
 })
 export type UsageRecord = typeof UsageRecord.Type
 
+// One tool the agent ran, as a client reports it to the audit log.
+export const ToolRun = Schema.Struct({
+  // The tool call's id; the server ignores one it already has, so clients can resend.
+  id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  // When it started.
+  at: Whole,
+  session: Schema.optional(Schema.String.check(Schema.isMaxLength(200))),
+  project: Schema.optional(Schema.String.check(Schema.isMaxLength(500))),
+  tool: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  outcome: Schema.Literals(["completed", "error"]),
+  // Milliseconds it ran.
+  duration: Whole.pipe(Schema.withDecodingDefault(Effect.succeed(0))),
+  // What it acted on: a file, a site, a program.
+  subject: Schema.optional(Schema.String.check(Schema.isMaxLength(1000))),
+  // Its input as JSON, when the organization keeps inputs.
+  input: Schema.optional(Schema.String.check(Schema.isMaxLength(4000))),
+  error: Schema.optional(Schema.String.check(Schema.isMaxLength(1000))),
+})
+export type ToolRun = typeof ToolRun.Type
+
 // "source" separates usage the gateway metered from usage that clients reported.
 export const UsageBy = Schema.Literals(["user", "model", "provider", "day", "project", "source"])
 export type UsageBy = typeof UsageBy.Type
@@ -352,12 +381,13 @@ export const AuditEvent = Schema.Struct({
 
 export const AuditPage = Schema.Struct({ events: Schema.Array(AuditEvent), next: Schema.NullOr(Schema.Finite) })
 
-// Destinations that receive every new audit event: a SIEM's HTTPS collector, or a syslog server.
-export const StreamKind = Schema.Literals(["webhook", "syslog"])
+// Destinations that receive every new audit event: a SIEM's HTTPS collector, a syslog server, or an
+// OpenTelemetry logs endpoint (OTLP over HTTP, JSON).
+export const StreamKind = Schema.Literals(["webhook", "syslog", "otlp"])
 export type StreamKind = typeof StreamKind.Type
 
-// Header names a webhook may set itself (an authorization header for the collector, say); the
-// signature and delivery headers are always the server's.
+// Header names a webhook or OTLP stream may set itself (an authorization header for the collector,
+// say); the signature and delivery headers are always the server's.
 const HeaderName = Schema.String.check(
   Schema.isPattern(/^(?!x-org-)[a-z0-9][a-z0-9-]{0,63}$/i, { message: "must be a header name" }),
 )
@@ -381,6 +411,11 @@ export const StreamTarget = Schema.Union([
     port: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 65535 })),
     tls: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
   }),
+  // The logs endpoint itself, such as https://collector.example.com:4318/v1/logs.
+  Schema.Struct({
+    kind: Schema.Literal("otlp"),
+    url: Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/, { message: "must be an http(s) URL" })),
+  }),
 ])
 export type StreamTarget = typeof StreamTarget.Type
 
@@ -388,7 +423,7 @@ export const AuditStream = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   target: StreamTarget,
-  // Names of the extra headers a webhook sends; their values are write-only.
+  // Names of the extra headers a webhook or OTLP stream sends; their values are write-only.
   headers: Schema.Array(Schema.String),
   enabled: Schema.Boolean,
   // Events not yet delivered.
@@ -869,6 +904,9 @@ export const Effective = Schema.Struct({
     reasons: Schema.Record(Schema.String, Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
     // Providers whose requests carry its filters as OpenRouter routing preferences.
     routing: list(Schema.String),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  audit: Schema.Struct({
+    tools: ToolAudit.pipe(Schema.withDecodingDefault(Effect.succeed("off" as const))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Effective = typeof Effective.Type

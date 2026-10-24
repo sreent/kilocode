@@ -51,7 +51,7 @@ const intervals = 1000
 
 // Collector URLs often carry their token in the path, so audit entries name only the host.
 const destination = (target: StreamTarget) =>
-  target.kind === "webhook" ? new URL(target.url).host : `${target.host}:${target.port}${target.tls ? " (TLS)" : ""}`
+  target.kind === "syslog" ? `${target.host}:${target.port}${target.tls ? " (TLS)" : ""}` : new URL(target.url).host
 
 const actions = (value: string | undefined) =>
   value
@@ -94,7 +94,9 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
       config.secret
         ? Crypto.seal(config.secret, value)
         : Effect.fail(
-            new InvalidRequestError({ message: "set ORGANIZATION_SECRET on the server before adding webhooks" }),
+            new InvalidRequestError({
+              message: "set ORGANIZATION_SECRET on the server before adding webhooks or stream headers",
+            }),
           )
     const sealHeaders = (headers: Record<string, string> | undefined) =>
       headers && Object.keys(headers).length > 0 ? seal(JSON.stringify(headers)) : Effect.succeed(null)
@@ -151,8 +153,8 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
           const input = ctx.payload
-          if (input.target.kind !== "webhook" && input.headers && Object.keys(input.headers).length > 0)
-            return yield* new InvalidRequestError({ message: "headers apply to webhook streams only" })
+          if (input.target.kind === "syslog" && input.headers && Object.keys(input.headers).length > 0)
+            return yield* new InvalidRequestError({ message: "headers apply to webhook and OTLP streams only" })
           const secret = input.target.kind === "webhook" ? Crypto.secret(32) : null
           const row = yield* store.stream.create(scope.org.id, {
             name: input.name,
@@ -181,8 +183,8 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
           // A webhook's signing secret is issued once, at creation.
           if (target.kind !== current.target.kind)
             return yield* new InvalidRequestError({ message: "create a new stream to change its kind" })
-          if (target.kind !== "webhook" && patch.headers && Object.keys(patch.headers).length > 0)
-            return yield* new InvalidRequestError({ message: "headers apply to webhook streams only" })
+          if (target.kind === "syslog" && patch.headers && Object.keys(patch.headers).length > 0)
+            return yield* new InvalidRequestError({ message: "headers apply to webhook and OTLP streams only" })
           const row = yield* store.stream.update(scope.org.id, current.id, {
             ...(patch.name !== undefined && { name: patch.name }),
             ...(patch.target !== undefined && { target: patch.target }),
@@ -224,6 +226,37 @@ export const InsightHandler = HttpApiBuilder.group(Api, "organization.insight", 
           const current = yield* store.stream.get(scope.org.id, ctx.params.id)
           if (!current) return yield* new NotFoundError({ message: "stream not found" })
           return yield* streams.test(scope.org, current)
+        }),
+      )
+      .handle(
+        "audit.tools",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const caller = yield* Caller
+          // The policy decides what is kept, whatever a client sends: nothing, or no inputs.
+          const level = (yield* store.policy.get(scope.org.id)).policy.audit.tools
+          if (level === "off") return { accepted: 0 }
+          const accepted = yield* store.audit.runs({
+            org: scope.org.id,
+            actor: { id: caller.user.id, email: caller.user.email },
+            ip: yield* RequestContext.address(config),
+            runs: ctx.payload.runs.map((run) => ({
+              id: run.id,
+              at: run.at,
+              tool: run.tool,
+              details: {
+                tool: run.tool,
+                outcome: run.outcome,
+                duration_ms: run.duration,
+                ...(run.session ? { session: run.session } : {}),
+                ...(run.project ? { project: run.project } : {}),
+                ...(run.subject ? { subject: run.subject } : {}),
+                ...(run.error ? { error: run.error } : {}),
+                ...(level === "inputs" && run.input ? { input: run.input } : {}),
+              },
+            })),
+          })
+          return { accepted }
         }),
       )
       .handle(

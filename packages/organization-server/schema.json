@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "4adbe6d8-d05b-4d1b-b8f0-74985357aaff",
+  "id": "0e9ef9ce-8d37-4129-bf4c-5d4ab514e201",
   "prevIds": [
-    "84487823-52fd-4b9a-a5cd-71fcbe16f83a"
+    "4adbe6d8-d05b-4d1b-b8f0-74985357aaff"
   ],
   "ddl": [
     {
@@ -305,6 +305,19 @@
       "generated": null,
       "identity": null,
       "name": "ip",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "audit"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ref",
       "entityType": "columns",
       "schema": "public",
       "table": "audit"
@@ -2768,6 +2781,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "audit_org_at",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "audit"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "org",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "ref",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "audit_org_ref",
       "entityType": "indexes",
       "schema": "public",
       "table": "audit"

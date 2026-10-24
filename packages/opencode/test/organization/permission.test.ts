@@ -56,6 +56,11 @@ const enrolled = Layer.succeed(
       start: () => Effect.void,
       stop: () => Effect.void,
     },
+    tools: {
+      push: () => Effect.void,
+      pending: () => Effect.succeed(0),
+      flush: () => Effect.succeed(true),
+    },
   }),
 )
 

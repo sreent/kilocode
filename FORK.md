@@ -87,6 +87,7 @@ The organization features use the same stack and conventions as the rest of Kilo
 | Org rules | System prompt of every request | |
 | Budgets | Before every request | Spend refreshes after each usage upload |
 | Usage | Each LLM call (step) | Batched every 15 s, spooled to disk when offline, de-duplicated by the server |
+| Tool-run audit | Each finished tool call | Only while the policy's `audit.tools` asks for it; sent to the audit log like usage, recorded once each |
 | Gateway providers | Last config layer | Their base URL becomes `<server>/gateway/<id>` and their API key the organization token; a provider clients don't know (LiteLLM, Claude on Bedrock or Vertex) is defined from the name and models the server sends; with `gateway.exclusive`, every other provider is refused |
 
 The policy is fetched at startup (waiting at most 5 s), refreshed every 5 minutes with an ETag, and cached on disk.
@@ -156,4 +157,3 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 
 1. **Rebranding and distribution** (see above).
 2. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).
-3. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.

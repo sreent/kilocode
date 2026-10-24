@@ -351,6 +351,154 @@ describe("usage and budgets", () => {
   })
 })
 
+describe("tool-run audit", () => {
+  // A finished tool part, as the session publishes it.
+  const tool = (id: string, name: string, state: Record<string, unknown>) => ({
+    event: {
+      type: "message.part.updated",
+      properties: {
+        part: { id, sessionID: "ses_t", messageID: "msg_t", type: "tool", callID: `call_${id}`, tool: name, state },
+      },
+    },
+  })
+  const time = { start: Date.now() - 1_500, end: Date.now() }
+
+  test("finished tool runs go to the org audit log at the level the policy sets", async () => {
+    expect((await cp.admin("PUT", "/policy", { audit: { tools: "summary" } })).status).toBe(200)
+    const dev = await cp.join("tools@acme.com", "member")
+    signin(dev.token)
+    const organization = await client()
+    const hooks = await OrganizationPlugin(organization)({} as never)
+    await hooks.event!({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            id: "msg_t",
+            sessionID: "ses_t",
+            role: "assistant",
+            providerID: "anthropic",
+            modelID: "claude-sonnet-4",
+            path: { cwd: "/work/web", root: "/work/web" },
+          },
+        },
+      },
+    } as never)
+    const read = tool("prt_read", "read", {
+      status: "completed",
+      input: { filePath: "/work/web/src/app.ts" },
+      output: "export {}",
+      title: "src/app.ts",
+      metadata: {},
+      time,
+    })
+    for (const event of [
+      // Running parts are not finished yet.
+      tool("prt_read", "read", { status: "running", input: { filePath: "/work/web/src/app.ts" }, time }),
+      read,
+      // A later update to a finished part reports nothing new.
+      read,
+      tool("prt_bash", "bash", {
+        status: "error",
+        input: { command: "TOKEN=secret rm -rf build", description: "Clean" },
+        error: "The user rejected permission to use this specific tool call.",
+        time,
+      }),
+      tool("prt_fetch", "webfetch", {
+        status: "completed",
+        input: { url: "https://docs.acme.dev/guide?token=secret" },
+        output: "",
+        title: "",
+        metadata: {},
+        time,
+      }),
+      // Compaction rewrites parts that finished long before.
+      tool("prt_old", "read", {
+        status: "completed",
+        input: { filePath: "/work/web/old.ts" },
+        output: "",
+        title: "",
+        metadata: {},
+        time: { ...time, compacted: Date.now() },
+      }),
+    ])
+      await hooks.event!(event as never)
+    expect(await run(organization.tools.pending())).toBe(3)
+    expect(await run(organization.tools.flush())).toBe(true)
+
+    const logged = async () =>
+      (await cp.store.audit.query({ org: cp.owner.org.id, actions: ["client.tool_run"], limit: 10 })).filter(
+        (event) => event.actor === dev.user.id,
+      )
+    const summary = await logged()
+    expect(summary.map((event) => [event.target, event.details])).toEqual([
+      [
+        "webfetch",
+        {
+          tool: "webfetch",
+          outcome: "completed",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "https://docs.acme.dev",
+        },
+      ],
+      [
+        "bash",
+        {
+          tool: "bash",
+          outcome: "error",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "rm",
+          error: "The user rejected permission to use this specific tool call.",
+        },
+      ],
+      [
+        "read",
+        {
+          tool: "read",
+          outcome: "completed",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "src/app.ts",
+        },
+      ],
+    ])
+    expect(summary.every((event) => event.email === "tools@acme.com")).toBe(true)
+
+    // With inputs on, the tool's input comes too.
+    expect((await cp.admin("PUT", "/policy", { audit: { tools: "inputs" } })).status).toBe(200)
+    await run(organization.refresh())
+    await hooks.event!(
+      tool("prt_grep", "grep", {
+        status: "completed",
+        input: { pattern: "password", path: "/work/web/src" },
+        output: "",
+        title: "",
+        metadata: {},
+        time,
+      }) as never,
+    )
+    expect(await run(organization.tools.flush())).toBe(true)
+    expect((await logged())[0].details).toMatchObject({
+      subject: "src",
+      input: JSON.stringify({ pattern: "password", path: "/work/web/src" }),
+    })
+
+    // Off again, nothing is queued.
+    expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
+    await run(organization.refresh())
+    await hooks.event!(
+      tool("prt_list", "list", { status: "completed", input: {}, output: "", title: "", metadata: {}, time }) as never,
+    )
+    expect(await run(organization.tools.pending())).toBe(0)
+    expect(await logged()).toHaveLength(4)
+  })
+})
+
 describe("sign-in", () => {
   // What the IDEs drive through `kilo serve`, and `kilo org login` in the terminal.
   test("a device sign-in waits for the browser; a token signs in at once; signing out forgets both", async () => {

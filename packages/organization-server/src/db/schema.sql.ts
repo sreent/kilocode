@@ -258,8 +258,10 @@ export const AuditTable = pgTable(
     target: text(),
     details: jsonb().$type<unknown>().notNull().default({}),
     ip: text(),
+    // An id a client gave the event, such as a tool call's; a resent event with it is ignored.
+    ref: text(),
   },
-  (table) => [index("audit_org_at").on(table.org, table.at)],
+  (table) => [index("audit_org_at").on(table.org, table.at), uniqueIndex("audit_org_ref").on(table.org, table.ref)],
 )
 
 export const UsageTable = pgTable(

@@ -1,6 +1,6 @@
 export * as Streams from "./streams"
 
-import { Clock, Context, Effect, Layer, Schema } from "effect"
+import { Clock, Context, Effect, Layer, Option, Schema } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http"
 import net from "node:net"
 import tls from "node:tls"
@@ -10,9 +10,10 @@ import { ServerConfig } from "./config"
 import { httpClient } from "./oidc"
 import { Store, type Audit, type Org, type Stream } from "./store"
 
-// Delivers audit events to each org's streams: signed JSON webhooks, or RFC 5424 syslog over TCP
-// or TLS. Delivery is at least once, in order, and resumes from the last event a destination
-// accepted. Events carry their audit id, so receivers can drop the rare duplicate.
+// Delivers audit events to each org's streams: signed JSON webhooks, RFC 5424 syslog over TCP or
+// TLS, or OpenTelemetry logs over OTLP/HTTP. Delivery is at least once, in order, and resumes from
+// the last event a destination accepted. Events carry their audit id, so receivers can drop the
+// rare duplicate.
 
 // Events per delivery, and how long a delivery may hold its stream before another worker may retry it.
 const batch = 200
@@ -50,6 +51,58 @@ export function syslog(host: string, event: ReturnType<typeof view>) {
   const id = event.action.replace(/[^!-~]/g, "_").slice(0, 32) || "-"
   return `<110>1 ${event.time} ${host} kilo-organization - ${id} - ${JSON.stringify(event)}`
 }
+
+// OTLP/HTTP with JSON encoding: one resource for the org, one scope for its audit log, one log record
+// per event, its body the event as JSON. 64-bit integers are decimal strings, as the protobuf JSON
+// mapping requires. https://opentelemetry.io/docs/specs/otlp/#json-protobuf-encoding
+export function otlp(org: Pick<Org, "id" | "slug" | "name">, events: ReadonlyArray<ReturnType<typeof view>>) {
+  const text = (value: string) => ({ stringValue: value })
+  const attribute = (key: string, value: string | number | null) =>
+    value === null ? [] : [{ key, value: typeof value === "number" ? { intValue: String(value) } : text(value) }]
+  return {
+    resourceLogs: [
+      {
+        resource: {
+          attributes: [
+            { key: "service.name", value: text("kilo-organization") },
+            { key: "kilo.org.id", value: text(org.id) },
+            { key: "kilo.org.slug", value: text(org.slug) },
+            { key: "kilo.org.name", value: text(org.name) },
+          ],
+        },
+        scopeLogs: [
+          {
+            scope: { name: "kilo.organization.audit" },
+            logRecords: events.map((event) => ({
+              timeUnixNano: String(BigInt(event.at) * 1_000_000n),
+              severityNumber: 9,
+              severityText: "INFO",
+              body: text(JSON.stringify(event)),
+              attributes: [
+                ...attribute("event.name", event.action),
+                ...attribute("kilo.audit.id", event.id),
+                ...attribute("user.id", event.actor),
+                ...attribute("user.email", event.email),
+                ...attribute("kilo.audit.target", event.target),
+                ...attribute("client.address", event.ip),
+              ],
+            })),
+          },
+        ],
+      },
+    ],
+  }
+}
+
+// How an OTLP collector says it kept a batch but refused some of its records. Resending them would
+// not help, so the batch counts as delivered and the refusal is logged.
+const Partial = Schema.Struct({
+  partialSuccess: Schema.Struct({
+    rejectedLogRecords: Schema.optional(Schema.Union([Schema.String, Schema.Number])),
+    errorMessage: Schema.optional(Schema.String),
+  }),
+})
+const partial = Schema.decodeUnknownOption(Partial)
 
 // RFC 6587 octet counting, so a message can never be split or merged by the receiver.
 const frame = (message: string) => `${Buffer.byteLength(message)} ${message}`
@@ -111,29 +164,47 @@ export const layer = Layer.effect(
           target,
           events.map((event) => syslog(host, event)),
         )
-      const secret = yield* open(row.secret)
-      if (!secret)
-        return yield* new DeliveryError({ message: "the signing secret cannot be read; recreate the stream" })
       const headers = JSON.parse((yield* open(row.headers)) ?? "{}") as Record<string, string>
-      const body = JSON.stringify({ org: { id: org.id, slug: org.slug, name: org.name }, events })
-      const time = Math.floor((yield* Clock.currentTimeMillis) / 1000)
+      // OTLP endpoints authenticate with headers of their own; webhooks are also signed.
+      const signed = yield* Effect.gen(function* () {
+        if (target.kind === "otlp") return { body: JSON.stringify(otlp(org, events)), headers: {} }
+        const secret = yield* open(row.secret)
+        if (!secret)
+          return yield* new DeliveryError({ message: "the signing secret cannot be read; recreate the stream" })
+        const body = JSON.stringify({ org: { id: org.id, slug: org.slug, name: org.name }, events })
+        const time = Math.floor((yield* Clock.currentTimeMillis) / 1000)
+        return {
+          body,
+          headers: {
+            "x-org-delivery": crypto.randomUUID(),
+            "x-org-signature": `t=${time},v1=${signature(secret, time, body)}`,
+          },
+        }
+      })
       const request = HttpClientRequest.post(target.url).pipe(
-        HttpClientRequest.setHeaders({
-          ...headers,
-          "user-agent": "kilo-organization",
-          "x-org-delivery": crypto.randomUUID(),
-          "x-org-signature": `t=${time},v1=${signature(secret, time, body)}`,
-        }),
-        HttpClientRequest.bodyText(body, "application/json"),
+        HttpClientRequest.setHeaders({ ...headers, "user-agent": "kilo-organization", ...signed.headers }),
+        HttpClientRequest.bodyText(signed.body, "application/json"),
       )
       // Never follow redirects: the destination is what the admin configured, nothing else.
       const response = yield* http.execute(request).pipe(
         Effect.provideService(FetchHttpClient.RequestInit, { redirect: "manual" }),
         Effect.timeout(timeout),
-        Effect.mapError((error) => new DeliveryError({ message: `webhook: ${error.message}` })),
+        Effect.mapError((error) => new DeliveryError({ message: `${target.kind}: ${error.message}` })),
       )
       if (response.status < 200 || response.status >= 300)
-        return yield* new DeliveryError({ message: `webhook: HTTP ${response.status}` })
+        return yield* new DeliveryError({ message: `${target.kind}: HTTP ${response.status}` })
+      if (target.kind === "otlp") {
+        const body = yield* response.json.pipe(
+          Effect.timeout("5 seconds"),
+          Effect.orElseSucceed(() => ({})),
+        )
+        const reply = Option.getOrUndefined(partial(body))?.partialSuccess
+        const rejected = Number(reply?.rejectedLogRecords ?? 0)
+        if (rejected > 0)
+          yield* Effect.logWarning("OTLP collector refused audit records").pipe(
+            Effect.annotateLogs({ org: org.slug, stream: row.id, rejected, error: reply?.errorMessage ?? "" }),
+          )
+      }
     })
 
     const attempt = Effect.fn("Streams.attempt")(function* (due: Stream) {

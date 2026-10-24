@@ -22,7 +22,7 @@ import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/ht
 import { OrganizationClient } from "@organization/protocol/client"
 import { DeviceError } from "@organization/protocol/errors"
 import { allows, overBudget, refusal as mcpRefusal, withheld } from "@organization/protocol/match"
-import { Effective, UsageRecord, type GatewayModel, type GatewayApi } from "@organization/protocol/schema"
+import { Effective, ToolRun, UsageRecord, type GatewayModel, type GatewayApi } from "@organization/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Global } from "@opencode-ai/core/global"
@@ -81,7 +81,6 @@ const decode = {
   managed: Schema.decodeUnknownOption(Schema.fromJsonString(Managed)),
   login: Schema.decodeUnknownOption(Schema.fromJsonString(Login)),
   cache: Schema.decodeUnknownOption(Schema.fromJsonString(Cache)),
-  usage: Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Array(UsageRecord))),
   // Server data is validated against the CLI's own config schemas; a bad entry is skipped and
   // logged rather than allowed to break config loading or permission checks.
   permission: Schema.decodeUnknownResult(ConfigPermissionV1.Info),
@@ -149,6 +148,7 @@ export type Target =
   | { readonly type: "remote"; readonly url: string }
 
 export type UsageEntry = typeof UsageRecord.Type
+export type ToolRunEntry = typeof ToolRun.Type
 
 // Why a sign-in could not finish; the message is shown to the user as is.
 export class SigninError extends Schema.TaggedErrorClass<SigninError>()("OrganizationSigninError", {
@@ -180,6 +180,7 @@ export const file = {
   login: () => path.join(Global.Path.data, "organization-auth.json"),
   cache: () => path.join(Global.Path.cache, "organization-policy.json"),
   usage: () => path.join(Global.Path.data, "organization-usage"),
+  tools: () => path.join(Global.Path.data, "organization-tools"),
 }
 
 export interface Interface {
@@ -254,8 +255,16 @@ export interface Interface {
     readonly push: (entry: UsageEntry) => Effect.Effect<void>
     readonly pending: () => Effect.Effect<number>
     readonly flush: () => Effect.Effect<boolean>
+    /** Starts reporting usage and tool runs, and sends what earlier processes left behind. */
     readonly start: () => Effect.Effect<void>
+    /** Sends what waits, or leaves it on disk for the next process. */
     readonly stop: () => Effect.Effect<void>
+  }
+  /** Tool runs for the org audit log, when the policy asks for them. */
+  readonly tools: {
+    readonly push: (run: ToolRunEntry) => Effect.Effect<void>
+    readonly pending: () => Effect.Effect<number>
+    readonly flush: () => Effect.Effect<boolean>
   }
 }
 
@@ -402,11 +411,11 @@ export const layer = Layer.effect(
         (entry) => Effect.sync(() => followers.delete(entry)),
       ).pipe(Effect.asVoid)
 
-    // What the policy shapes in a running client; spend, the poll interval and the version number
-    // change without changing any of it.
+    // What the policy shapes in a running client. Spend, the poll interval, the version number and
+    // what is audited change without changing any of it; hooks read those as they run.
     const shape = (policy: Effective | undefined) => {
       if (!policy) return undefined
-      const { budget: _, ttl: __, version: ___, ...rest } = policy
+      const { budget: _, ttl: __, version: ___, audit: ____, ...rest } = policy
       return JSON.stringify(rest)
     }
 
@@ -810,84 +819,121 @@ export const layer = Layer.effect(
       yield* forget()
     })
 
-    // ---- usage -------------------------------------------------------------------------------
+    // ---- reporting ---------------------------------------------------------------------------
 
-    // Records are keyed by the step-finish part id, which the server de-duplicates, so resending
-    // after a crash or a lost response is safe.
+    // Records the control plane keeps: usage, and tool runs for the audit log. Each outbox sends in
+    // batches every 15 seconds, sooner once 50 wait, and spools what it could not send to disk
+    // when the process stops, for the next one to send. Records carry ids the server
+    // de-duplicates, so resending after a crash or a lost response is safe.
     const max = 5_000
     const batch = 500
-    const queue: UsageEntry[] = []
-    const reporting: { flushing?: Fiber.Fiber<boolean>; loop?: Fiber.Fiber<void> } = {}
 
-    const send = Effect.fn("Organization.usage.send")(function* () {
-      const cfg = yield* settings()
-      if (!cfg?.token || cfg.error) return queue.length === 0
-      const insight = (yield* client({ url: cfg.url, token: cfg.token }))["organization.insight"]
-      while (queue.length) {
-        const chunk = queue.slice(0, batch)
-        const exit = yield* insight["usage.ingest"]({ params: { org: cfg.org }, payload: { records: chunk } }).pipe(
-          Effect.timeout("10 seconds"),
-          Effect.exit,
-        )
-        if (Exit.isFailure(exit)) {
-          yield* Effect.logWarning("usage upload failed", { error: describe(cfg.url, exit.cause) })
-          return false
+    function outbox<A, I>(input: {
+      readonly name: string
+      readonly dir: () => string
+      readonly schema: Schema.Codec<A, I>
+      readonly upload: (
+        client: OrganizationClient.Client,
+        org: string,
+        records: ReadonlyArray<A>,
+      ) => Effect.Effect<unknown, unknown>
+      // Runs once every waiting record was accepted.
+      readonly sent?: () => Effect.Effect<void>
+    }) {
+      const queue: A[] = []
+      const reporting: { flushing?: Fiber.Fiber<boolean>; loop?: Fiber.Fiber<void> } = {}
+      const records = Schema.Array(input.schema)
+      const decode = Schema.decodeUnknownOption(Schema.fromJsonString(records))
+
+      const send = Effect.fn(`Organization.${input.name}.send`)(function* () {
+        const cfg = yield* settings()
+        if (!cfg?.token || cfg.error) return queue.length === 0
+        const remote = yield* client({ url: cfg.url, token: cfg.token })
+        while (queue.length) {
+          const chunk = queue.slice(0, batch)
+          const exit = yield* input.upload(remote, cfg.org, chunk).pipe(Effect.timeout("10 seconds"), Effect.exit)
+          if (Exit.isFailure(exit)) {
+            yield* Effect.logWarning(`${input.name} upload failed`, { error: describe(cfg.url, exit.cause) })
+            return false
+          }
+          queue.splice(0, chunk.length)
         }
-        queue.splice(0, chunk.length)
-      }
+        if (input.sent) yield* input.sent()
+        return true
+      })
+
+      const flush = Effect.fn(`Organization.${input.name}.flush`)(function* () {
+        const running = reporting.flushing ?? (yield* send().pipe(Effect.forkIn(scope)))
+        reporting.flushing = running
+        return yield* Fiber.join(running).pipe(
+          Effect.ensuring(
+            Effect.sync(() => {
+              if (reporting.flushing === running) reporting.flushing = undefined
+            }),
+          ),
+        )
+      })
+
+      const push = Effect.fn(`Organization.${input.name}.push`)(function* (entry: A) {
+        queue.push(entry)
+        if (queue.length > max) {
+          const dropped = queue.splice(0, queue.length - max)
+          yield* Effect.logWarning(`${input.name} queue full, dropping oldest records`, { dropped: dropped.length })
+        }
+        if (queue.length >= 50) yield* flush().pipe(Effect.forkIn(scope))
+      })
+
+      // Picks up records spooled by earlier processes that could not reach the control plane.
+      const recover = Effect.fn(`Organization.${input.name}.recover`)(function* () {
+        const entries = yield* fs.readDirectoryEntries(input.dir()).pipe(Effect.orElseSucceed(() => []))
+        for (const entry of entries) {
+          const target = path.join(input.dir(), entry.name)
+          const found = decode((yield* read(target)) ?? "")
+          yield* remove(target)
+          if (Option.isSome(found)) queue.push(...found.value)
+        }
+      })
+
+      const start = Effect.fn(`Organization.${input.name}.start`)(function* () {
+        if (reporting.loop) return
+        yield* recover()
+        reporting.loop = yield* flush().pipe(Effect.delay("15 seconds"), Effect.forever, Effect.forkIn(scope))
+      })
+
+      const stop = Effect.fn(`Organization.${input.name}.stop`)(function* () {
+        if (reporting.loop) yield* Fiber.interrupt(reporting.loop)
+        reporting.loop = undefined
+        const sent = Option.getOrElse(yield* flush().pipe(Effect.timeoutOption("3 seconds")), () => false)
+        if (sent || queue.length === 0) return
+        yield* write(
+          path.join(input.dir(), `${process.pid}-${yield* Clock.currentTimeMillis}.json`),
+          JSON.stringify(Schema.encodeSync(records)(queue.splice(0))),
+        )
+      })
+
+      return { push, pending: () => Effect.sync(() => queue.length), flush, start, stop }
+    }
+
+    // Keyed by the step-finish part id.
+    const usage = outbox({
+      name: "usage",
+      dir: file.usage,
+      schema: UsageRecord,
+      upload: (remote, org, records) =>
+        remote["organization.insight"]["usage.ingest"]({ params: { org }, payload: { records } }),
       // Budgets are enforced from the effective policy, so pull fresh spend after reporting.
-      if ((yield* current())?.budget.limits.length) yield* refresh()
-      return true
+      sent: Effect.fnUntraced(function* () {
+        if ((yield* current())?.budget.limits.length) yield* refresh()
+      }),
     })
 
-    const flush = Effect.fn("Organization.usage.flush")(function* () {
-      const running = reporting.flushing ?? (yield* send().pipe(Effect.forkIn(scope)))
-      reporting.flushing = running
-      return yield* Fiber.join(running).pipe(
-        Effect.ensuring(
-          Effect.sync(() => {
-            if (reporting.flushing === running) reporting.flushing = undefined
-          }),
-        ),
-      )
-    })
-
-    const push = Effect.fn("Organization.usage.push")(function* (entry: UsageEntry) {
-      queue.push(entry)
-      if (queue.length > max) {
-        const dropped = queue.splice(0, queue.length - max)
-        yield* Effect.logWarning("usage queue full, dropping oldest records", { dropped: dropped.length })
-      }
-      if (queue.length >= 50) yield* flush().pipe(Effect.forkIn(scope))
-    })
-
-    // Picks up records spooled by earlier processes that could not reach the control plane.
-    const recover = Effect.fn("Organization.usage.recover")(function* () {
-      const entries = yield* fs.readDirectoryEntries(file.usage()).pipe(Effect.orElseSucceed(() => []))
-      for (const entry of entries) {
-        const target = path.join(file.usage(), entry.name)
-        const records = decode.usage((yield* read(target)) ?? "")
-        yield* remove(target)
-        if (Option.isSome(records)) queue.push(...records.value)
-      }
-    })
-
-    const begin = Effect.fn("Organization.usage.start")(function* () {
-      if (reporting.loop) return
-      yield* recover()
-      reporting.loop = yield* flush().pipe(Effect.delay("15 seconds"), Effect.forever, Effect.forkIn(scope))
-    })
-
-    const stop = Effect.fn("Organization.usage.stop")(function* () {
-      if (reporting.loop) yield* Fiber.interrupt(reporting.loop)
-      reporting.loop = undefined
-      const sent = Option.getOrElse(yield* flush().pipe(Effect.timeoutOption("3 seconds")), () => false)
-      if (sent || queue.length === 0) return
-      const records = queue.splice(0)
-      yield* write(
-        path.join(file.usage(), `${process.pid}-${yield* Clock.currentTimeMillis}.json`),
-        JSON.stringify(Schema.encodeSync(Schema.Array(UsageRecord))(records)),
-      )
+    // Keyed by the tool part id. The server keeps them only while the policy asks for them.
+    const tools = outbox({
+      name: "tool run",
+      dir: file.tools,
+      schema: ToolRun,
+      upload: (remote, org, runs) =>
+        remote["organization.insight"]["audit.tools"]({ params: { org }, payload: { runs } }),
     })
 
     return Service.of({
@@ -912,7 +958,13 @@ export const layer = Layer.effect(
       client,
       signin: { start, finish, pending, token, invite },
       signout,
-      usage: { push, pending: () => Effect.sync(() => queue.length), flush, start: begin, stop },
+      usage: {
+        ...usage,
+        // Tool runs are reported alongside usage, and stop with it.
+        start: () => Effect.all([usage.start(), tools.start()], { discard: true }),
+        stop: () => Effect.all([usage.stop(), tools.stop()], { concurrency: "unbounded", discard: true }),
+      },
+      tools: { push: tools.push, pending: tools.pending, flush: tools.flush },
     })
   }),
 )

@@ -36,6 +36,7 @@ describe("schemas", () => {
       telemetry: { product: false },
       gateway: { exclusive: false, limits: {}, log: { bodies: false, retention: 30 } },
       data: { training: "allowed", retention: "any", regions: [], providers: {} },
+      audit: { tools: "off" },
     })
   })
 
@@ -72,6 +73,7 @@ describe("schemas", () => {
     }
     const decoded = Schema.decodeUnknownSync(Effective)(cached)
     expect(decoded.gateway).toEqual({ exclusive: false, providers: [] })
+    expect(decoded.audit).toEqual({ tools: "off" })
     expect(decoded.data).toEqual({
       training: "allowed",
       retention: "any",

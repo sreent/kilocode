@@ -85,6 +85,7 @@ export function resolve(input: {
       reasons,
       routing: filtered ? admitted.filter((id) => data.providers[id]?.routing) : [],
     },
+    audit: { tools: input.policy.audit.tools },
   }
 }
 

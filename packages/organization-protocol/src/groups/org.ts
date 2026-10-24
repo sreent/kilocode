@@ -53,6 +53,7 @@ import {
   StreamTest,
   Suborg,
   Token,
+  ToolRun,
   UsageBy,
   UsageRecord,
   UsageSummary,
@@ -388,6 +389,15 @@ export const InsightGroup = HttpApiGroup.make("organization.insight")
       success: StreamTest,
       error: failures,
     }).annotate(Requires, "audit.stream"),
+  )
+  // Tool runs a client reports, kept as audit events when the organization's policy asks for them.
+  .add(
+    HttpApiEndpoint.post("audit.tools", "/api/v1/orgs/:org/audit/tools", {
+      params: org,
+      payload: Schema.Struct({ runs: Schema.Array(ToolRun).check(Schema.isMaxLength(500)) }),
+      success: Schema.Struct({ accepted: Schema.Finite }),
+      error: failures,
+    }),
   )
   .add(
     HttpApiEndpoint.post("usage.ingest", "/api/v1/orgs/:org/usage", {

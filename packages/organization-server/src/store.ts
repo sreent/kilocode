@@ -790,6 +790,44 @@ const make = Effect.gen(function* () {
         }),
       )
     }, Effect.orDie),
+    // Tool runs a client reported, as "client.tool_run" events attributed to the person. Runs it
+    // already has are skipped. Returns how many were new.
+    runs: Effect.fn("Store.audit.runs")(function* (input: {
+      org: string
+      actor: Actor
+      ip: string | null
+      runs: ReadonlyArray<{ id: string; at: number; tool: string; details: Record<string, unknown> }>
+    }) {
+      if (input.runs.length === 0) return 0
+      const time = yield* now
+      return yield* db.transaction(() =>
+        Effect.gen(function* () {
+          yield* db.execute(sql`select pg_advisory_xact_lock(hashtext('kilo-organization:audit'))`)
+          const rows = yield* db
+            .insert(AuditTable)
+            .values(
+              input.runs.map((run) => ({
+                org: input.org,
+                // A client's clock can run ahead; nothing is logged in the future.
+                at: Math.min(run.at, time),
+                action: "client.tool_run",
+                actor: input.actor.id,
+                email: input.actor.email,
+                target: run.tool,
+                // Postgres refuses JSON holding half a surrogate pair, which a client can send.
+                details: JSON.parse(
+                  JSON.stringify(run.details, (_, value) => (typeof value === "string" ? value.toWellFormed() : value)),
+                ),
+                ip: input.ip,
+                ref: `tool:${run.id}`,
+              })),
+            )
+            .onConflictDoNothing({ target: [AuditTable.org, AuditTable.ref] })
+            .returning({ id: AuditTable.id })
+          return rows.length
+        }),
+      )
+    }, Effect.orDie),
     query: Effect.fn("Store.audit.query")(function* (input: {
       org: string
       actions?: ReadonlyArray<string>

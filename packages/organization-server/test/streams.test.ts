@@ -10,14 +10,14 @@ type Delivery = { headers: Record<string, string>; body: string; events: Array<{
 
 const collector = (() => {
   const deliveries: Delivery[] = []
-  const state = { status: 200, delay: 0 }
+  const state = { status: 200, delay: 0, reply: "" }
   const bun = Bun.serve({
     port: 0,
     async fetch(request) {
       const body = await request.text()
       if (state.delay) await Bun.sleep(state.delay)
       deliveries.push({ headers: Object.fromEntries(request.headers), body, events: JSON.parse(body).events })
-      return new Response(null, { status: state.status })
+      return new Response(state.reply || null, { status: state.status })
     },
   })
   return { url: `http://localhost:${bun.port}/ingest/token-in-path`, deliveries, state, stop: () => bun.stop(true) }
@@ -61,6 +61,7 @@ beforeEach(async () => {
   collector.deliveries.length = 0
   collector.state.status = 200
   collector.state.delay = 0
+  collector.state.reply = ""
   syslog.received.length = 0
 })
 
@@ -211,6 +212,143 @@ describe("syslog streams", () => {
   })
 })
 
+describe("OTLP streams", () => {
+  type Attribute = { key: string; value: { stringValue?: string; intValue?: string } }
+  type Record = { timeUnixNano: string; severityText: string; body: { stringValue: string }; attributes: Attribute[] }
+  const attributes = (list: Attribute[]) =>
+    Object.fromEntries(list.map((item) => [item.key, item.value.stringValue ?? item.value.intValue]))
+
+  test("send OpenTelemetry log records over OTLP/HTTP with the collector's headers, unsigned", async () => {
+    const created = await create({
+      name: "OTel collector",
+      target: { kind: "otlp", url: collector.url },
+      headers: { authorization: "Bearer otel-token" },
+    })
+    expect(created.status).toBe(201)
+    expect(created.data.secret).toBeNull()
+    await activity("ops")
+    await run()
+
+    expect(collector.deliveries).toHaveLength(1)
+    const [delivery] = collector.deliveries
+    expect(delivery.headers.authorization).toBe("Bearer otel-token")
+    expect(delivery.headers["content-type"]).toContain("application/json")
+    expect(delivery.headers["x-org-signature"]).toBeUndefined()
+    const [resource] = JSON.parse(delivery.body).resourceLogs
+    expect(attributes(resource.resource.attributes)).toEqual({
+      "service.name": "kilo-organization",
+      "kilo.org.id": env.owner.org.id,
+      "kilo.org.slug": "acme",
+      "kilo.org.name": "Acme",
+    })
+    expect(resource.scopeLogs[0].scope).toEqual({ name: "kilo.organization.audit" })
+    const records: Record[] = resource.scopeLogs[0].logRecords
+    expect(records.map((record) => attributes(record.attributes)["event.name"])).toEqual([
+      "audit.stream_create",
+      "group.create",
+    ])
+    const event = JSON.parse(records[1].body.stringValue)
+    expect(event).toMatchObject({ action: "group.create", email: "owner@acme.com" })
+    // Nanoseconds, as a decimal string.
+    expect(records[1].timeUnixNano).toBe(`${event.at}000000`)
+    expect(records[1].severityText).toBe("INFO")
+    expect(attributes(records[1].attributes)).toMatchObject({
+      "kilo.audit.id": String(event.id),
+      "user.id": env.owner.user.id,
+      "user.email": "owner@acme.com",
+    })
+
+    // Records a collector keeps the batch but refuses are not sent again.
+    collector.state.reply = JSON.stringify({ partialSuccess: { rejectedLogRecords: "1", errorMessage: "too old" } })
+    await activity("refused")
+    await run()
+    expect((await streams()).data.streams[0]).toMatchObject({ pending: 0, error: null })
+
+    collector.state.status = 503
+    await activity("later")
+    await run()
+    expect((await streams()).data.streams[0]).toMatchObject({ pending: 1, error: "otlp: HTTP 503" })
+  })
+})
+
+describe("tool-run audit", () => {
+  const policy = (tools: string) =>
+    env.call("PUT", "/api/v1/orgs/acme/policy", { token: env.owner.token, body: { audit: { tools } } })
+  const send = (token: string, runs: unknown[]) =>
+    env.call("POST", "/api/v1/orgs/acme/audit/tools", { token, body: { runs } })
+  const runs = (at = Date.now() - 2_000) => [
+    {
+      id: "prt_1",
+      at,
+      session: "ses_1",
+      project: "web",
+      tool: "bash",
+      outcome: "completed",
+      duration: 1_200,
+      subject: "git",
+      input: '{"command":"git push"}',
+    },
+    { id: "prt_2", at, tool: "read", outcome: "error", subject: "src/app.ts", error: "File not found" },
+  ]
+  const logged = async () =>
+    (await env.store.audit.query({ org: env.owner.org.id, actions: ["client.tool_run"], limit: 10 })).toReversed()
+
+  test("are kept only at the level the policy sets, attributed to the person, once each", async () => {
+    const dev = await env.join("dev@acme.com", "member")
+    // Off by default: nothing is kept, whatever a client sends.
+    expect((await send(dev.token, runs())).data).toEqual({ accepted: 0 })
+    expect(await logged()).toHaveLength(0)
+
+    expect((await policy("summary")).status).toBe(200)
+    expect((await send(dev.token, runs())).data).toEqual({ accepted: 2 })
+    // Resent after a lost response, nothing is logged twice.
+    expect((await send(dev.token, runs())).data).toEqual({ accepted: 0 })
+    const summary = await logged()
+    expect(summary.map((event) => [event.target, event.email, event.details])).toEqual([
+      [
+        "bash",
+        "dev@acme.com",
+        { tool: "bash", outcome: "completed", duration_ms: 1_200, session: "ses_1", project: "web", subject: "git" },
+      ],
+      [
+        "read",
+        "dev@acme.com",
+        { tool: "read", outcome: "error", duration_ms: 0, subject: "src/app.ts", error: "File not found" },
+      ],
+    ])
+
+    expect((await policy("inputs")).status).toBe(200)
+    const next = runs().map((item) => ({ ...item, id: `${item.id}_next` }))
+    expect((await send(dev.token, next)).data).toEqual({ accepted: 2 })
+    expect((await logged())[2].details).toMatchObject({ input: '{"command":"git push"}' })
+  })
+
+  test("never log in the future, and keep text Postgres would refuse", async () => {
+    const dev = await env.join("dev@acme.com", "member")
+    expect((await policy("inputs")).status).toBe(200)
+    const late = Date.now() + 60 * 60_000
+    const odd = { ...runs(late)[1], id: "prt_odd", subject: "half \ud800 a pair" }
+    expect((await send(dev.token, [runs(late)[0], odd])).data).toEqual({ accepted: 2 })
+    const events = await logged()
+    expect(events.every((event) => event.at <= Date.now())).toBe(true)
+    expect(events[1].details).toMatchObject({ subject: "half \ufffd a pair" })
+  })
+
+  test("are streamed like any other audit event", async () => {
+    const dev = await env.join("dev@acme.com", "member")
+    await policy("summary")
+    await create({ name: "OTel", target: { kind: "otlp", url: collector.url } })
+    await send(dev.token, runs())
+    await run()
+    const records = JSON.parse(collector.deliveries.at(-1)!.body).resourceLogs[0].scopeLogs[0].logRecords
+    const names = records.map(
+      (record: { attributes: Array<{ key: string; value: { stringValue?: string } }> }) =>
+        record.attributes.find((item) => item.key === "event.name")!.value.stringValue,
+    )
+    expect(names.filter((name: string) => name === "client.tool_run")).toHaveLength(2)
+  })
+})
+
 describe("stream administration", () => {
   test("owners and admins manage streams; members cannot see them", async () => {
     const admin = await env.join("admin@acme.com", "admin")
@@ -244,7 +382,7 @@ describe("stream administration", () => {
     expect(changed.status).toBe(400)
   })
 
-  test("webhooks need ORGANIZATION_SECRET for their signing secret; syslog does not", async () => {
+  test("webhooks and headers need ORGANIZATION_SECRET to seal them; syslog and bare OTLP do not", async () => {
     await env.runtime.dispose()
     env = await setup({ secret: undefined })
     expect((await create({ name: "w", target: { kind: "webhook", url: collector.url } })).status).toBe(400)
@@ -252,6 +390,11 @@ describe("stream administration", () => {
       (await create({ name: "s", target: { kind: "syslog", host: "127.0.0.1", port: syslog.port, tls: false } }))
         .status,
     ).toBe(201)
+    expect((await create({ name: "o", target: { kind: "otlp", url: collector.url } })).status).toBe(201)
+    expect(
+      (await create({ name: "h", target: { kind: "otlp", url: collector.url }, headers: { authorization: "x" } }))
+        .status,
+    ).toBe(400)
   })
 
   test("audit entries name the destination's host, never a token in its URL", async () => {
