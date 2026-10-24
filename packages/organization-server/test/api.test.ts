@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
-import { setup } from "./fixture"
+import { setup, type Env } from "./fixture"
 
 describe("authentication and scoping", () => {
   test("bootstrap token identifies the owner", async () => {
@@ -454,6 +454,145 @@ describe("usage and budgets", () => {
     const response = await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: env.owner.token, body })
     expect(response.status).toBe(400)
     expect(response.data.message).toContain("must differ")
+  })
+})
+
+describe("spend management", () => {
+  const spend = (id: string, cost: number) => ({ id, at: Date.now(), provider: "anthropic", model: "claude", cost })
+  const report = (env: Env, token: string, ...records: ReturnType<typeof spend>[]) =>
+    env.call("POST", `/api/v1/orgs/${env.owner.org.id}/usage`, { token, body: { records } })
+
+  test("a group budget caps its members' combined spend and binds only them", async () => {
+    const env = await setup()
+    const ada = await env.join("ada@acme.com", "member")
+    const bo = await env.join("bo@acme.com", "member")
+    const cy = await env.join("cy@acme.com", "member")
+    const group = await env.call("POST", "/api/v1/orgs/acme/groups", {
+      token: env.owner.token,
+      body: { name: "Research" },
+    })
+    await env.call("PUT", `/api/v1/orgs/acme/groups/${group.data.id}/members`, {
+      token: env.owner.token,
+      body: { users: [ada.user.id, bo.user.id] },
+    })
+    const budgets = [{ scope: "group", target: group.data.id, period: "month", amount: 3 }]
+    expect(
+      (await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: env.owner.token, body: { budgets } })).status,
+    ).toBe(200)
+    await report(env, ada.token, spend("a1", 2))
+    await report(env, bo.token, spend("b1", 1.5))
+    await report(env, cy.token, spend("c1", 10))
+
+    const bound = await env.call("GET", "/api/v1/orgs/acme/policy/effective", { token: ada.token })
+    expect(bound.data.budget).toEqual({
+      exceeded: true,
+      limits: [{ scope: "org", period: "month", amount: 3, spent: 3.5, name: "Research group" }],
+    })
+    const free = await env.call("GET", "/api/v1/orgs/acme/policy/effective", { token: cy.token })
+    expect(free.data.budget).toEqual({ exceeded: false, limits: [] })
+
+    const listed = await env.call("GET", "/api/v1/orgs/acme/budgets", { token: env.owner.token })
+    expect(listed.data.spend).toEqual([{ ...budgets[0], spent: 3.5, from: null }])
+
+    const unknown = { budgets: [{ scope: "group", target: "grp_nope", period: "month", amount: 1 }] }
+    const refused = await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: env.owner.token, body: unknown })
+    expect(refused.status).toBe(400)
+    expect(refused.data.message).toContain("not a group")
+  })
+
+  test("a parent's budget covers its sub-organizations, and an allowance caps one of them", async () => {
+    const env = await setup()
+    const child = await env.call("POST", "/api/v1/orgs/acme/suborgs", {
+      token: env.owner.token,
+      body: { name: "Acme EU", slug: "acme-eu" },
+    })
+    const eu = await env.join("eu@acme.com", "member", child.data.org.id)
+    const home = await env.join("home@acme.com", "member")
+    const budgets = [
+      { scope: "org", period: "month", amount: 10 },
+      { scope: "suborg", target: child.data.org.id, period: "month", amount: 1 },
+    ]
+    expect(
+      (await env.call("PUT", "/api/v1/orgs/acme/budgets", { token: env.owner.token, body: { budgets } })).status,
+    ).toBe(200)
+    await env.call("POST", "/api/v1/orgs/acme-eu/usage", { token: eu.token, body: { records: [spend("e1", 1.5)] } })
+    await report(env, home.token, spend("h1", 6))
+
+    // The allowance is the sub-organization's own budget; the parent's is named.
+    const euPolicy = await env.call("GET", "/api/v1/orgs/acme-eu/policy/effective", { token: eu.token })
+    expect(euPolicy.data.budget).toEqual({
+      exceeded: true,
+      limits: [
+        { scope: "org", period: "month", amount: 10, spent: 7.5, name: "Acme" },
+        { scope: "org", period: "month", amount: 1, spent: 1.5 },
+      ],
+    })
+    // The parent's members aren't bound by the allowance, but its budget counts the sub-organization.
+    const homePolicy = await env.call("GET", "/api/v1/orgs/acme/policy/effective", { token: home.token })
+    expect(homePolicy.data.budget).toEqual({
+      exceeded: false,
+      limits: [{ scope: "org", period: "month", amount: 10, spent: 7.5 }],
+    })
+
+    // The sub-organization sees what binds it from above, and can't set allowances of its own.
+    const listed = await env.call("GET", "/api/v1/orgs/acme-eu/budgets", { token: env.owner.token })
+    expect(listed.data).toEqual({
+      budgets: [],
+      spend: [
+        { scope: "org", target: "", period: "month", amount: 10, spent: 7.5, from: "Acme" },
+        { scope: "suborg", target: child.data.org.id, period: "month", amount: 1, spent: 1.5, from: "Acme" },
+      ],
+    })
+    const own = { budgets: [{ scope: "suborg", target: env.owner.org.id, period: "month", amount: 100 }] }
+    const refused = await env.call("PUT", "/api/v1/orgs/acme-eu/budgets", { token: env.owner.token, body: own })
+    expect(refused.status).toBe(400)
+    expect(refused.data.message).toContain("not a sub-organization")
+  })
+
+  test("seats limit who can join an organization and its sub-organizations", async () => {
+    const env = await setup()
+    const child = await env.call("POST", "/api/v1/orgs/acme/suborgs", {
+      token: env.owner.token,
+      body: { name: "Acme EU", slug: "acme-eu" },
+    })
+    expect((await env.call("PATCH", "/api/v1/orgs/acme", { token: env.owner.token, body: { seats: 2 } })).status).toBe(
+      200,
+    )
+    const nested = await env.call("PATCH", "/api/v1/orgs/acme-eu", { token: env.owner.token, body: { seats: 5 } })
+    expect(nested.status).toBe(400)
+
+    const add = (org: string, email: string) =>
+      env.call("POST", `/api/v1/orgs/${org}/members`, { token: env.owner.token, body: { email } })
+    expect((await add("acme", "ada@acme.com")).status).toBe(201)
+    const full = await add("acme-eu", "bo@acme.com")
+    expect(full.status).toBe(409)
+    expect(full.data.message).toBe(
+      "Acme has no seats left: all 2 are taken. An owner can add seats, or free one by removing or suspending someone.",
+    )
+    // Someone with a seat in the organization takes no other in its sub-organization.
+    expect((await add("acme-eu", "ada@acme.com")).status).toBe(201)
+    expect((await env.call("GET", "/api/v1/orgs/acme", { token: env.owner.token })).data.seats).toEqual({
+      limit: 2,
+      used: 2,
+    })
+
+    const invite = await env.call("POST", "/api/v1/orgs/acme/invites", {
+      token: env.owner.token,
+      body: { email: "cy@acme.com" },
+    })
+    const accepted = await env.call("POST", `/api/v1/invites/${invite.data.token}/accept`, { body: {} })
+    expect(accepted.status).toBe(403)
+    expect(accepted.data.message).toContain("no seats left")
+
+    // Suspending someone frees their seat; lifting the limit frees them all.
+    const ada = await env.store.user.find("ada@acme.com")
+    await env.store.member.suspend(env.owner.org.id, ada!.id, true)
+    await env.store.member.suspend(child.data.org.id, ada!.id, true)
+    expect((await add("acme", "bo@acme.com")).status).toBe(201)
+    expect(
+      (await env.call("PATCH", "/api/v1/orgs/acme", { token: env.owner.token, body: { seats: null } })).status,
+    ).toBe(200)
+    expect((await env.call("POST", `/api/v1/invites/${invite.data.token}/accept`, { body: {} })).status).toBe(200)
   })
 })
 

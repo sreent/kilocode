@@ -91,7 +91,8 @@ const StatusCommand = effectCmd({
           ]
         : []),
       ...(policy?.budget.limits ?? []).map(
-        (item) => `Budget:        ${item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
+        (item) =>
+          `Budget:        ${item.name ?? item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
       ),
       ...(info.error ? [`Last error:    ${info.error}`] : []),
       ...(blocked ? [`Blocked:       ${blocked}`] : []),

@@ -224,6 +224,10 @@ describe("matching", () => {
     )
     expect(overBudget(limits(0.005, 0.00846))).toContain("budget of $0.0050 has been reached ($0.0085 spent)")
     expect(overBudget(limits(0, 0))).toContain("budget of $0.00 has been reached ($0.00 spent)")
+    const shared = { scope: "org" as const, period: "month" as const, amount: 3, spent: 3.5, name: "Research group" }
+    expect(overBudget({ budget: { limits: [shared] } })).toBe(
+      "Your monthly Research group AI budget of $3.00 has been reached ($3.50 spent). Contact your administrator.",
+    )
     expect([0.25, 0.0995, 0.00004].map(dollars)).toEqual(["$0.25", "$0.10", "<$0.0001"])
   })
 

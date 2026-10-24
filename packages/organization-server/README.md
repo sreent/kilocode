@@ -8,7 +8,7 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 
 | Area | Details |
 |---|---|
-| Organizations | Owner, admin, member and billing manager roles; one level of sub-organizations whose parent owners, admins and billing managers get access without a seat |
+| Organizations | Owner, admin, member and billing manager roles; one level of sub-organizations whose parent owners, admins and billing managers get access without a seat; a seat limit across an organization and its sub-organizations |
 | Sign-in | Single sign-on with OpenID Connect (discovery, PKCE, nonce, JWKS-verified ID tokens) or SAML 2.0 (signed responses, metadata import, optional IdP-initiated sign-in); RFC 8628 device flow for the CLI and IDEs; invite links; admin-issued tokens for orgs without SSO |
 | Provisioning | Verified-domain just-in-time provisioning; SCIM 2.0 `Users` and `Groups`, handling the request quirks Okta and Entra ID are known for (string booleans, PATCH with and without paths). Not yet validated against live IdP tenants |
 | Model access | Org-wide denylist ceiling, default policy and group grants (`all`, `selected`, `none`); effective access = ceiling ∩ (default ∪ group grants) |
@@ -22,7 +22,7 @@ These are standard features of this fork's Kilo Code, not a separate paid tier. 
 | Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
 | Data policy | Refuses providers that may train on the org's data, keep it, or process it outside chosen regions, judged by the terms admins record for each provider. OpenRouter-compatible providers get the filters as routing preferences on every request |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
-| Budgets | Org-wide, per-member default and per-user daily or monthly limits; clients refuse new requests once one is reached, and so does the gateway |
+| Budgets | Daily or monthly limits for the whole organization (its sub-organizations included), each person, one person, a group's combined spend, and a sub-organization's allowance; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
 | Deployment | One binary or container with Postgres embedded, or any number of replicas behind a load balancer on a shared PostgreSQL server ([storage and high availability](#storage-and-high-availability)) |
 
@@ -284,7 +284,19 @@ Edit the policy as JSON in the admin console (Governance → Policy; it is check
 - **`data`** is the [data policy](#data-policy): filters on training, retention and regions, and each provider's recorded terms.
 - **`gateway.exclusive`** makes clients refuse every provider the [LLM gateway](#llm-gateway) does not route. **`gateway.limits`** caps each member's gateway requests and tokens per minute, and **`gateway.log`** sets whether the call log keeps bodies and for how many days.
 
-Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`): `org` caps total spend, `member` is the default per-person cap, and `user` overrides it for one person. Periods are UTC `day` or `month`.
+Budgets are managed separately (Governance → Budgets or `PUT /api/v1/orgs/{org}/budgets`), in US dollars over UTC `day`s or `month`s:
+
+| `scope` | `target` | Caps |
+|---|---|---|
+| `org` | | Everyone's spend, sub-organizations' included |
+| `member` | | Each person's spend: the default per-person cap |
+| `user` | user id | One person's spend, in place of `member` |
+| `group` | group id | What a group's members spend together |
+| `suborg` | sub-organization id | A sub-organization's spend: the allowance its parent gives it, which its own admins can't change |
+
+A sub-organization is bound by its own budgets, by its parent's `org` budget and by the allowance its parent gives it. `GET /api/v1/orgs/{org}/budgets` returns each budget with what this period has spent against it, and, for a sub-organization, the parent's budgets that bind it.
+
+**Seats.** `PATCH /api/v1/orgs/{org}` with `{ "seats": 50 }` (owners, top-level organizations only; `null` for no limit) caps how many people hold a seat: an active membership in the organization or any of its sub-organizations, counted once per person. Suspended members hold none. Once the seats are taken, adding a member, accepting an invite, signing in through single sign-on for the first time, and SCIM creating or reactivating a user are all refused, SCIM with a `403`. `GET /api/v1/orgs/{org}` reports `seats: { limit, used }`.
 
 ## Audit streaming
 

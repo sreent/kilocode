@@ -10,6 +10,7 @@ import {
   AuditStreamInput,
   AuditStreamPatch,
   Budget,
+  BudgetSpend,
   Domain,
   Effective,
   Gateway,
@@ -35,6 +36,7 @@ import {
   ProviderID,
   Role,
   ScimToken,
+  Seats,
   Slug,
   Sso,
   SsoInput,
@@ -65,7 +67,7 @@ export const OrgGroup = HttpApiGroup.make("organization.org")
   .add(
     HttpApiEndpoint.get("org.get", "/api/v1/orgs/:org", {
       params: org,
-      success: Schema.Struct({ org: Org, role: Role, inherited: Schema.Boolean }),
+      success: Schema.Struct({ org: Org, role: Role, inherited: Schema.Boolean, seats: Seats }),
     }),
   )
   .add(
@@ -74,6 +76,8 @@ export const OrgGroup = HttpApiGroup.make("organization.org")
       payload: Schema.Struct({
         name: Schema.optional(Name),
         settings: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+        // Top-level organizations only; null removes the limit.
+        seats: Schema.optional(Schema.NullOr(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 1_000_000 })))),
       }),
       success: Schema.Struct({ org: Org }),
       error: failures,
@@ -279,7 +283,9 @@ export const GovernanceGroup = HttpApiGroup.make("organization.governance")
   .add(
     HttpApiEndpoint.get("budgets.get", "/api/v1/orgs/:org/budgets", {
       params: org,
-      success: Schema.Struct({ budgets: Schema.Array(Budget) }),
+      // `spend` adds this period's spend to each budget, and lists the parent organization's budgets
+      // that bind this one too.
+      success: Schema.Struct({ budgets: Schema.Array(Budget), spend: Schema.Array(BudgetSpend) }),
       error: failures,
     }).annotate(Requires, "usage.read"),
   )

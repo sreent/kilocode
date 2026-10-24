@@ -10,6 +10,8 @@ import {
   Mode,
   ModelAccess,
   Policy,
+  type Budget,
+  type BudgetSpend,
   type BudgetStatus,
   type GatewayAuth,
   type GatewayKind,
@@ -78,8 +80,6 @@ export type Stream = typeof StreamTable.$inferSelect
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
 export type Actor = { readonly id: string | null; readonly email: string }
 
-type Budget = { scope: BudgetStatus["scope"]; target: string; period: BudgetStatus["period"]; amount: number }
-
 const day = 24 * 60 * 60 * 1000
 const now = Clock.currentTimeMillis
 // Emails and domain names are stored lowercase and always looked up lowercase.
@@ -120,11 +120,12 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     update: Effect.fn("Store.org.update")(function* (
       id: string,
-      input: { name?: string; settings?: Record<string, unknown> },
+      input: { name?: string; settings?: Record<string, unknown>; seats?: number | null },
     ) {
       const patch = {
         ...(input.name != null && { name: input.name }),
         ...(input.settings != null && { settings: input.settings }),
+        ...(input.seats !== undefined && { seats: input.seats }),
       }
       if (Object.keys(patch).length > 0) yield* db.update(OrgTable).set(patch).where(eq(OrgTable.id, id))
       return (yield* findOrg(id))!
@@ -939,16 +940,31 @@ const make = Effect.gen(function* () {
         from usage s join users u on u.id = s.user
         where ${window(input)} order by s.at`)
     }, Effect.orDie),
-    // Rounded to micro-dollars so float summation noise never reaches budgets or the UI.
-    spent: Effect.fn("Store.usage.spent")(function* (input: { org: string; from: number; user?: string }) {
+    // Spend since `from` in these orgs: everyone's, one person's, or a group's members'. Rounded to
+    // micro-dollars so float summation noise never reaches budgets or the UI.
+    spent: Effect.fn("Store.usage.spent")(function* (input: {
+      orgs: ReadonlyArray<string>
+      from: number
+      user?: string
+      group?: string
+    }) {
       const row = (yield* db
         .select({ n: sql<number | null>`sum(${UsageTable.cost})` })
         .from(UsageTable)
         .where(
           and(
-            eq(UsageTable.org, input.org),
+            inArray(UsageTable.org, [...input.orgs]),
             gte(UsageTable.at, input.from),
             input.user ? eq(UsageTable.user, input.user) : undefined,
+            input.group
+              ? inArray(
+                  UsageTable.user,
+                  db
+                    .select({ user: GroupMemberTable.user })
+                    .from(GroupMemberTable)
+                    .where(eq(GroupMemberTable.grp, input.group)),
+                )
+              : undefined,
           ),
         )
         .limit(1))[0]
@@ -1262,6 +1278,70 @@ const make = Effect.gen(function* () {
       .orderBy(asc(BudgetTable.scope), asc(BudgetTable.target), asc(BudgetTable.period))
   }, Effect.orDie)
 
+  // An org with its sub-orgs: what an "org" budget covers.
+  const tree = Effect.fn("Store.org.tree")(function* (orgID: string) {
+    const children = yield* db.select({ id: OrgTable.id }).from(OrgTable).where(eq(OrgTable.parent, orgID))
+    return [orgID, ...children.map((child) => child.id)]
+  }, Effect.orDie)
+
+  const periods = Effect.gen(function* () {
+    const date = new Date(yield* now)
+    return {
+      day: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+      month: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
+    }
+  })
+
+  // What a budget row has spent this period: the whole of what it covers, or null for "member",
+  // where each person has their own.
+  const spending = Effect.fn("Store.budget.spending")(function* (
+    orgID: string,
+    row: Budget,
+    start: { day: number; month: number },
+  ) {
+    const from = start[row.period]
+    if (row.scope === "member") return null
+    if (row.scope === "org") return yield* usage.spent({ orgs: yield* tree(orgID), from })
+    if (row.scope === "user") return yield* usage.spent({ orgs: [orgID], from, user: row.target })
+    if (row.scope === "group") return yield* usage.spent({ orgs: [orgID], from, group: row.target })
+    return yield* usage.spent({ orgs: [row.target], from })
+  })
+
+  // The seat limit that governs an org (its own, or its parent's) and how many seats are taken:
+  // people with an active membership anywhere in the top-level org's tree.
+  const occupied = Effect.fn("Store.seats.usage")(function* (orgID: string) {
+    const found = yield* findOrg(orgID)
+    const root = found?.parent ? yield* findOrg(found.parent) : found
+    if (!root) return { root: orgID, limit: null, used: 0 }
+    const row = (yield* db
+      .select({ n: sql<number>`count(distinct ${MemberTable.user})::int` })
+      .from(MemberTable)
+      .where(and(inArray(MemberTable.org, yield* tree(root.id)), isNull(MemberTable.suspended)))
+      .limit(1))[0]
+    return { root: root.id, limit: root.seats, used: row?.n ?? 0 }
+  }, Effect.orDie)
+
+  const seats = {
+    usage: occupied,
+    // Why adding this person would need a seat there isn't, if it would. Someone already seated
+    // elsewhere in the tree doesn't take another.
+    full: Effect.fn("Store.seats.full")(function* (orgID: string, userID: string) {
+      const taken = yield* occupied(orgID)
+      if (taken.limit === null || taken.used < taken.limit) return undefined
+      const seated = yield* db.$count(
+        MemberTable,
+        and(
+          eq(MemberTable.user, userID),
+          inArray(MemberTable.org, yield* tree(taken.root)),
+          isNull(MemberTable.suspended),
+        ),
+      )
+      if (seated > 0) return undefined
+      const root = yield* findOrg(taken.root)
+      return `${root?.name ?? "This organization"} has no seats left: all ${taken.limit} are taken. An owner can add seats, or free one by removing or suspending someone.`
+    }, Effect.orDie),
+  }
+
   const budget = {
     list: listBudgets,
     replace: Effect.fn("Store.budget.replace")(function* (orgID: string, rows: ReadonlyArray<Budget>) {
@@ -1272,28 +1352,83 @@ const make = Effect.gen(function* () {
         }),
       )
     }, Effect.orDie),
-    // Budgets that bind this user, with spend for the current UTC day/month.
+    // Budgets that bind this user, with spend for the current UTC day/month: the org's own, and
+    // a parent org's budget and the allowance it gives this org.
     status: Effect.fn("Store.budget.status")(function* (orgID: string, userID: string) {
-      const date = new Date(yield* now)
-      const start = {
-        day: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-        month: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
-      }
+      const start = yield* periods
+      const found = yield* findOrg(orgID)
+      const parent = found?.parent ? yield* findOrg(found.parent) : undefined
       const rows = yield* listBudgets(orgID)
+      const groups = new Map((yield* group.of(orgID, userID)).map((row) => [row.id, row.name]))
       const own = new Set(rows.filter((row) => row.scope === "user" && row.target === userID).map((row) => row.period))
       const binding = rows.filter((row) => {
         if (row.scope === "org") return true
         if (row.scope === "user") return row.target === userID
+        if (row.scope === "group") return groups.has(row.target)
+        // Allowances for sub-orgs bind their members, not this org's.
+        if (row.scope === "suborg") return false
         // A per-user override replaces the member default for the same period.
         return !own.has(row.period)
       })
-      return yield* Effect.forEach(
+      const inherited = parent
+        ? (yield* listBudgets(parent.id)).filter(
+            (row) => row.scope === "org" || (row.scope === "suborg" && row.target === orgID),
+          )
+        : []
+      const mine = yield* Effect.forEach(
         binding,
         (row): Effect.Effect<BudgetStatus> =>
-          usage
-            .spent({ org: orgID, from: start[row.period], user: row.scope === "org" ? undefined : userID })
-            .pipe(Effect.map((spent) => ({ scope: row.scope, period: row.period, amount: row.amount, spent }))),
+          Effect.gen(function* () {
+            const scope = row.scope === "member" || row.scope === "user" ? row.scope : "org"
+            const spent =
+              scope === "org"
+                ? ((yield* spending(orgID, row, start)) ?? 0)
+                : yield* usage.spent({ orgs: [orgID], from: start[row.period], user: userID })
+            return {
+              scope,
+              period: row.period,
+              amount: row.amount,
+              spent,
+              ...(row.scope === "group" ? { name: `${groups.get(row.target)} group` } : {}),
+            }
+          }),
       )
+      const theirs = yield* Effect.forEach(
+        inherited,
+        (row): Effect.Effect<BudgetStatus> =>
+          spending(parent!.id, row, start).pipe(
+            Effect.map((spent) => ({
+              scope: "org" as const,
+              period: row.period,
+              amount: row.amount,
+              spent: spent ?? 0,
+              // The parent's own budget covers everyone under it; its allowance is this org's budget.
+              ...(row.scope === "org" ? { name: parent!.name } : {}),
+            })),
+          ),
+      )
+      return [...mine, ...theirs]
+    }),
+    // The org's budgets with this period's spend, and the parent org's budgets that bind it too.
+    spend: Effect.fn("Store.budget.spend")(function* (orgID: string) {
+      const start = yield* periods
+      const found = yield* findOrg(orgID)
+      const parent = found?.parent ? yield* findOrg(found.parent) : undefined
+      const mine = yield* Effect.forEach(
+        yield* listBudgets(orgID),
+        (row): Effect.Effect<BudgetSpend> =>
+          spending(orgID, row, start).pipe(Effect.map((spent) => ({ ...row, spent, from: null }))),
+      )
+      const theirs = parent
+        ? yield* Effect.forEach(
+            (yield* listBudgets(parent.id)).filter(
+              (row) => row.scope === "org" || (row.scope === "suborg" && row.target === orgID),
+            ),
+            (row): Effect.Effect<BudgetSpend> =>
+              spending(parent.id, row, start).pipe(Effect.map((spent) => ({ ...row, spent, from: parent.name }))),
+          )
+        : []
+      return [...mine, ...theirs]
     }),
   }
 
@@ -1319,6 +1454,7 @@ const make = Effect.gen(function* () {
     call,
     stream,
     budget,
+    seats,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.
     transaction: <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>

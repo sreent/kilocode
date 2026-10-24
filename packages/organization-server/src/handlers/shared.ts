@@ -21,6 +21,7 @@ export function view(org: Org) {
     slug: org.slug,
     parent: org.parent,
     settings: org.settings,
+    seats: org.seats,
     created: org.created,
   }
 }

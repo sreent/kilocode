@@ -806,6 +806,12 @@ body {
   font-weight: 400;
 }
 
+.kilo-console .seats {
+  margin: 0;
+  flex: 1 1 12rem;
+  align-self: center;
+}
+
 .kilo-console .edit-row > .row-note {
   grid-column: 1 / -1;
   color: var(--text-weaker);

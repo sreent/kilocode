@@ -23,6 +23,9 @@ export const Org = Schema.Struct({
   slug: Schema.String,
   parent: Schema.NullOr(Schema.String),
   settings: Schema.Record(Schema.String, Schema.Unknown),
+  // How many people may hold a seat across this organization and its sub-organizations; set on
+  // top-level organizations only. Null means unlimited.
+  seats: Schema.NullOr(Count).pipe(Schema.withDecodingDefault(Effect.succeed(null))),
   created: Time,
 })
 export type Org = typeof Org.Type
@@ -256,18 +259,46 @@ export const GroupName = Schema.Struct({ id: Schema.String, name: Schema.String 
 
 // ---- budgets, usage, audit ----------------------------------------------------------------
 
-export const BudgetScope = Schema.Literals(["org", "member", "user"])
+// "org" caps everyone's spend, sub-organizations' included; "member" is each person's default cap
+// and "user" one person's own; "group" caps a group's combined spend; "suborg" is the allowance a
+// parent organization gives one of its sub-organizations, which that sub-organization can't change.
+export const BudgetScope = Schema.Literals(["org", "member", "user", "group", "suborg"])
+export type BudgetScope = typeof BudgetScope.Type
 export const Period = Schema.Literals(["day", "month"])
 
 export const Budget = Schema.Struct({
   scope: BudgetScope,
+  // The person for "user", the group for "group", the sub-organization for "suborg"; empty otherwise.
   target: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
   period: Period,
   amount: Count.check(Schema.isLessThanOrEqualTo(10_000_000)),
 })
+export type Budget = typeof Budget.Type
 
-export const BudgetStatus = Schema.Struct({ scope: BudgetScope, period: Period, amount: Count, spent: Count })
+// A budget and what its period has spent against it: everyone's spend it covers, or null for
+// "member", where each person has their own. Budgets a parent organization sets come with its name.
+export const BudgetSpend = Schema.Struct({
+  ...Budget.fields,
+  spent: Schema.NullOr(Count),
+  from: Schema.NullOr(Schema.String),
+})
+export type BudgetSpend = typeof BudgetSpend.Type
+
+// A budget that binds one person, as clients show it. Shared budgets ("org": the organization's,
+// a parent organization's, a sub-organization allowance or a group's) carry the name of what they
+// cover when it isn't the person's own organization; "member" and "user" are the person's own.
+export const BudgetStatus = Schema.Struct({
+  scope: Schema.Literals(["org", "member", "user"]),
+  period: Period,
+  amount: Count,
+  spent: Count,
+  name: Schema.optional(Schema.String),
+})
 export type BudgetStatus = typeof BudgetStatus.Type
+
+// Seats are people with an active membership in an organization or its sub-organizations, and
+// the limit is the top-level organization's. Null means unlimited.
+export const Seats = Schema.Struct({ limit: Schema.NullOr(Count), used: Count })
 
 export const UsageRecord = Schema.Struct({
   id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),

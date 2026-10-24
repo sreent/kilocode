@@ -103,6 +103,8 @@ export const SigninHandler = HttpApiBuilder.group(Api, "organization.signin", (h
             })
           const user = yield* store.user.ensure({ email: row.email, name: ctx.payload.name })
           if (!user.active) return yield* new ForbiddenError({ message: "this account is deactivated" })
+          const full = yield* store.seats.full(row.org, user.id)
+          if (full) return yield* new ForbiddenError({ message: full })
           const issued = yield* store.transaction(
             Effect.gen(function* () {
               if (!(yield* store.invite.accept(row.id)))

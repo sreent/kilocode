@@ -107,6 +107,6 @@ export function overBudget(policy: { readonly budget: Pick<Effective["budget"], 
   const limit = policy.budget.limits.find((item) => item.spent >= item.amount)
   if (!limit) return undefined
   const period = limit.period === "day" ? "daily" : "monthly"
-  const scope = limit.scope === "org" ? "organization" : "personal"
+  const scope = limit.scope === "org" ? (limit.name ?? "organization") : "personal"
   return `Your ${period} ${scope} AI budget of ${dollars(limit.amount)} has been reached (${dollars(limit.spent)} spent). Contact your administrator.`
 }

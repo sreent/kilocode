@@ -58,9 +58,15 @@ export const ssoRoutes = HttpRouter.use((router) =>
       if (membership?.suspended)
         return failure("Access suspended", "Your access to this organization is suspended.", 403)
 
+      const pending = access ? undefined : (yield* store.invite.pending(org.id, email)).at(0)
+      // Just-in-time provisioning for people whose email domain this org has verified.
+      const provision = !access && sso.provision && (yield* store.domain.owner(email)) === org.id
+      // Joining takes a seat: someone the org would let in is told when none is left.
+      const full = pending || provision ? yield* store.seats.full(org.id, known?.id ?? "") : undefined
+      if (full) return failure("No seats left", full, 403)
+
       const user = yield* Effect.gen(function* () {
         if (access) return known
-        const pending = (yield* store.invite.pending(org.id, email)).at(0)
         if (pending && (yield* store.invite.accept(pending.id))) {
           const created = yield* store.user.ensure({ email, name, external: input.external })
           yield* store.member.add(org.id, created.id, pending.role)
@@ -72,8 +78,7 @@ export const ssoRoutes = HttpRouter.use((router) =>
           })
           return created
         }
-        // Just-in-time provisioning for people whose email domain this org has verified.
-        if (sso.provision && (yield* store.domain.owner(email)) === org.id) {
+        if (provision) {
           const created = yield* store.user.ensure({ email, name, external: input.external })
           yield* store.member.add(org.id, created.id, "member")
           yield* record({

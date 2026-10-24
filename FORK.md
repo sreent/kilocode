@@ -158,4 +158,3 @@ The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plu
 2. **Operations.** A Helm chart, rate limiting, and built-in backups of the embedded database. The container image exists ([`packages/organization-server/Dockerfile`](packages/organization-server/Dockerfile)), and replicas can share a PostgreSQL server ([storage and high availability](packages/organization-server/README.md#storage-and-high-availability)).
 3. **SIEM streaming, next steps.** Audit events already stream to webhooks and syslog. Next: OTLP log export, and opt-in audit of client-side events such as tool runs.
 4. **Analytics.** Adoption dashboards, team and sub-organization comparisons, scheduled reports, an analytics API.
-5. **Spend management.** Group budgets, distributing funds across sub-organizations, seat management.

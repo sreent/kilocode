@@ -14,6 +14,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core"
 import type {
+  BudgetScope,
   GatewayAuth,
   GatewayKind,
   GatewayModel,
@@ -33,6 +34,8 @@ export const OrgTable = pgTable("orgs", {
   slug: text().notNull().unique(),
   parent: text().references((): AnyPgColumn => OrgTable.id, { onDelete: "cascade" }),
   settings: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  // People who may hold a seat across the org and its sub-orgs; top-level orgs only, null is unlimited.
+  seats: integer(),
   created: bigint({ mode: "number" }).notNull(),
 })
 
@@ -298,14 +301,14 @@ export const BudgetTable = pgTable(
     org: text()
       .notNull()
       .references(() => OrgTable.id, { onDelete: "cascade" }),
-    scope: text().$type<"org" | "member" | "user">().notNull(),
+    scope: text().$type<BudgetScope>().notNull(),
     target: text().notNull().default(""),
     period: text().$type<"day" | "month">().notNull(),
     amount: doublePrecision().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.org, table.scope, table.target, table.period] }),
-    check("budgets_scope", sql`${table.scope} in ('org', 'member', 'user')`),
+    check("budgets_scope", sql`${table.scope} in ('org', 'member', 'user', 'group', 'suborg')`),
     check("budgets_period", sql`${table.period} in ('day', 'month')`),
   ],
 )

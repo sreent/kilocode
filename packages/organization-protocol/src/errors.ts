@@ -56,6 +56,10 @@ export class ScimBadRequest extends Schema.ErrorClass<ScimBadRequest>("ScimBadRe
 export class ScimUnauthorized extends Schema.ErrorClass<ScimUnauthorized>("ScimUnauthorized")(scim, {
   httpApiStatus: 401,
 }) {}
+// A limit of the organization's, such as its seats, refuses the change.
+export class ScimForbidden extends Schema.ErrorClass<ScimForbidden>("ScimForbidden")(scim, {
+  httpApiStatus: 403,
+}) {}
 export class ScimNotFound extends Schema.ErrorClass<ScimNotFound>("ScimNotFound")(scim, {
   httpApiStatus: 404,
 }) {}
@@ -69,7 +73,12 @@ const scimJson = <S extends Schema.Top>(schema: S) => schema.pipe(HttpApiSchema.
 
 // ScimAuthorization declares the 401; endpoints declare the rest.
 export const ScimUnauthorizedJson = scimJson(ScimUnauthorized)
-export const ScimErrors = [scimJson(ScimBadRequest), scimJson(ScimNotFound), scimJson(ScimConflict)] as const
+export const ScimErrors = [
+  scimJson(ScimBadRequest),
+  scimJson(ScimForbidden),
+  scimJson(ScimNotFound),
+  scimJson(ScimConflict),
+] as const
 
 export const scimError = "urn:ietf:params:scim:api:messages:2.0:Error"
 

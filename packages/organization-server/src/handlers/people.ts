@@ -79,6 +79,8 @@ export const PeopleHandler = HttpApiBuilder.group(Api, "organization.people", (h
           const user = yield* store.user.ensure({ email: ctx.payload.email, name: ctx.payload.name })
           if (yield* store.member.get(scope.org.id, user.id))
             return yield* new ConflictError({ message: "already a member" })
+          const full = yield* store.seats.full(scope.org.id, user.id)
+          if (full) return yield* new ConflictError({ message: full })
           yield* store.member.add(scope.org.id, user.id, role)
           yield* audit("member.add", user.id, { email: user.email, role })
           return { id: user.id, email: user.email, role }
