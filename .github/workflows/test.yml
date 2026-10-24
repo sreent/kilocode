@@ -24,7 +24,7 @@ jobs:
   # kilocode_change start
   changes:
     name: detect general unit test changes
-    runs-on: ubuntu-24.04 # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     permissions:
       contents: read
       pull-requests: read
@@ -61,7 +61,7 @@ jobs:
         run: |
           if [ "$GENERAL" != "true" ]; then
             echo 'general=false' >> "$GITHUB_OUTPUT"
-            # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+            # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
             echo 'settings=[{"os":"linux","index":1,"total":1,"host":"ubuntu-24.04","run":false,"packages":false,"pty":false}]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -69,7 +69,7 @@ jobs:
           # kilocode_change - Windows runs 6 shards at KILO_TEST_CONCURRENCY=2. Measured: a
           # 5-shard matrix was worse on both wall-clock (slowest job 9.3m vs 6.7m) and machine
           # minutes (43 vs 37) — with 2 workers per shard, packing more work per shard loses.
-          # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+          # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
           echo 'settings=[{"os":"linux","index":1,"total":2,"host":"ubuntu-24.04","run":true,"packages":true,"pty":true},{"os":"linux","index":2,"total":2,"host":"ubuntu-24.04","run":true,"packages":false,"pty":false},{"os":"macos","index":1,"total":1,"host":"macos-15","run":true,"packages":true,"pty":true},{"os":"windows","index":1,"total":6,"host":"windows-2025","run":true,"packages":true,"pty":true},{"os":"windows","index":2,"total":6,"host":"windows-2025","run":true,"packages":false,"pty":false},{"os":"windows","index":3,"total":6,"host":"windows-2025","run":true,"packages":false,"pty":false},{"os":"windows","index":4,"total":6,"host":"windows-2025","run":true,"packages":false,"pty":false},{"os":"windows","index":5,"total":6,"host":"windows-2025","run":true,"packages":false,"pty":false},{"os":"windows","index":6,"total":6,"host":"windows-2025","run":true,"packages":false,"pty":false}]' >> "$GITHUB_OUTPUT"
   # kilocode_change end
   unit:
@@ -120,7 +120,7 @@ jobs:
           }
           Write-Host "Defender path exclusions applied: $applied"
       # kilocode_change end
-      # kilocode_change start - enterprise: GitHub-hosted Windows runners keep TEMP on C:, the slow
+      # kilocode_change start - fork: GitHub-hosted Windows runners keep TEMP on C:, the slow
       # OS disk, and the checkout on D:. Tests that build temp paths and compare them with
       # normalized ones assume a single drive, so keep temp files on the checkout drive.
       # RUNNER_TEMP is already excluded from Defender scanning above.
@@ -167,7 +167,7 @@ jobs:
         timeout-minutes: 5
         uses: ./.github/actions/setup-linux-sandbox
       # kilocode_change end
-      # kilocode_change start - enterprise: GitHub-hosted Ubuntu 24.04 blocks unprivileged user
+      # kilocode_change start - fork: GitHub-hosted Ubuntu 24.04 blocks unprivileged user
       # namespaces (kernel.apparmor_restrict_unprivileged_userns=1), which bwrap needs for the
       # sandbox tests. Kilo's Blacksmith runners allow them.
       - name: Allow unprivileged user namespaces
@@ -295,7 +295,7 @@ jobs:
     name: HttpApi exerciser
     needs: changes
     if: needs.changes.outputs.general == 'true'
-    runs-on: ubuntu-24.04 # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     timeout-minutes: 15
     defaults:
       run:
@@ -350,7 +350,7 @@ jobs:
   # kilocode_change start
   unit-required:
     name: unit (linux)
-    runs-on: ubuntu-24.04 # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     needs:
       - unit
     if: always()
@@ -363,7 +363,7 @@ jobs:
   # kilocode_change start
   required:
     name: test (linux)
-    runs-on: ubuntu-24.04 # kilocode_change - enterprise: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     needs:
       - changes
       - unit

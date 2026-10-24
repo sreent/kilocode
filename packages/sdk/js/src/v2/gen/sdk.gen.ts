@@ -77,14 +77,6 @@ import type {
   ConfigWarningsResponses,
   EnhancePromptEnhanceErrors,
   EnhancePromptEnhanceResponses,
-  EnterpriseSigninErrors,
-  EnterpriseSigninResponses,
-  EnterpriseSignoutErrors,
-  EnterpriseSignoutResponses,
-  EnterpriseStatusErrors,
-  EnterpriseStatusResponses,
-  EnterpriseWaitErrors,
-  EnterpriseWaitResponses,
   EventSubscribeResponse,
   EventSubscribeResponses,
   EventTuiCommandExecute2,
@@ -324,6 +316,14 @@ import type {
   NotebookFailure,
   NotebookRequestId,
   NotebookResult,
+  OrgSigninErrors,
+  OrgSigninResponses,
+  OrgSignoutErrors,
+  OrgSignoutResponses,
+  OrgStatusErrors,
+  OrgStatusResponses,
+  OrgWaitErrors,
+  OrgWaitResponses,
   OutputFormat,
   Part as Part2,
   PartDeleteErrors,
@@ -10065,11 +10065,11 @@ export class Memory extends HeyApiClient {
   }
 }
 
-export class Enterprise extends HeyApiClient {
+export class Org extends HeyApiClient {
   /**
    * Get organization status
    *
-   * Sign-in, policy and blocking state of the self-hosted enterprise enrollment.
+   * Sign-in, policy and blocking state of the self-hosted organization enrollment.
    */
   public status<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -10089,8 +10089,8 @@ export class Enterprise extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<EnterpriseStatusResponses, EnterpriseStatusErrors, ThrowOnError>({
-      url: "/kilo/enterprise/status",
+    return (options?.client ?? this.client).get<OrgStatusResponses, OrgStatusErrors, ThrowOnError>({
+      url: "/kilo/org/status",
       ...options,
       ...params,
     })
@@ -10125,8 +10125,8 @@ export class Enterprise extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<EnterpriseSigninResponses, EnterpriseSigninErrors, ThrowOnError>({
-      url: "/kilo/enterprise/signin",
+    return (options?.client ?? this.client).post<OrgSigninResponses, OrgSigninErrors, ThrowOnError>({
+      url: "/kilo/org/signin",
       ...options,
       ...params,
       headers: {
@@ -10160,8 +10160,8 @@ export class Enterprise extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<EnterpriseWaitResponses, EnterpriseWaitErrors, ThrowOnError>({
-      url: "/kilo/enterprise/signin/wait",
+    return (options?.client ?? this.client).post<OrgWaitResponses, OrgWaitErrors, ThrowOnError>({
+      url: "/kilo/org/signin/wait",
       ...options,
       ...params,
     })
@@ -10190,8 +10190,8 @@ export class Enterprise extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<EnterpriseSignoutResponses, EnterpriseSignoutErrors, ThrowOnError>({
-      url: "/kilo/enterprise/signout",
+    return (options?.client ?? this.client).post<OrgSignoutResponses, OrgSignoutErrors, ThrowOnError>({
+      url: "/kilo/org/signout",
       ...options,
       ...params,
     })
@@ -12489,9 +12489,9 @@ export class KiloClient extends HeyApiClient {
     return (this._memory ??= new Memory({ client: this.client }))
   }
 
-  private _enterprise?: Enterprise
-  get enterprise(): Enterprise {
-    return (this._enterprise ??= new Enterprise({ client: this.client }))
+  private _org?: Org
+  get org(): Org {
+    return (this._org ??= new Org({ client: this.client }))
   }
 
   private _v2?: V2

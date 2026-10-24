@@ -65,7 +65,7 @@ import { installLocalPluginDependency, needsLocalPluginDependency } from "@/kilo
 // kilocode_change end
 import { withTransientReadRetry } from "@/util/effect-http-client"
 import * as Log from "@opencode-ai/core/util/log" // kilocode_change
-import { Enterprise } from "@/enterprise" // kilocode_change - enterprise
+import { Organization } from "@/organization" // kilocode_change - organization
 
 const log = Log.create({ service: "config" }) // kilocode_change
 
@@ -289,7 +289,7 @@ const layer = Layer.effect(
     const http = yield* HttpClient.HttpClient
     const git = yield* Git.Service // kilocode_change
     const flock = yield* EffectFlock.Service // kilocode_change - serialize global config read-merge-write updates
-    const enterprise = yield* Enterprise.Service // kilocode_change - enterprise
+    const organization = yield* Organization.Service // kilocode_change - organization
 
     const readConfigFile = (filepath: string) => fs.readFileStringSafe(filepath).pipe(Effect.orDie)
 
@@ -1058,7 +1058,7 @@ const layer = Layer.effect(
         // kilocode_change start — inject Kilo default plugins into both plugin list and origins
         KilocodeDefaultPlugins.apply(result, { disabled: Flag.KILO_DISABLE_DEFAULT_PLUGINS, log })
         // kilocode_change end
-        yield* enterprise.overlay(result) // kilocode_change - enterprise: the org policy is the last layer, above managed and env config
+        yield* organization.overlay(result) // kilocode_change - organization: the org policy is the last layer, above managed and env config
 
         return {
           config: result,
@@ -1252,8 +1252,8 @@ export const node = LayerNode.make({
     httpClient,
     Git.node,
     EffectFlock.node,
-    Enterprise.node,
-  ], // kilocode_change, enterprise
+    Organization.node,
+  ], // kilocode_change, organization
 })
 
 export * as Config from "./config"

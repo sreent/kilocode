@@ -1,5 +1,5 @@
 import type {
-  EnterpriseStatusResponse,
+  OrgStatusResponse,
   ProviderAuthAuthorization,
   ProviderAuthMethod,
   ProviderFailure,
@@ -471,16 +471,16 @@ export interface DeviceAuthCancelledMessage {
   type: "deviceAuthCancelled"
 }
 
-// Self-hosted organization (enterprise) state, as `kilo serve` reports it.
-export type EnterpriseStatus = EnterpriseStatusResponse
+// Self-hosted organization state, as `kilo serve` reports it.
+export type OrgStatus = OrgStatusResponse
 
-export interface EnterpriseStatusMessage {
-  type: "enterpriseStatus"
-  status: EnterpriseStatus
+export interface OrgStatusMessage {
+  type: "orgStatus"
+  status: OrgStatus
 }
 
-export interface EnterpriseSigninFailedMessage {
-  type: "enterpriseSigninFailed"
+export interface OrgSigninFailedMessage {
+  type: "orgSigninFailed"
   error: string
 }
 
@@ -1870,8 +1870,8 @@ export type ExtensionMessage =
   | DeviceAuthCompleteMessage
   | DeviceAuthFailedMessage
   | DeviceAuthCancelledMessage
-  | EnterpriseStatusMessage
-  | EnterpriseSigninFailedMessage
+  | OrgStatusMessage
+  | OrgSigninFailedMessage
   | NavigateMessage
   | AgentManagerSettingsLoadedMessage
   | AgentManagerSettingsBranchesLoadedMessage

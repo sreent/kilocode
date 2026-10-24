@@ -1,6 +1,6 @@
 package ai.kilocode.client.settings.profile
 
-import ai.kilocode.client.app.KiloEnterpriseService
+import ai.kilocode.client.app.KiloOrganizationService
 import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.client.settings.auth.DeviceOAuthInfo
 import ai.kilocode.client.settings.auth.DeviceOAuthPanel
@@ -14,8 +14,8 @@ import ai.kilocode.client.ui.layout.align
 import ai.kilocode.client.util.UiTimerSource
 import ai.kilocode.client.util.UiTimers
 import ai.kilocode.log.KiloLog
-import ai.kilocode.rpc.dto.EnterpriseSigninDto
-import ai.kilocode.rpc.dto.EnterpriseStatusDto
+import ai.kilocode.rpc.dto.OrganizationSigninDto
+import ai.kilocode.rpc.dto.OrganizationStatusDto
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.ui.DocumentAdapter
@@ -44,7 +44,7 @@ internal enum class OrgMode { HIDDEN, SIGNED_IN, ENROLLED, OFFER, FORM, STARTING
 private sealed interface OrgFlow {
     data object Idle : OrgFlow
     data object Starting : OrgFlow
-    data class Pending(val signin: EnterpriseSigninDto) : OrgFlow
+    data class Pending(val signin: OrganizationSigninDto) : OrgFlow
     data class Failed(val message: String) : OrgFlow
 }
 
@@ -59,7 +59,7 @@ private sealed interface OrgFlow {
  */
 internal class OrganizationUi(
     private val cs: CoroutineScope,
-    private val enterprise: KiloEnterpriseService = service(),
+    private val organization: KiloOrganizationService = service(),
     private val browse: (String) -> Unit = { BrowserUtil.browse(it) },
     private val timers: UiTimerSource = UiTimers,
 ) : JPanel(BorderLayout()) {
@@ -75,48 +75,48 @@ internal class OrganizationUi(
     private val gatewayLabel = weak()
     private val blockedLabel = JBLabel().apply { foreground = UiStyle.Colors.errorLabelForeground() }
     private val refreshLabel = weak()
-    val signoutBtn = JButton(KiloBundle.message("profile.enterprise.action.signout"))
+    val signoutBtn = JButton(KiloBundle.message("profile.organization.action.signout"))
         .also { it.addActionListener { signout() } }
     private val signoutRow = signoutBtn.align(HAlign.RIGHT, VAlign.CENTER)
     private val signedIn = card(
-        "kilo.enterprise.signedIn",
+        "kilo.organization.signedIn",
         nameLabel, userLabel, policyLabel, gatewayLabel, blockedLabel, refreshLabel, signoutRow,
     )
 
     // -- enrolled, not signed in --
     private val managedLabel = JBLabel()
     private val enrolledError = weak()
-    val signinBtn = JButton(KiloBundle.message("profile.enterprise.action.signin"))
+    val signinBtn = JButton(KiloBundle.message("profile.organization.action.signin"))
         .also { it.addActionListener { signin() } }
     private val enrolled = card(
-        "kilo.enterprise.enrolled",
+        "kilo.organization.enrolled",
         managedLabel, enrolledError, signinBtn.align(HAlign.LEFT, VAlign.CENTER),
     )
 
     // -- not enrolled: an unobtrusive way to connect to one --
-    val connectLink = ActionLink(KiloBundle.message("profile.enterprise.connect")) { open() }
-        .apply { name = "kilo.enterprise.connect" }
+    val connectLink = ActionLink(KiloBundle.message("profile.organization.connect")) { open() }
+        .apply { name = "kilo.organization.connect" }
     private val offer = connectLink.align(HAlign.LEFT, VAlign.CENTER)
 
     val urlField = JBTextField().apply {
-        name = "kilo.enterprise.url"
-        emptyText.text = KiloBundle.message("profile.enterprise.url.placeholder")
+        name = "kilo.organization.url"
+        emptyText.text = KiloBundle.message("profile.organization.url.placeholder")
     }
     val orgField = JBTextField().apply {
-        name = "kilo.enterprise.org"
-        emptyText.text = KiloBundle.message("profile.enterprise.org.placeholder")
+        name = "kilo.organization.org"
+        emptyText.text = KiloBundle.message("profile.organization.org.placeholder")
     }
-    val formSigninBtn = JButton(KiloBundle.message("profile.enterprise.action.signin"))
+    val formSigninBtn = JButton(KiloBundle.message("profile.organization.action.signin"))
         .also { it.addActionListener { signin() } }
     private val formCancelBtn = JButton(KiloBundle.message("profile.login.cancel"))
         .also { it.addActionListener { close() } }
     private val form = RoundedContentPanel(UiStyle.Gap.pad(), UiStyle.Gap.xl()).apply {
-        name = "kilo.enterprise.form"
+        name = "kilo.organization.form"
         addToCenter(Stack.vertical(UiStyle.Gap.md())
-            .next(JBLabel(KiloBundle.message("profile.enterprise.connect")).apply { font = UiStyle.Fonts.bold() })
+            .next(JBLabel(KiloBundle.message("profile.organization.connect")).apply { font = UiStyle.Fonts.bold() })
             .next(FormBuilder.createFormBuilder()
-                .addLabeledComponent(KiloBundle.message("profile.enterprise.url"), urlField)
-                .addLabeledComponent(KiloBundle.message("profile.enterprise.org"), orgField)
+                .addLabeledComponent(KiloBundle.message("profile.organization.url"), urlField)
+                .addLabeledComponent(KiloBundle.message("profile.organization.org"), orgField)
                 .panel)
             .next(Stack.horizontal(UiStyle.Gap.md())
                 .next(formCancelBtn)
@@ -125,10 +125,10 @@ internal class OrganizationUi(
     }
 
     // -- sign-in in progress --
-    private val startingIcon = AsyncProcessIcon("KiloEnterpriseStarting").also { it.suspend() }
+    private val startingIcon = AsyncProcessIcon("KiloOrgStarting").also { it.suspend() }
     private val starting = Stack.horizontal(UiStyle.Gap.sm())
         .next(startingIcon)
-        .next(weak(KiloBundle.message("profile.enterprise.starting")))
+        .next(weak(KiloBundle.message("profile.organization.starting")))
         .align(HAlign.LEFT, VAlign.CENTER)
     // Holds a fresh code panel for each sign-in, like the provider OAuth flow.
     private val pending = BorderLayoutPanel()
@@ -140,7 +140,7 @@ internal class OrganizationUi(
     private val failedCancelBtn = JButton(KiloBundle.message("profile.login.cancel"))
         .also { it.addActionListener { cancel() } }
     private val failed = card(
-        "kilo.enterprise.failed",
+        "kilo.organization.failed",
         failedLabel,
         Stack.horizontal(UiStyle.Gap.md())
             .next(retryBtn)
@@ -158,7 +158,7 @@ internal class OrganizationUi(
         OrgMode.FAILED to failed,
     )
 
-    private var status: EnterpriseStatusDto? = null
+    private var status: OrganizationStatusDto? = null
     private var flow: OrgFlow = OrgFlow.Idle
     private var connecting = false
     private var attempt = 0
@@ -188,7 +188,7 @@ internal class OrganizationUi(
         val id = attempt
         cs.launch {
             val next = try {
-                enterprise.status()
+                organization.status()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -237,7 +237,7 @@ internal class OrganizationUi(
         job?.cancel()
         job = cs.launch {
             try {
-                val started = enterprise.signin(url, org)
+                val started = organization.signin(url, org)
                 val code = started.status?.signin
                 withContext(edt) {
                     if (id != attempt) return@withContext
@@ -249,7 +249,7 @@ internal class OrganizationUi(
                     browse(code.link)
                 }
                 if (code == null) return@launch
-                val done = enterprise.finish()
+                val done = organization.finish()
                 withContext(edt) {
                     if (id != attempt) return@withContext
                     val next = done.status ?: return@withContext fail(done.error)
@@ -281,7 +281,7 @@ internal class OrganizationUi(
         signoutBtn.isEnabled = false
         cs.launch {
             val next = try {
-                enterprise.signout().also { if (it.status == null) LOG.warn("organization sign-out failed: ${it.error}") }.status
+                organization.signout().also { if (it.status == null) LOG.warn("organization sign-out failed: ${it.error}") }.status
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -302,20 +302,20 @@ internal class OrganizationUi(
 
     @RequiresEdt
     private fun fail(message: String?) {
-        flow = OrgFlow.Failed(message ?: KiloBundle.message("profile.enterprise.failed"))
+        flow = OrgFlow.Failed(message ?: KiloBundle.message("profile.organization.failed"))
         sync()
     }
 
     @RequiresEdt
-    private fun show(code: EnterpriseSigninDto) {
+    private fun show(code: OrganizationSigninDto) {
         val panel = DeviceOAuthPanel(
             DeviceOAuthText(
-                title = KiloBundle.message("profile.enterprise.signinTitle", name()),
-                qrDescription = KiloBundle.message("profile.enterprise.qr.description"),
+                title = KiloBundle.message("profile.organization.signinTitle", name()),
+                qrDescription = KiloBundle.message("profile.organization.qr.description"),
             ),
             cancel = ::cancel,
             browse = browse,
-            prefix = "kilo.enterprise",
+            prefix = "kilo.organization",
             timers = timers,
         )
         auth?.dispose()
@@ -348,8 +348,8 @@ internal class OrganizationUi(
         val target = target()
         if (current != null && target == OrgMode.SIGNED_IN) fill(current)
         if (current != null && target == OrgMode.ENROLLED) {
-            text(managedLabel, KiloBundle.message("profile.enterprise.managed", name()))
-            text(enrolledError, current.error?.let { KiloBundle.message("profile.enterprise.error", it) })
+            text(managedLabel, KiloBundle.message("profile.organization.managed", name()))
+            text(enrolledError, current.error?.let { KiloBundle.message("profile.organization.error", it) })
         }
         (flow as? OrgFlow.Failed)?.let { text(failedLabel, it.message) }
         if (mode == target) return
@@ -364,22 +364,22 @@ internal class OrganizationUi(
     }
 
     @RequiresEdt
-    private fun fill(current: EnterpriseStatusDto) {
+    private fun fill(current: OrganizationStatusDto) {
         nameLabel.text = name()
         val user = current.user ?: return
-        userLabel.text = KiloBundle.message("profile.enterprise.signedIn", user.email, user.role)
+        userLabel.text = KiloBundle.message("profile.organization.signedIn", user.email, user.role)
         text(policyLabel, current.policy?.let {
             KiloBundle.message(
-                "profile.enterprise.policy",
+                "profile.organization.policy",
                 it.version.toString(),
                 DateFormatUtil.formatDateTime(it.fetched),
             )
         })
         text(gatewayLabel, current.gateway.takeIf { it.isNotEmpty() }?.let {
-            KiloBundle.message("profile.enterprise.gateway", it.joinToString(", "))
+            KiloBundle.message("profile.organization.gateway", it.joinToString(", "))
         })
         text(blockedLabel, current.blocked)
-        text(refreshLabel, current.error?.let { KiloBundle.message("profile.enterprise.error", it) })
+        text(refreshLabel, current.error?.let { KiloBundle.message("profile.organization.error", it) })
         // An organization given by environment variables cannot be signed out of from here.
         signoutRow.isVisible = current.source != "env"
     }
@@ -404,7 +404,7 @@ internal class OrganizationUi(
     private fun card(id: String, vararg rows: JComponent) = RoundedContentPanel(UiStyle.Gap.pad(), UiStyle.Gap.xl()).apply {
         name = id
         addToCenter(Stack.vertical(UiStyle.Gap.sm()).apply {
-            next(weak(KiloBundle.message("profile.enterprise.title")))
+            next(weak(KiloBundle.message("profile.organization.title")))
             rows.forEach { next(it) }
         })
     }

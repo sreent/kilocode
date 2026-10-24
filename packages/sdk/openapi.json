@@ -22443,10 +22443,10 @@
         ]
       }
     },
-    "/kilo/enterprise/status": {
+    "/kilo/org/status": {
       "get": {
-        "tags": ["enterprise"],
-        "operationId": "enterprise.status",
+        "tags": ["org"],
+        "operationId": "org.status",
         "parameters": [
           {
             "name": "directory",
@@ -22475,7 +22475,7 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean",
-                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                      "description": "False when no organization.json, environment variables or stored sign-in enroll this device"
                     },
                     "source": {
                       "type": "string",
@@ -22594,20 +22594,20 @@
             }
           }
         },
-        "description": "Sign-in, policy and blocking state of the self-hosted enterprise enrollment.",
+        "description": "Sign-in, policy and blocking state of the self-hosted organization enrollment.",
         "summary": "Get organization status",
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.status({\n  ...\n})"
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.org.status({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/enterprise/signin": {
+    "/kilo/org/signin": {
       "post": {
-        "tags": ["enterprise"],
-        "operationId": "enterprise.signin",
+        "tags": ["org"],
+        "operationId": "org.signin",
         "parameters": [
           {
             "name": "directory",
@@ -22636,7 +22636,7 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean",
-                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                      "description": "False when no organization.json, environment variables or stored sign-in enroll this device"
                     },
                     "source": {
                       "type": "string",
@@ -22738,7 +22738,7 @@
             }
           },
           "400": {
-            "description": "BadRequest | EnterpriseSigninError | InvalidRequestError",
+            "description": "BadRequest | OrganizationSigninError | InvalidRequestError",
             "content": {
               "application/json": {
                 "schema": {
@@ -22747,7 +22747,7 @@
                       "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
                     },
                     {
-                      "$ref": "#/components/schemas/EnterpriseSigninError"
+                      "$ref": "#/components/schemas/OrganizationSigninError"
                     },
                     {
                       "$ref": "#/components/schemas/InvalidRequestError"
@@ -22784,15 +22784,15 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.signin({\n  ...\n})"
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.org.signin({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/enterprise/signin/wait": {
+    "/kilo/org/signin/wait": {
       "post": {
-        "tags": ["enterprise"],
-        "operationId": "enterprise.wait",
+        "tags": ["org"],
+        "operationId": "org.wait",
         "parameters": [
           {
             "name": "directory",
@@ -22821,7 +22821,7 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean",
-                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                      "description": "False when no organization.json, environment variables or stored sign-in enroll this device"
                     },
                     "source": {
                       "type": "string",
@@ -22923,7 +22923,7 @@
             }
           },
           "400": {
-            "description": "BadRequest | EnterpriseSigninError | InvalidRequestError",
+            "description": "BadRequest | OrganizationSigninError | InvalidRequestError",
             "content": {
               "application/json": {
                 "schema": {
@@ -22932,7 +22932,7 @@
                       "$ref": "#/components/schemas/effect_HttpApiError_BadRequest"
                     },
                     {
-                      "$ref": "#/components/schemas/EnterpriseSigninError"
+                      "$ref": "#/components/schemas/OrganizationSigninError"
                     },
                     {
                       "$ref": "#/components/schemas/InvalidRequestError"
@@ -22948,15 +22948,15 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.wait({\n  ...\n})"
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.org.wait({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/enterprise/signout": {
+    "/kilo/org/signout": {
       "post": {
-        "tags": ["enterprise"],
-        "operationId": "enterprise.signout",
+        "tags": ["org"],
+        "operationId": "org.signout",
         "parameters": [
           {
             "name": "directory",
@@ -22985,7 +22985,7 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean",
-                      "description": "False when no enterprise.json, environment variables or stored sign-in enroll this device"
+                      "description": "False when no organization.json, environment variables or stored sign-in enroll this device"
                     },
                     "source": {
                       "type": "string",
@@ -23109,7 +23109,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.enterprise.signout({\n  ...\n})"
+            "source": "import { createKiloClient } from \"@kilocode/sdk\"\n\nconst client = createKiloClient()\nawait client.org.signout({\n  ...\n})"
           }
         ]
       }
@@ -43618,12 +43618,12 @@
         "required": ["name", "data"],
         "additionalProperties": false
       },
-      "EnterpriseSigninError": {
+      "OrganizationSigninError": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "enum": ["EnterpriseSigninError"]
+            "enum": ["OrganizationSigninError"]
           },
           "message": {
             "type": "string"
@@ -63206,8 +63206,8 @@
       "description": "Kilo memory routes."
     },
     {
-      "name": "enterprise",
-      "description": "Self-hosted enterprise routes."
+      "name": "org",
+      "description": "Self-hosted organization routes."
     },
     {
       "name": "Kilo HttpApi",

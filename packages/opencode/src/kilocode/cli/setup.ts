@@ -12,7 +12,7 @@ import {
   DaemonCommand,
   DevAliasCommand,
   DevSetupCommand,
-  EnterpriseCommand, // kilocode_change - enterprise
+  OrganizationCommand, // kilocode_change - organization
   KiloConsoleCommand,
   ProfileCommand,
   PtySmokeCommand,
@@ -49,7 +49,7 @@ export namespace KiloCli {
       .command(CloudCommand)
       .command(RollCallCommand)
       .command(ProfileCommand)
-      .command(EnterpriseCommand) // kilocode_change - enterprise
+      .command(OrganizationCommand) // kilocode_change - organization
       .command(AutoCommand)
       .command(RemoteCommand)
       .command(DaemonCommand)
@@ -103,13 +103,13 @@ export namespace KiloCli {
       version: InstallationVersion,
       enabled: cfg.experimental?.openTelemetry !== false,
     })
-    // kilocode_change start - enterprise: under enterprise management, product analytics and session sharing/sync
+    // kilocode_change start - organization: under organization management, product analytics and session sharing/sync
     // stay off unless the org policy allows them (this also overrides KILO_TELEMETRY_LEVEL)
-    const { Enterprise } = await import("@/enterprise/enterprise")
-    const enterprise = runtime
-      ? await runtime.KiloCliBootstrapRuntime.enterprise()
-      : await app!.AppRuntime.runPromise(Enterprise.Service.use((service) => service.bootstrap()))
-    if (!enterprise.telemetry) Telemetry.setEnabled(false)
+    const { Organization } = await import("@/organization/organization")
+    const organization = runtime
+      ? await runtime.KiloCliBootstrapRuntime.organization()
+      : await app!.AppRuntime.runPromise(Organization.Service.use((service) => service.bootstrap()))
+    if (!organization.telemetry) Telemetry.setEnabled(false)
     // kilocode_change end
 
     const { migrateLegacyKiloAuth } = gateway

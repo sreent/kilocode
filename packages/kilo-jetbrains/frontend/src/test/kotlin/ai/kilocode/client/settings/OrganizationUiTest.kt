@@ -1,18 +1,18 @@
 package ai.kilocode.client.settings
 
-import ai.kilocode.client.app.KiloEnterpriseService
+import ai.kilocode.client.app.KiloOrganizationService
 import ai.kilocode.client.settings.profile.OrgMode
 import ai.kilocode.client.settings.profile.OrganizationUi
-import ai.kilocode.client.testing.FakeEnterpriseRpcApi
+import ai.kilocode.client.testing.FakeOrganizationRpcApi
 import ai.kilocode.client.testing.TestCoroutines
 import ai.kilocode.client.testing.TestUiTimers
 import ai.kilocode.client.util.edtWait
-import ai.kilocode.rpc.dto.EnterpriseOrgDto
-import ai.kilocode.rpc.dto.EnterprisePolicyDto
-import ai.kilocode.rpc.dto.EnterpriseResultDto
-import ai.kilocode.rpc.dto.EnterpriseSigninRequestDto
-import ai.kilocode.rpc.dto.EnterpriseStatusDto
-import ai.kilocode.rpc.dto.EnterpriseUserDto
+import ai.kilocode.rpc.dto.OrganizationNameDto
+import ai.kilocode.rpc.dto.OrganizationPolicyDto
+import ai.kilocode.rpc.dto.OrganizationResultDto
+import ai.kilocode.rpc.dto.OrganizationSigninRequestDto
+import ai.kilocode.rpc.dto.OrganizationStatusDto
+import ai.kilocode.rpc.dto.OrganizationUserDto
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CompletableDeferred
@@ -24,28 +24,28 @@ import javax.swing.JLabel
 class OrganizationUiTest : BasePlatformTestCase() {
 
     private lateinit var coroutines: TestCoroutines
-    private lateinit var rpc: FakeEnterpriseRpcApi
+    private lateinit var rpc: FakeOrganizationRpcApi
     private lateinit var panel: OrganizationUi
     private val urls = mutableListOf<String>()
 
-    private val enrolled = EnterpriseStatusDto(
+    private val enrolled = OrganizationStatusDto(
         enabled = true,
         source = "managed",
         url = "https://ai.acme.com",
-        org = EnterpriseOrgDto("acme", "Acme"),
+        org = OrganizationNameDto("acme", "Acme"),
         required = true,
         blocked = "Sign in to Acme to use Kilo.",
     )
     private val signedIn = enrolled.copy(
         source = "login",
-        user = EnterpriseUserDto("dev@acme.com", "member"),
+        user = OrganizationUserDto("dev@acme.com", "member"),
         blocked = null,
     )
 
     override fun setUp() {
         super.setUp()
         coroutines = TestCoroutines()
-        rpc = FakeEnterpriseRpcApi()
+        rpc = FakeOrganizationRpcApi()
     }
 
     override fun tearDown() {
@@ -58,7 +58,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
     }
 
     fun `test stays hidden when the CLI has no organization support`() {
-        load(EnterpriseStatusDto(available = false))
+        load(OrganizationStatusDto(available = false))
 
         edt {
             assertEquals(OrgMode.HIDDEN, panel.mode)
@@ -78,8 +78,8 @@ class OrganizationUiTest : BasePlatformTestCase() {
 
     fun `test a device that is not enrolled can sign in to an organization`() {
         rpc.finishGate = CompletableDeferred()
-        rpc.finishResult = EnterpriseResultDto(status = signedIn)
-        load(EnterpriseStatusDto())
+        rpc.finishResult = OrganizationResultDto(status = signedIn)
+        load(OrganizationStatusDto())
 
         edt {
             assertEquals(OrgMode.OFFER, panel.mode)
@@ -95,7 +95,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
         }
         waitFor(OrgMode.PENDING)
 
-        assertEquals(listOf(EnterpriseSigninRequestDto(url = "https://ai.acme.com", org = "acme")), rpc.signins)
+        assertEquals(listOf(OrganizationSigninRequestDto(url = "https://ai.acme.com", org = "acme")), rpc.signins)
         assertEquals(listOf(rpc.code.link), urls)
         edt {
             val t = text(panel)
@@ -125,7 +125,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
         }
         waitFor(OrgMode.PENDING)
 
-        assertEquals(listOf(EnterpriseSigninRequestDto()), rpc.signins)
+        assertEquals(listOf(OrganizationSigninRequestDto()), rpc.signins)
         edt { assertTrue(text(panel).contains("Sign in to Acme")) }
     }
 
@@ -147,7 +147,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
     }
 
     fun `test a failed sign-in shows the CLI's reason and can be tried again`() {
-        rpc.finishResult = EnterpriseResultDto(error = "Sign-in was denied.")
+        rpc.finishResult = OrganizationResultDto(error = "Sign-in was denied.")
         load(enrolled)
 
         edt { panel.signinBtn.doClick() }
@@ -163,7 +163,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
     fun `test signed in shows the policy in force and why the agent is blocked`() {
         load(
             signedIn.copy(
-                policy = EnterprisePolicyDto(7, 1761230000000),
+                policy = OrganizationPolicyDto(7, 1761230000000),
                 gateway = listOf("anthropic", "openai"),
                 blocked = "Your daily organization AI budget of \$5.00 has been reached (\$5.12 spent).",
                 error = "Could not reach https://ai.acme.com",
@@ -192,7 +192,7 @@ class OrganizationUiTest : BasePlatformTestCase() {
     }
 
     fun `test sign out shows the status the CLI returns`() {
-        rpc.signoutResult = EnterpriseResultDto(status = EnterpriseStatusDto())
+        rpc.signoutResult = OrganizationResultDto(status = OrganizationStatusDto())
         load(signedIn)
 
         edt { panel.signoutBtn.doClick() }
@@ -203,12 +203,12 @@ class OrganizationUiTest : BasePlatformTestCase() {
 
     // -- helpers --
 
-    private fun load(status: EnterpriseStatusDto) {
+    private fun load(status: OrganizationStatusDto) {
         rpc.status = status
         edt {
             panel = OrganizationUi(
                 coroutines.scope,
-                KiloEnterpriseService(rpc),
+                KiloOrganizationService(rpc),
                 browse = { urls.add(it) },
                 timers = TestUiTimers(),
             )

@@ -117,13 +117,13 @@ class MockCliServer : AutoCloseable {
     @Volatile var lastMarketplaceRemoveBody: String? = null
 
     // Organization routes; a null status answers 404 like a CLI without organization support.
-    @Volatile var enterpriseStatus: String? = null
-    @Volatile var enterpriseSignin = """{"enabled":false,"required":false,"gateway":[]}"""
-    @Volatile var enterpriseSigninStatus = 200
-    @Volatile var enterpriseWait = """{"enabled":true,"required":false,"gateway":[]}"""
-    @Volatile var enterpriseWaitStatus = 200
-    @Volatile var enterpriseSignout = """{"enabled":false,"required":false,"gateway":[]}"""
-    @Volatile var lastEnterpriseSigninBody: String? = null
+    @Volatile var orgStatus: String? = null
+    @Volatile var orgSignin = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var orgSigninStatus = 200
+    @Volatile var orgWait = """{"enabled":true,"required":false,"gateway":[]}"""
+    @Volatile var orgWaitStatus = 200
+    @Volatile var orgSignout = """{"enabled":false,"required":false,"gateway":[]}"""
+    @Volatile var lastOrgSigninBody: String? = null
 
     // Project-scoped REST responses
     @Volatile var providers = """{"all":[],"default":{},"connected":[],"failed":[]}"""
@@ -484,16 +484,16 @@ class MockCliServer : AutoCloseable {
                     lastMarketplaceRemoveBody = body
                     respond(output, marketplaceRemoveStatus, marketplaceRemoveResult)
                 }
-                bare == "/kilo/enterprise/status" && method == "GET" -> {
-                    val status = enterpriseStatus
+                bare == "/kilo/org/status" && method == "GET" -> {
+                    val status = orgStatus
                     if (status == null) respond(output, 404, """{"error":"Not found"}""") else respond(output, 200, status)
                 }
-                bare == "/kilo/enterprise/signin" && method == "POST" -> {
-                    lastEnterpriseSigninBody = body
-                    respond(output, enterpriseSigninStatus, enterpriseSignin)
+                bare == "/kilo/org/signin" && method == "POST" -> {
+                    lastOrgSigninBody = body
+                    respond(output, orgSigninStatus, orgSignin)
                 }
-                bare == "/kilo/enterprise/signin/wait" && method == "POST" -> respond(output, enterpriseWaitStatus, enterpriseWait)
-                bare == "/kilo/enterprise/signout" && method == "POST" -> respond(output, 200, enterpriseSignout)
+                bare == "/kilo/org/signin/wait" && method == "POST" -> respond(output, orgWaitStatus, orgWait)
+                bare == "/kilo/org/signout" && method == "POST" -> respond(output, 200, orgSignout)
                 bare.matches(Regex("/kilocode/session/ses_[^/]+/board")) && method == "GET" -> {
                     lastSessionBoardPath = path
                     respond(output, sessionBoardStatus, sessionBoard)

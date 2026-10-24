@@ -4845,8 +4845,8 @@ export type MemoryApiServerError = {
   }
 }
 
-export type EnterpriseSigninError = {
-  name: "EnterpriseSigninError"
+export type OrganizationSigninError = {
+  name: "OrganizationSigninError"
   message: string
 }
 
@@ -19682,32 +19682,32 @@ export type MemoryPurgeResponses = {
 
 export type MemoryPurgeResponse = MemoryPurgeResponses[keyof MemoryPurgeResponses]
 
-export type EnterpriseStatusData = {
+export type OrgStatusData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/enterprise/status"
+  url: "/kilo/org/status"
 }
 
-export type EnterpriseStatusErrors = {
+export type OrgStatusErrors = {
   /**
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
 }
 
-export type EnterpriseStatusError = EnterpriseStatusErrors[keyof EnterpriseStatusErrors]
+export type OrgStatusError = OrgStatusErrors[keyof OrgStatusErrors]
 
-export type EnterpriseStatusResponses = {
+export type OrgStatusResponses = {
   /**
    * Organization status
    */
   200: {
     /**
-     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     * False when no organization.json, environment variables or stored sign-in enroll this device
      */
     enabled: boolean
     source?: "managed" | "env" | "login"
@@ -19754,9 +19754,9 @@ export type EnterpriseStatusResponses = {
   }
 }
 
-export type EnterpriseStatusResponse = EnterpriseStatusResponses[keyof EnterpriseStatusResponses]
+export type OrgStatusResponse = OrgStatusResponses[keyof OrgStatusResponses]
 
-export type EnterpriseSigninData = {
+export type OrgSigninData = {
   body?: {
     url?: string
     org?: string
@@ -19767,25 +19767,25 @@ export type EnterpriseSigninData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/enterprise/signin"
+  url: "/kilo/org/signin"
 }
 
-export type EnterpriseSigninErrors = {
+export type OrgSigninErrors = {
   /**
-   * BadRequest | EnterpriseSigninError | InvalidRequestError
+   * BadRequest | OrganizationSigninError | InvalidRequestError
    */
-  400: EffectHttpApiErrorBadRequest | EnterpriseSigninError | InvalidRequestError
+  400: EffectHttpApiErrorBadRequest | OrganizationSigninError | InvalidRequestError
 }
 
-export type EnterpriseSigninError2 = EnterpriseSigninErrors[keyof EnterpriseSigninErrors]
+export type OrgSigninError = OrgSigninErrors[keyof OrgSigninErrors]
 
-export type EnterpriseSigninResponses = {
+export type OrgSigninResponses = {
   /**
    * Status, with the waiting sign-in, or signed in when a token was given
    */
   200: {
     /**
-     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     * False when no organization.json, environment variables or stored sign-in enroll this device
      */
     enabled: boolean
     source?: "managed" | "env" | "login"
@@ -19832,34 +19832,34 @@ export type EnterpriseSigninResponses = {
   }
 }
 
-export type EnterpriseSigninResponse = EnterpriseSigninResponses[keyof EnterpriseSigninResponses]
+export type OrgSigninResponse = OrgSigninResponses[keyof OrgSigninResponses]
 
-export type EnterpriseWaitData = {
+export type OrgWaitData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/enterprise/signin/wait"
+  url: "/kilo/org/signin/wait"
 }
 
-export type EnterpriseWaitErrors = {
+export type OrgWaitErrors = {
   /**
-   * BadRequest | EnterpriseSigninError | InvalidRequestError
+   * BadRequest | OrganizationSigninError | InvalidRequestError
    */
-  400: EffectHttpApiErrorBadRequest | EnterpriseSigninError | InvalidRequestError
+  400: EffectHttpApiErrorBadRequest | OrganizationSigninError | InvalidRequestError
 }
 
-export type EnterpriseWaitError = EnterpriseWaitErrors[keyof EnterpriseWaitErrors]
+export type OrgWaitError = OrgWaitErrors[keyof OrgWaitErrors]
 
-export type EnterpriseWaitResponses = {
+export type OrgWaitResponses = {
   /**
    * Status after the sign-in was approved
    */
   200: {
     /**
-     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     * False when no organization.json, environment variables or stored sign-in enroll this device
      */
     enabled: boolean
     source?: "managed" | "env" | "login"
@@ -19906,34 +19906,34 @@ export type EnterpriseWaitResponses = {
   }
 }
 
-export type EnterpriseWaitResponse = EnterpriseWaitResponses[keyof EnterpriseWaitResponses]
+export type OrgWaitResponse = OrgWaitResponses[keyof OrgWaitResponses]
 
-export type EnterpriseSignoutData = {
+export type OrgSignoutData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/enterprise/signout"
+  url: "/kilo/org/signout"
 }
 
-export type EnterpriseSignoutErrors = {
+export type OrgSignoutErrors = {
   /**
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
 }
 
-export type EnterpriseSignoutError = EnterpriseSignoutErrors[keyof EnterpriseSignoutErrors]
+export type OrgSignoutError = OrgSignoutErrors[keyof OrgSignoutErrors]
 
-export type EnterpriseSignoutResponses = {
+export type OrgSignoutResponses = {
   /**
    * Status after signing out
    */
   200: {
     /**
-     * False when no enterprise.json, environment variables or stored sign-in enroll this device
+     * False when no organization.json, environment variables or stored sign-in enroll this device
      */
     enabled: boolean
     source?: "managed" | "env" | "login"
@@ -19980,7 +19980,7 @@ export type EnterpriseSignoutResponses = {
   }
 }
 
-export type EnterpriseSignoutResponse = EnterpriseSignoutResponses[keyof EnterpriseSignoutResponses]
+export type OrgSignoutResponse = OrgSignoutResponses[keyof OrgSignoutResponses]
 
 export type V2HealthGetData = {
   body?: never

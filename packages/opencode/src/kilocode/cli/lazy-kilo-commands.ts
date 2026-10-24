@@ -18,11 +18,11 @@ export const RollCallCommand = lazy({
   load: async () => (await import("@/kilocode/cli/cmd/roll-call")).RollCallCommand,
 })
 
-// kilocode_change start - enterprise
-export const EnterpriseCommand = lazy({
-  command: "enterprise",
+// kilocode_change start - organization
+export const OrganizationCommand = lazy({
+  command: "org",
   describe: "sign in to your organization and inspect its policy",
-  load: async () => (await import("@/enterprise/cli")).EnterpriseCommand,
+  load: async () => (await import("@/organization/cli")).OrganizationCommand,
 })
 // kilocode_change end
 

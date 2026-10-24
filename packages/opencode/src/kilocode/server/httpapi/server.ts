@@ -30,7 +30,7 @@ import { sandboxHandlers } from "./handlers/sandbox"
 import { sessionImportHandlers } from "./handlers/session-import"
 import { suggestionHandlers } from "./handlers/suggestion"
 import { telemetryHandlers } from "./handlers/telemetry"
-import { enterpriseHandlers } from "@/enterprise/httpapi/handler" // kilocode_change - enterprise
+import { organizationHandlers } from "@/organization/httpapi/handler" // kilocode_change - organization
 
 export const provide = Layer.provide([
   agentBuilderHandlers,
@@ -53,7 +53,7 @@ export const provide = Layer.provide([
   sessionImportHandlers,
   suggestionHandlers,
   telemetryHandlers,
-  enterpriseHandlers, // kilocode_change - enterprise
+  organizationHandlers, // kilocode_change - organization
 ])
 
 export function provideListener(opts?: CorsOptions) {

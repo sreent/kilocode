@@ -469,18 +469,18 @@ export const kiloScenarios: Scenario[] = [
     .post("/kilo/cloud/session/import", "kilo.cloud.session.import")
     .at((ctx) => ({ path: "/kilo/cloud/session/import", headers: ctx.headers(), body: { sessionId: "missing" } }))
     .status(401),
-  // Self-hosted enterprise: the exerciser's device has no enterprise.json, environment or stored sign-in.
-  http.protected.get("/kilo/enterprise/status", "enterprise.status").json(200, (body) => {
+  // Self-hosted organization: the exerciser's device has no organization.json, environment or stored sign-in.
+  http.protected.get("/kilo/org/status", "org.status").json(200, (body) => {
     object(body)
-    check(body.enabled === false, "a device without enterprise configuration should not be enrolled")
+    check(body.enabled === false, "a device without organization configuration should not be enrolled")
     array(body.gateway)
   }),
   http.protected
-    .post("/kilo/enterprise/signin", "enterprise.signin")
-    .at((ctx) => ({ path: "/kilo/enterprise/signin", headers: ctx.headers(), body: {} }))
+    .post("/kilo/org/signin", "org.signin")
+    .at((ctx) => ({ path: "/kilo/org/signin", headers: ctx.headers(), body: {} }))
     .status(400),
-  http.protected.post("/kilo/enterprise/signin/wait", "enterprise.wait").status(400),
-  http.protected.post("/kilo/enterprise/signout", "enterprise.signout").json(200, (body) => {
+  http.protected.post("/kilo/org/signin/wait", "org.wait").status(400),
+  http.protected.post("/kilo/org/signout", "org.signout").json(200, (body) => {
     object(body)
     check(body.enabled === false, "signing out of no organization should leave the device unenrolled")
   }),

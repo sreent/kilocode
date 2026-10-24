@@ -7,7 +7,7 @@ import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
 import DeviceAuthCard from "./DeviceAuthCard"
-import EnterpriseCard from "./EnterpriseCard"
+import OrganizationCard from "./OrganizationCard"
 import type { ProfileData, ProviderUsageData, DeviceAuthState } from "../../types/messages"
 import { ProviderUsageCards } from "./ProviderUsageCards"
 
@@ -166,7 +166,7 @@ const ProfileView: Component<ProfileViewProps> = (props) => {
           "box-sizing": "border-box",
         }}
       >
-        <EnterpriseCard />
+        <OrganizationCard />
         <Show
           when={props.profileData}
           fallback={

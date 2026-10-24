@@ -47,12 +47,12 @@ class UserProfileConfigurable : KiloReadyConfigurable() {
 
     override fun createReadyComponent(cs: CoroutineScope): JComponent {
         val panel = buildPanel(cs)
-        val enterprise = OrganizationUi(cs)
+        val organization = OrganizationUi(cs)
         ui = panel
-        org = enterprise
+        org = organization
         startWatching(cs, panel)
-        enterprise.load()
-        return Stack.vertical().next(enterprise).next(panel)
+        organization.load()
+        return Stack.vertical().next(organization).next(panel)
     }
 
     override fun onReadyComponentCreated(component: JComponent) {
@@ -89,13 +89,13 @@ class UserProfileConfigurable : KiloReadyConfigurable() {
     override fun disposeReadyComponent(component: JComponent) {
         // Dispose UI first to invalidate pending login attempts before scope cancellation.
         val panel = ui
-        val enterprise = org
+        val organization = org
         val job = watchJob
         ui = null
         org = null
         watchJob = null
         panel?.dispose()
-        enterprise?.dispose()
+        organization?.dispose()
         job?.cancel()
     }
 
