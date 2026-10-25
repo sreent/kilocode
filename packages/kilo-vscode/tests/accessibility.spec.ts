@@ -148,18 +148,19 @@ test.describe("webview accessibility ratchet", () => {
     await expect(page.locator('.sr-only[role="status"]')).toHaveAttribute("aria-live", "polite")
   })
 
-  test("Profile login exposes a keyboard-operable named control", async ({ page }) => {
+  // TU Code has no account to log in to, so the profile's keyboard check is on its usage refresh.
+  test("Profile usage refresh exposes a keyboard-operable named control", async ({ page }) => {
     await open(page, "profile--not-logged-in")
 
-    const login = page.getByRole("button", { name: "Login with TU Code" })
-    await reach(page, login)
-    await expect(login).toBeFocused()
+    const refresh = page.getByRole("button", { name: "Refresh" })
+    await reach(page, refresh)
+    await expect(refresh).toBeFocused()
 
-    await login.evaluate((node) => {
+    await refresh.evaluate((node) => {
       node.addEventListener("click", () => node.setAttribute("data-keyboard-activated", "true"), { once: true })
     })
     await page.keyboard.press("Enter")
-    await expect(login).toHaveAttribute("data-keyboard-activated", "true")
+    await expect(refresh).toHaveAttribute("data-keyboard-activated", "true")
   })
 
   test("Agent Manager sidebar search filters and selects with the keyboard", async ({ page }) => {

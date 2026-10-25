@@ -128,11 +128,13 @@ test("Kilo exposes only supported embedding model presets", async ({ page }) => 
   await disableAnimations(page)
   await page.waitForSelector("#storybook-root *", { state: "attached" })
 
-  await expect(page.getByText("Kilo model preset", { exact: true })).toBeVisible()
+  // The preset's title names the product, which the rebrand renames, so it's found by the rest.
+  const title = page.getByText(/ model preset$/)
+  await expect(title).toBeVisible()
   await expect(page.getByText("Embedding model", { exact: true })).toHaveCount(0)
   await expect(page.getByText("Vector dimension", { exact: true })).toBeVisible()
 
-  const preset = selectIn(page, "Kilo model preset")
+  const preset = selectIn(page, (await title.textContent()) ?? "")
   await expect(preset).toContainText("Provider Model")
 
   const dimension = field(page, "Vector dimension").first()

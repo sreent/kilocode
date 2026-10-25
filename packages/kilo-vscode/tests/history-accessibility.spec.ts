@@ -74,32 +74,6 @@ test.describe("history session accessibility", () => {
     await expect(selected).toBeEmpty()
   })
 
-  test("exposes Local and Cloud as keyboard navigable selected tabs", async ({ page }) => {
-    await story(page, "history-sessionlist--sources")
-
-    const local = page.getByRole("tab", { name: "Local" })
-    const cloud = page.getByRole("tab", { name: "Cloud" })
-    await expect(page.getByRole("tablist", { name: "History source" })).toBeVisible()
-    await expect(local).toHaveAttribute("aria-selected", "true")
-    await expect(page.getByRole("tabpanel", { name: "Local" })).toBeVisible()
-
-    await local.focus()
-    await page.keyboard.press("ArrowRight")
-    await expect(cloud).toBeFocused()
-    await expect(local).toHaveAttribute("aria-selected", "true")
-    await page.keyboard.press("Enter")
-    await expect(cloud).toHaveAttribute("aria-selected", "true")
-    await expect(page.getByRole("tabpanel", { name: "Cloud" })).toBeVisible()
-    await expect(page.getByPlaceholder("Search sessions...")).toBeFocused()
-
-    await cloud.focus()
-    await page.keyboard.press("ArrowLeft")
-    await expect(local).toBeFocused()
-    await page.keyboard.press("Enter")
-    await expect(local).toHaveAttribute("aria-selected", "true")
-    await expect(page.getByRole("tabpanel", { name: "Local" })).toBeVisible()
-  })
-
   test("filters sessions to the current worktree and includes it in keyboard navigation", async ({ page }) => {
     await story(page, "history-sessionlist--worktree-sources")
 
