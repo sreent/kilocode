@@ -14,12 +14,13 @@ function clip(text: string, max: number) {
   return `${/[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut}…`
 }
 
-// A path inside the project as relative to it; anything else as is.
+// A path inside the project as relative to it, with forward slashes on every platform so audit
+// entries read the same from any client; anything else as is.
 function relative(root: string, file: string) {
   if (root === path.parse(root).root) return file
   const inside = path.relative(root, path.resolve(root, file))
   if (inside === ".." || inside.startsWith(`..${path.sep}`) || path.isAbsolute(inside)) return file
-  return inside || "."
+  return (inside || ".").split(path.sep).join("/")
 }
 
 // What a tool acted on, for audit summaries that leave its input out: a file or folder, the site a
