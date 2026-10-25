@@ -250,6 +250,11 @@ function withProject<A, E, E2 = never>(
   })
 }
 
+// kilocode_change start - tucode: no Kilo Gateway provider to fall back on
+// A prompt without a reply still records a model, so these tests configure one. It is never called.
+const replyless = testProviderConfig("http://127.0.0.1:9/v1")
+// kilocode_change end
+
 function withStandardProject<A, E>(
   serverPath: ServerPath,
   run: (input: ProjectFixture) => Effect.Effect<A, E, TestScope>,
@@ -767,7 +772,7 @@ describe("HttpApi SDK", () => {
   )
 
   serverPathParity("matches generated SDK prompt no-reply routes", (serverPath) =>
-    withStandardProject(serverPath, ({ sdk }) =>
+    withProject(serverPath, { setup: writeStandardFiles, config: replyless }, ({ sdk }) => // kilocode_change - tucode
       Effect.gen(function* () {
         const session = yield* capture(() => sdk.session.create({ title: "prompt" }))
         const sessionID = String(record(session.data).id)
@@ -840,7 +845,7 @@ describe("HttpApi SDK", () => {
     ),
   )
   serverPathParity("rejects oversized user image files before persistence", (serverPath) =>
-    withProject(serverPath, { config: { attachment: { image: { max_base64_bytes: 4 } } } }, ({ sdk, directory }) =>
+    withProject(serverPath, { config: { ...replyless, attachment: { image: { max_base64_bytes: 4 } } } }, ({ sdk, directory }) => // kilocode_change - tucode
       Effect.gen(function* () {
         const filepath = path.join(directory, "oversized.png")
         yield* call(() => Bun.write(filepath, Buffer.alloc(1024, 1)))
@@ -871,7 +876,7 @@ describe("HttpApi SDK", () => {
     ),
   )
   serverPathParity("reads an SVG attachment as text instead of treating it as an image", (serverPath) =>
-    withProject(serverPath, { config: { attachment: { image: { max_base64_bytes: 4 } } } }, ({ sdk, directory }) =>
+    withProject(serverPath, { config: { ...replyless, attachment: { image: { max_base64_bytes: 4 } } } }, ({ sdk, directory }) => // kilocode_change - tucode
       Effect.gen(function* () {
         // SVG is relabelled text/plain before resolution, so it leaves the image path entirely:
         // the image base64 cap (set absurdly low here) no longer governs it, the Read tool does

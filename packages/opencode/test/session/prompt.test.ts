@@ -1313,6 +1313,7 @@ noLLMServer.instance("prompt tools replace matching rules and preserve existing 
     ])
     expect(Permission.evaluate("bash", "anything", reloaded.permission ?? []).action).toBe("deny")
   }),
+  { config: cfg }, // kilocode_change - tucode: no Kilo Gateway provider to fall back on
 )
 
 it.instance(

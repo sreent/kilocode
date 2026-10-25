@@ -14,6 +14,7 @@ import { Session } from "../../src/session/session"
 import { SessionPrompt } from "../../src/session/prompt"
 import { MessageV2 } from "../../src/session/message-v2"
 import { disposeTestRuntime, provideInstance, provideTestInstance, testInstanceStoreLayer, tmpdir } from "../fixture/fixture"
+import { testProviderConfig } from "../lib/test-provider"
 
 Log.init({ print: false })
 setDefaultTimeout(15_000)
@@ -26,7 +27,8 @@ afterAll(async () => {
 })
 
 test("persists the read-failure text shape the JetBrains notice parser expects", async () => {
-  await using tmp = await tmpdir({ git: true })
+  // A prompt without a reply still records a model; this provider is never called.
+  await using tmp = await tmpdir({ git: true, config: testProviderConfig("http://127.0.0.1:9/v1") })
   const file = path.join(tmp.path, "trace.jfr")
   await fs.writeFile(file, Buffer.from([0, 1, 2, 0, 255, 0, 3, 0, 4, 0]))
 

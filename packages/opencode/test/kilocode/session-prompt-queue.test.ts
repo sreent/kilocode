@@ -27,6 +27,7 @@ import { disposeTestRuntime, provideInstance, testInstanceStoreLayer, tmpdir } f
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { remove as cleanup } from "./cleanup"
 import { pollWithTimeout } from "../lib/effect"
+import { testProviderConfig } from "../lib/test-provider"
 
 Log.init({ print: false })
 setDefaultTimeout(15_000)
@@ -841,7 +842,7 @@ describe("session prompt queue", () => {
   test("new prompt dismisses a pending suggestion", async () => {
     const shown = Promise.withResolvers<void>()
     const dismissed = Promise.withResolvers<void>()
-    await using tmp = await tmpdir({ git: true })
+    await using tmp = await tmpdir({ git: true, config: testProviderConfig("http://127.0.0.1:9/v1") })
 
     await provideTestInstance({
       directory: tmp.path,
@@ -891,7 +892,7 @@ describe("session prompt queue", () => {
     // queue the follow-up first, then open the blocker. Suggestion.show must see
     // hasFollowup=true and reject synchronously, before any pending entry or
     // Shown event is published.
-    await using tmp = await tmpdir({ git: true })
+    await using tmp = await tmpdir({ git: true, config: testProviderConfig("http://127.0.0.1:9/v1") })
     await provideTestInstance({
       directory: tmp.path,
       fn: async () => {
