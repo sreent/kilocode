@@ -69,7 +69,20 @@ export function spellings(b: Brand) {
     `${b.npm.scope}/`,
     b.jetbrains.id,
     b.managed.macDomain,
+    repo(b),
+    pages(b),
   ]
+}
+
+/** The repository as GitHub Actions names it, owner/name, which the release workflows check. */
+function repo(b: Brand) {
+  return new URL(b.repository).pathname.slice(1)
+}
+
+/** The repository's GitHub Pages site, which serves the JetBrains plugin repository of stable releases. */
+function pages(b: Brand) {
+  const [owner = "", name = ""] = repo(b).split("/")
+  return `https://${owner.toLowerCase()}.github.io/${name}/`
 }
 
 /** Applies `transform` to the values of double-quoted string literals, never to object keys. */
@@ -172,6 +185,36 @@ export function rules(b: Brand): Rule[] {
           .replace(/\/licenses\/kilo$/gm, `/licenses/${b.command}`)
           .replace(/^RUN kilo /gm, `RUN ${b.command} `)
           .replace(/^ENTRYPOINT \["kilo"\]/gm, `ENTRYPOINT ["${b.command}"]`),
+    },
+    {
+      // The release workflows and scripts run in the brand's repository, and handle the packages,
+      // binary and archives the build names after the brand. (Kilo's benchmark, hourly beta branch
+      // and CI images stay Kilo's, so their workflows aren't listed.)
+      name: "Release workflows",
+      files: [
+        ".github/workflows/publish.yml",
+        ".github/workflows/prepare-jetbrains-release.yml",
+        ".github/workflows/publish-jetbrains.yml",
+        ".github/workflows/publish-jetbrains-bundled.yml",
+        ".github/workflows/validate-cli-smoke.yml",
+        ".kilo/skills/release-jetbrains/script/*.ts",
+        "script/jetbrains-release-*.ts",
+        "packages/kilo-jetbrains/RELEASING.md",
+      ],
+      apply: (text) =>
+        text
+          .replaceAll("github.repository == 'Kilo-Org/kilocode'", `github.repository == '${repo(b)}'`)
+          .replaceAll(`?? "Kilo-Org/kilocode"`, `?? "${repo(b)}"`)
+          .replace(/"kilo-(darwin|linux|windows)-/g, `"${b.command}-$1-`)
+          .replaceAll("@kilocode/cli-", `${b.npm.cli}-`)
+          .replaceAll("@kilocode\\cli-", `${b.npm.cli.replace("/", "\\")}-`)
+          .replace(/([/\\]bin[/\\])kilo(?=\.exe\b|["\s])/g, `$1${b.command}`)
+          .replaceAll(`"kilo-" + $dir.Name`, `"${b.command}-" + $dir.Name`)
+          .replaceAll(`-d "Kilo CLI"`, `-d "${b.name} CLI"`)
+          .replace(/kilo-(cli|cli-distribution|jetbrains)-SHA256SUMS/g, `${b.command}-$1-SHA256SUMS`)
+          .replace(/kilo-code-(\$\{VERSION\}|<version>)-bundled\.zip/g, `${b.command}-$1-bundled.zip`)
+          .replaceAll("https://github.com/Kilo-Org/kilocode/actions/", `${b.repository}/actions/`)
+          .replaceAll("https://kilo-org.github.io/kilocode/", pages(b)),
     },
     {
       // The plugin's identity and its Marketplace listing.

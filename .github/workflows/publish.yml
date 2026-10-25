@@ -41,8 +41,8 @@ permissions:
 
 jobs:
   version:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    if: github.repository == 'sreent/kilocode'
     steps:
       - uses: actions/checkout@v6 # kilocode_change
         with:
@@ -53,10 +53,6 @@ jobs:
       # kilocode_change start - install deps for version script workspace resolution
       - name: Install dependencies
         run: bun install
-
-      - name: Install Kilo
-        if: inputs.bump || inputs.version
-        run: bun i -g @kilocode/cli
       # kilocode_change end
 
       - id: version
@@ -68,8 +64,6 @@ jobs:
           KILO_BUMP: ${{ inputs.bump }}
           KILO_VERSION: ${{ inputs.version }}
           KILO_PRE_RELEASE: ${{ inputs.pre_release }}
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
     outputs:
       version: ${{ steps.version.outputs.version }}
       release: ${{ steps.version.outputs.release }}
@@ -77,8 +71,8 @@ jobs:
 
   build-cli:
     needs: version
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    if: github.repository == 'sreent/kilocode'
     steps:
       - uses: actions/checkout@v6 # kilocode_change
         with:
@@ -136,7 +130,7 @@ jobs:
           path: |
             packages/opencode/dist/*.cdx.json
             packages/opencode/dist/cli-sbom-evidence.json
-            packages/opencode/dist/kilo-cli-SHA256SUMS
+            packages/opencode/dist/tucode-cli-SHA256SUMS
           if-no-files-found: error
       # kilocode_change end
 
@@ -198,6 +192,7 @@ jobs:
   validate-cli-unix:
     name: Validate CLI (${{ matrix.target }})
     needs: pack-signed-cli
+    if: ${{ !cancelled() && needs.pack-signed-cli.result == 'success' }} # kilocode_change - fork: with or without Windows signing
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     strategy:
@@ -207,33 +202,33 @@ jobs:
           - target: darwin-arm64
             runner: macos-15
             uname: arm64
-            package: "@kilocode/cli-darwin-arm64"
+            package: "@tucode/cli-darwin-arm64"
             mode: host
           - target: darwin-x64
             runner: macos-15-intel
             uname: x86_64
-            package: "@kilocode/cli-darwin-x64"
+            package: "@tucode/cli-darwin-x64"
             mode: host
           - target: linux-arm64
             runner: ubuntu-24.04-arm
             uname: aarch64
-            package: "@kilocode/cli-linux-arm64"
+            package: "@tucode/cli-linux-arm64"
             mode: host
           - target: linux-x64
             runner: ubuntu-24.04
             uname: x86_64
-            package: "@kilocode/cli-linux-x64"
+            package: "@tucode/cli-linux-x64"
             mode: host
           - target: alpine-arm64
             runner: ubuntu-24.04-arm
             uname: aarch64
-            package: "@kilocode/cli-linux-arm64-musl"
+            package: "@tucode/cli-linux-arm64-musl"
             mode: alpine
             platform: linux/arm64
           - target: alpine-x64
             runner: ubuntu-24.04
             uname: x86_64
-            package: "@kilocode/cli-linux-x64-musl"
+            package: "@tucode/cli-linux-x64-musl"
             mode: alpine
             platform: linux/amd64
     steps:
@@ -286,7 +281,7 @@ jobs:
           }
 
           if [ "${{ matrix.mode }}" = "host" ]; then
-            smoke_host "./dist/${{ matrix.package }}/bin/kilo"
+            smoke_host "./dist/${{ matrix.package }}/bin/tucode"
             exit 0
           fi
 
@@ -302,7 +297,7 @@ jobs:
               # as optional packages and must be installed for any Bun-compiled musl binary to run.
               apk add --no-cache libstdc++ libgcc
               # kilocode_change end
-              binary="/dist/$PACKAGE/bin/kilo" # kilocode_change
+              binary="/dist/$PACKAGE/bin/tucode" # kilocode_change
               "$binary" --version # kilocode_change
               "/dist/$PACKAGE/bin/bwrap" --version # kilocode_change
               grep -q '\''^SPDX-License-Identifier: LGPL-2.0-or-later$'\'' "/dist/$PACKAGE/bin/licenses/bubblewrap/NOTICE" # kilocode_change
@@ -323,6 +318,7 @@ jobs:
   validate-cli-windows:
     name: Validate CLI (windows-${{ matrix.arch }})
     needs: pack-signed-cli # kilocode_change
+    if: ${{ !cancelled() && needs.pack-signed-cli.result == 'success' }} # kilocode_change - fork: with or without Windows signing
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20 # kilocode_change
     strategy:
@@ -331,10 +327,10 @@ jobs:
         include:
           - arch: arm64
             runner: windows-11-arm
-            package: "@kilocode/cli-windows-arm64"
+            package: "@tucode/cli-windows-arm64"
           - arch: x64
             runner: windows-2025
-            package: "@kilocode/cli-windows-x64"
+            package: "@tucode/cli-windows-x64"
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -359,7 +355,7 @@ jobs:
         shell: pwsh
         run: |
           $package = "${{ matrix.package }}".Replace("/", "\")
-          $binary = ".\dist\$package\bin\kilo.exe"
+          $binary = ".\dist\$package\bin\tucode.exe"
           & $binary --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -400,7 +396,9 @@ jobs:
     name: Sign CLI (Windows EV)
     needs: build-cli
     runs-on: windows-2025
-    if: github.repository == 'Kilo-Org/kilocode'
+    # Signing needs the repository's own Azure Key Vault certificate, so it runs once the
+    # WINDOWS_SIGNING variable is "true". Without it, the Windows binaries ship unsigned.
+    if: github.repository == 'sreent/kilocode' && vars.WINDOWS_SIGNING == 'true'
     timeout-minutes: 20
     steps:
       - uses: actions/download-artifact@v8
@@ -438,13 +436,13 @@ jobs:
           # DefaultAzureCredential fallback). Mint a Key Vault token from the azure/login
           # OIDC session and pass it via -kva.
           token="$(az account get-access-token --resource https://vault.azure.net --query accessToken -o tsv)"
-          for exe in dist/@kilocode/cli-windows-*/bin/kilo.exe; do
+          for exe in dist/@tucode/cli-windows-*/bin/tucode.exe; do
             AzureSignTool sign -v \
               -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" \
               -kvc "${{ secrets.AZURE_CERT_NAME }}" \
               -kva "$token" \
               -tr http://timestamp.digicert.com \
-              -d "Kilo CLI" \
+              -d "tucode CLI" \
               "$exe"
           done
 
@@ -453,7 +451,7 @@ jobs:
         run: |
           $kit = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Directory | Where-Object { $_.Name -match '^\d+\.' } | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
           $signtool = Join-Path $kit.FullName "x64\signtool.exe"
-          foreach ($exe in Get-ChildItem "dist\@kilocode\cli-windows-*\bin\kilo.exe") {
+          foreach ($exe in Get-ChildItem "dist\@tucode\cli-windows-*\bin\tucode.exe") {
             & $signtool verify /pa $exe.FullName
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
@@ -468,7 +466,7 @@ jobs:
           cd dist
           # --force-local: git-bash tar reads $RUNNER_TEMP's "D:\..." colon as an
           # rmt remote-tape "host:path" and dies with "Cannot connect to D".
-          tar --zstd --force-local -cf "$RUNNER_TEMP/kilo-windows-signed.tar.zst" ./@kilocode/cli-windows-*/bin/kilo.exe
+          tar --zstd --force-local -cf "$RUNNER_TEMP/kilo-windows-signed.tar.zst" ./@tucode/cli-windows-*/bin/tucode.exe
 
       - uses: actions/upload-artifact@v7
         with:
@@ -485,8 +483,8 @@ jobs:
         shell: pwsh
         run: |
           $archives = @()
-          foreach ($dir in Get-ChildItem "dist\@kilocode\cli-windows-*" -Directory) {
-            $archive = "kilo-" + $dir.Name.Replace("cli-", "") + ".zip"
+          foreach ($dir in Get-ChildItem "dist\@tucode\cli-windows-*" -Directory) {
+            $archive = "tucode-" + $dir.Name.Replace("cli-", "") + ".zip"
             Compress-Archive -Path (Join-Path $dir.FullName "bin\*") -DestinationPath $archive -Force
             $archives += $archive
           }
@@ -505,13 +503,14 @@ jobs:
 
   # Overlay the signed Windows exes onto the original Linux-produced dist
   # tarball so POSIX mode bits on the Unix binaries (kilo, bwrap) stay intact.
+  # When signing is off, the dist passes through unchanged under the same name.
   pack-signed-cli:
     name: Pack signed CLI dist
     needs:
       - build-cli
       - sign-cli-windows
     runs-on: ubuntu-24.04
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: ${{ !cancelled() && needs.build-cli.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.sign-cli-windows.result) }}
     timeout-minutes: 15
     steps:
       - uses: actions/download-artifact@v8
@@ -521,6 +520,7 @@ jobs:
           skip-decompress: true
 
       - uses: actions/download-artifact@v8
+        if: needs.sign-cli-windows.result == 'success'
         with:
           name: kilo-windows-signed.tar.zst
           path: /tmp
@@ -530,7 +530,9 @@ jobs:
         run: |
           mkdir -p dist
           tar --zstd -xf /tmp/kilo-cli.tar.zst -C dist
-          tar --zstd -xf /tmp/kilo-windows-signed.tar.zst -C dist
+          if [ -f /tmp/kilo-windows-signed.tar.zst ]; then
+            tar --zstd -xf /tmp/kilo-windows-signed.tar.zst -C dist
+          fi
           tar --zstd -cf "$RUNNER_TEMP/kilo-cli-signed.tar.zst" -C dist .
 
       - uses: actions/upload-artifact@v7
@@ -545,8 +547,8 @@ jobs:
       - pack-signed-cli # kilocode_change
       - validate-cli-unix
       - validate-cli-windows
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    runs-on: ubuntu-24.04 # kilocode_change - fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
+    if: ${{ !cancelled() && needs.validate-cli-unix.result == 'success' && needs.validate-cli-windows.result == 'success' }} # kilocode_change - fork: with or without Windows signing
     steps:
       - uses: actions/checkout@v6 # kilocode_change
 
@@ -605,7 +607,9 @@ jobs:
       - version
       - build-cli
       - sign-cli-windows
-    if: github.repository == 'Kilo-Org/kilocode'
+    # fork: this runs Kilo's private benchmark through Kilo Gateway, so the fork's release goes
+    # without it. validate-cli-unix and validate-cli-windows still run every built binary.
+    if: false
     uses: ./.github/workflows/smoke-test.yml
     with:
       cli_version: ${{ needs.version.outputs.version }}
@@ -621,6 +625,7 @@ jobs:
       - validate-cli-unix # kilocode_change
       - validate-cli-windows # kilocode_change
       - smoke-test
+    if: ${{ !cancelled() && needs.build-vscode.result == 'success' }} # kilocode_change - fork: without Windows signing and Kilo's smoke test
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6 # kilocode_change
@@ -682,6 +687,7 @@ jobs:
           path: packages/kilo-vscode/out
 
       - name: Cache apt packages (AUR)
+        if: false # kilocode_change - fork: the AUR package is Kilo's, and script/publish.ts only updates it there
         uses: actions/cache@v5 # kilocode_change
         with:
           path: /var/cache/apt/archives
@@ -690,6 +696,7 @@ jobs:
             ${{ runner.os }}-apt-aur-
 
       - name: Setup SSH for AUR
+        if: false # kilocode_change - fork: the AUR package is Kilo's, and script/publish.ts only updates it there
         run: |
           sudo apt-get update
           sudo apt-get install -y pacman-package-manager
@@ -708,7 +715,12 @@ jobs:
           GH_REPO: ${{ github.repository }}
           AUR_KEY: ${{ secrets.AUR_KEY }}
           GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
-          NPM_CONFIG_PROVENANCE: true
+          NPM_CONFIG_PROVENANCE: ${{ !github.event.repository.private }} # kilocode_change - fork: npm accepts provenance only from a public repository
           VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
           OPENVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
           SBOM_ENFORCE: ${{ vars.SBOM_ENFORCE }} # kilocode_change
+          # kilocode_change start - fork: npm publishes with a token, or through trusted publishing once
+          # the packages exist; without either, the release skips npm (script/kilocode/channels.ts)
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TRUSTED_PUBLISHING: ${{ vars.NPM_TRUSTED_PUBLISHING }}
+          # kilocode_change end

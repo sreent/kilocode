@@ -485,7 +485,7 @@ export async function ociImage(input: {
   }
 }
 
-export const DISTRIBUTION_CHECKSUMS = "kilo-cli-distribution-SHA256SUMS"
+export const DISTRIBUTION_CHECKSUMS = `${Brand.command}-cli-distribution-SHA256SUMS`
 
 /**
  * Record evidence for the npm and container distributions of a release.
@@ -527,7 +527,7 @@ export async function distribution(input: {
   }
 }
 
-export const CHECKSUMS = "kilo-cli-SHA256SUMS"
+export const CHECKSUMS = `${Brand.command}-cli-SHA256SUMS`
 
 /**
  * Produce the full evidence set for a CLI release and report its completeness.

@@ -54,7 +54,7 @@ CLI releases also try to open this pin bump PR automatically after publishing. T
 
 1. Open the GitHub Actions workflow:
 
-[https://github.com/Kilo-Org/kilocode/actions/workflows/prepare-jetbrains-release.yml](https://github.com/Kilo-Org/kilocode/actions/workflows/prepare-jetbrains-release.yml)
+[https://github.com/sreent/kilocode/actions/workflows/prepare-jetbrains-release.yml](https://github.com/sreent/kilocode/actions/workflows/prepare-jetbrains-release.yml)
 
 2. Click **Run workflow**. This immediately creates `jetbrains/v<version>` at the current `origin/main` commit, then creates or updates the release PR.
 
@@ -121,7 +121,7 @@ jetbrains/v<version>
 
 Then it publishes from that tag:
 
-[https://github.com/Kilo-Org/kilocode/actions/workflows/publish-jetbrains.yml](https://github.com/Kilo-Org/kilocode/actions/workflows/publish-jetbrains.yml)
+[https://github.com/sreent/kilocode/actions/workflows/publish-jetbrains.yml](https://github.com/sreent/kilocode/actions/workflows/publish-jetbrains.yml)
 
 Publishing behavior:
 
@@ -132,12 +132,12 @@ Publishing behavior:
 
 The workflow checks out `jetbrains/v<version>` for verification, signing, and Marketplace publishing. It overlays the reviewed `packages/kilo-jetbrains/gradle.properties` and `packages/kilo-jetbrains/CHANGELOG.md` from the merged PR before rendering release notes and before `publishPlugin`, so the Marketplace plugin version, Marketplace notes, and GitHub Release use the reviewed metadata.
 
-After Marketplace publishing succeeds, `publish-jetbrains` dispatches `publish-jetbrains-bundled`. The bundled workflow rebuilds the same `jetbrains/v<version>` tag with `-Pkilo.cli.bundled=true`, signs and verifies the all-platform plugin ZIP, then uploads `kilo-code-<version>-bundled.zip` to the same GitHub Release. Bundled builds keep `kilo.cli.pinned=true`; the build flag only embeds the pinned CLI release assets so runtime extracts the bundled current-platform CLI instead of downloading it.
+After Marketplace publishing succeeds, `publish-jetbrains` dispatches `publish-jetbrains-bundled`. The bundled workflow rebuilds the same `jetbrains/v<version>` tag with `-Pkilo.cli.bundled=true`, signs and verifies the all-platform plugin ZIP, then uploads `tucode-<version>-bundled.zip` to the same GitHub Release. Bundled builds keep `kilo.cli.pinned=true`; the build flag only embeds the pinned CLI release assets so runtime extracts the bundled current-platform CLI instead of downloading it.
 
 Stable bundled releases also publish the GitHub Pages custom plugin repository XML:
 
 ```text
-https://kilo-org.github.io/kilocode/jetbrains/updatePlugins.xml
+https://sreent.github.io/kilocode/jetbrains/updatePlugins.xml
 ```
 
 RC bundled ZIPs are attached to prereleases for install-from-disk testing, but they do not update the stable custom repository XML.

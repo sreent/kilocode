@@ -5,7 +5,8 @@ import { existsSync } from "node:fs"
 import { Script } from "@opencode-ai/script"
 import { Manifest, Policy } from "../../../script/kilocode/sbom/index"
 import { upload } from "../../../script/kilocode/release"
-import { CHECKSUMS } from "./sbom"
+import { Channels } from "../../../script/kilocode/channels"
+import { CHECKSUMS, VSIX } from "./sbom"
 
 const prerelease = process.env.KILO_PRE_RELEASE === "true"
 
@@ -32,7 +33,7 @@ const targets = [
 
 const vsixFiles: string[] = []
 for (const target of targets) {
-  const vsixPath = join(outDir, `kilo-vscode-${target}.vsix`)
+  const vsixPath = join(outDir, `${VSIX}${target}.vsix`)
   if (!existsSync(vsixPath)) {
     throw new Error(`VSIX file not found: ${vsixPath}`)
   }
@@ -48,26 +49,34 @@ const evidence = await verifyEvidence()
 
 const flag = prerelease ? ["--pre-release"] : []
 
-for (const target of targets) {
-  const vsixPath = join(outDir, `kilo-vscode-${target}.vsix`)
-  console.log(`\n🚀 Publishing ${target} to VS Code Marketplace${prerelease ? " (pre-release)" : ""}...`)
-  await retry(() => $`vsce publish ${flag} --skip-duplicate --packagePath ${vsixPath}`, {
-    attempts: 3,
-    delay: 30_000,
-    label: `vsce publish ${target}`,
-  })
-  console.log(`  ✅ Published ${target} to VS Code Marketplace`)
+// A store without credentials is skipped, so a release can ship the VSIX files on GitHub alone.
+if (!Channels.vscode) console.log("\nVS Code Marketplace: skipped, since VSCE_PAT isn't set")
+if (!Channels.openvsx) console.log("\nOpen VSX: skipped, since OPENVSX_TOKEN isn't set")
 
-  console.log(`\n📤 Publishing ${target} to Open VSX${prerelease ? " (pre-release)" : ""}...`)
-  await retry(
-    () => $`npx ovsx publish ${flag} --skip-duplicate --pat ${process.env.OPENVSX_TOKEN} --packagePath ${vsixPath}`,
-    {
+for (const target of targets) {
+  const vsixPath = join(outDir, `${VSIX}${target}.vsix`)
+  if (Channels.vscode) {
+    console.log(`\n🚀 Publishing ${target} to VS Code Marketplace${prerelease ? " (pre-release)" : ""}...`)
+    await retry(() => $`vsce publish ${flag} --skip-duplicate --packagePath ${vsixPath}`, {
       attempts: 3,
       delay: 30_000,
-      label: `ovsx publish ${target}`,
-    },
-  )
-  console.log(`  ✅ Published ${target} to Open VSX`)
+      label: `vsce publish ${target}`,
+    })
+    console.log(`  ✅ Published ${target} to VS Code Marketplace`)
+  }
+
+  if (Channels.openvsx) {
+    console.log(`\n📤 Publishing ${target} to Open VSX${prerelease ? " (pre-release)" : ""}...`)
+    await retry(
+      () => $`npx ovsx publish ${flag} --skip-duplicate --pat ${process.env.OPENVSX_TOKEN} --packagePath ${vsixPath}`,
+      {
+        attempts: 3,
+        delay: 30_000,
+        label: `ovsx publish ${target}`,
+      },
+    )
+    console.log(`  ✅ Published ${target} to Open VSX`)
+  }
 }
 
 if (Script.release) {

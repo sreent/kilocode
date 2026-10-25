@@ -36,7 +36,7 @@ env:
 jobs:
   publish:
     if: >-
-      github.repository == 'Kilo-Org/kilocode' &&
+      github.repository == 'sreent/kilocode' &&
       (
         (
           github.event_name == 'pull_request' &&
@@ -47,7 +47,7 @@ jobs:
         ) ||
         github.event_name == 'workflow_dispatch'
       )
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04 # fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     steps:
       - name: Checkout merged release PR
         uses: actions/checkout@v6
@@ -244,7 +244,7 @@ jobs:
           VERSION: ${{ steps.release.outputs.version }}
           KIND: ${{ steps.release.outputs.kind }}
           ARCHIVE: ${{ steps.archive.outputs.path }}
-          EVIDENCE: ${{ steps.archive.outputs.path }}.cdx.json packages/kilo-jetbrains/build/distributions/jetbrains-sbom-evidence.json packages/kilo-jetbrains/build/distributions/kilo-jetbrains-SHA256SUMS
+          EVIDENCE: ${{ steps.archive.outputs.path }}.cdx.json packages/kilo-jetbrains/build/distributions/jetbrains-sbom-evidence.json packages/kilo-jetbrains/build/distributions/tucode-jetbrains-SHA256SUMS
           NOTES: packages/kilo-jetbrains/build/release-notes.md
 
       - name: Dispatch bundled GitHub release build
@@ -269,5 +269,5 @@ jobs:
             packages/kilo-jetbrains/build/distributions/*.zip
             packages/kilo-jetbrains/build/distributions/*.cdx.json
             packages/kilo-jetbrains/build/distributions/jetbrains-sbom-evidence.json
-            packages/kilo-jetbrains/build/distributions/kilo-jetbrains-SHA256SUMS
+            packages/kilo-jetbrains/build/distributions/tucode-jetbrains-SHA256SUMS
           if-no-files-found: ignore

@@ -8,7 +8,7 @@ import {
   copyTreeSitterResources,
 } from "../src/services/cli-backend/cli-resources"
 import { ensureFfmpegForTarget } from "./ffmpeg-helper"
-import { evidence as sbom } from "./sbom"
+import { VSIX, evidence as sbom } from "./sbom"
 import { Brand } from "../src/brand"
 
 const packageJsonPath = join(import.meta.dir, "..", "package.json")
@@ -97,7 +97,7 @@ for (const config of targets) {
   await ensureFfmpegForTarget(config.target, binDir)
 
   console.log(`  📦 Packaging .vsix for ${config.target}${prerelease ? " (pre-release)" : ""}...`)
-  const vsixPath = join(outDir, `kilo-vscode-${config.target}.vsix`)
+  const vsixPath = join(outDir, `${VSIX}${config.target}.vsix`)
   const args = ["--no-dependencies", "--skip-license", "--target", config.target, "-o", vsixPath]
   if (prerelease) args.push("--pre-release")
   await $`vsce package ${args}`.env({

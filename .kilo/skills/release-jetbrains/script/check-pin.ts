@@ -5,7 +5,7 @@ import semver from "semver"
 import { parseArgs } from "util"
 import { latest, missing } from "./pin-common"
 
-const repo = process.env.GH_REPO ?? process.env.GITHUB_REPOSITORY ?? "Kilo-Org/kilocode"
+const repo = process.env.GH_REPO ?? process.env.GITHUB_REPOSITORY ?? "sreent/kilocode"
 
 const { values } = parseArgs({
   args: Bun.argv.slice(2),

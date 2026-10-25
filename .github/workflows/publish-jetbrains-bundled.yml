@@ -25,8 +25,8 @@ env:
 
 jobs:
   validate:
-    if: github.repository == 'Kilo-Org/kilocode'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    if: github.repository == 'sreent/kilocode'
+    runs-on: ubuntu-24.04 # fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     permissions:
       contents: read
       pull-requests: read
@@ -64,8 +64,8 @@ jobs:
 
   bundle:
     needs: validate
-    if: github.repository == 'Kilo-Org/kilocode'
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    if: github.repository == 'sreent/kilocode'
+    runs-on: ubuntu-24.04 # fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     permissions:
       actions: read
       artifact-metadata: write
@@ -183,7 +183,7 @@ jobs:
             printf '%s\n' "${signed[@]}" >&2
             exit 1
           fi
-          asset="kilo-code-${VERSION}-bundled.zip"
+          asset="tucode-${VERSION}-bundled.zip"
           dest="packages/kilo-jetbrains/build/release/$asset"
           mkdir -p "$(dirname "$dest")"
           cp "${signed[0]}" "$dest"
@@ -259,7 +259,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.validate.outputs.tag }}
           ARCHIVE: ${{ steps.archive.outputs.path }}
-          EVIDENCE: ${{ steps.sbom.outputs.sidecar }} packages/kilo-jetbrains/build/release/jetbrains-sbom-evidence.json packages/kilo-jetbrains/build/release/kilo-jetbrains-SHA256SUMS
+          EVIDENCE: ${{ steps.sbom.outputs.sidecar }} packages/kilo-jetbrains/build/release/jetbrains-sbom-evidence.json packages/kilo-jetbrains/build/release/tucode-jetbrains-SHA256SUMS
 
       - name: Resolve bundled asset URL
         id: asset
@@ -366,14 +366,16 @@ jobs:
             packages/kilo-jetbrains/build/release/*.zip
             packages/kilo-jetbrains/build/release/*.cdx.json
             packages/kilo-jetbrains/build/release/jetbrains-sbom-evidence.json
-            packages/kilo-jetbrains/build/release/kilo-jetbrains-SHA256SUMS
+            packages/kilo-jetbrains/build/release/tucode-jetbrains-SHA256SUMS
             pages/jetbrains/updatePlugins.xml
           if-no-files-found: ignore
 
   pages:
     needs: bundle
-    if: needs.bundle.outputs.kind == 'stable'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    # fork: a private repository's release files download only with access to it, so a plugin
+    # repository that links to them would be of no use.
+    if: needs.bundle.outputs.kind == 'stable' && !github.event.repository.private
+    runs-on: ubuntu-24.04 # fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     permissions:
       actions: read
       id-token: write

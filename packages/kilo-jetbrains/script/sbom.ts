@@ -24,6 +24,7 @@ import path from "node:path"
 import { Artifact, Deps, Manifest, Policy, Scan, compose, serialize } from "../../../script/kilocode/sbom/index"
 import type { Component, Gap, Manifest as ManifestType } from "../../../script/kilocode/sbom/index"
 import * as Cli from "../../opencode/script/kilocode/sbom"
+import brand from "../../../brand/brand.json"
 
 const root = path.resolve(import.meta.dir, "..")
 const repo = path.resolve(root, "../..")
@@ -277,7 +278,7 @@ export async function plugin(input: Options) {
   }
 }
 
-export const CHECKSUMS = "kilo-jetbrains-SHA256SUMS"
+export const CHECKSUMS = `${brand.command}-jetbrains-SHA256SUMS`
 
 /**
  * Describe one plugin ZIP and record it in the release manifest.

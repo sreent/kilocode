@@ -1,6 +1,7 @@
 import { $ } from "bun"
 import semver from "semver"
 import path from "path"
+import brand from "../../../brand/brand.json" // kilocode_change
 
 const rootPkgPath = path.resolve(import.meta.dir, "../../../package.json")
 const rootPkg = await Bun.file(rootPkgPath).json()
@@ -57,11 +58,15 @@ function compareVersion(
   return a.patch - b.patch
 }
 
+// tucode: the brand's CLI package, and before its first publish, the CLI version in this repository
 async function fetchLatest() {
-  const data: any = await fetch("https://registry.npmjs.org/@kilocode/cli/latest").then((res) => {
-    if (!res.ok) throw new Error(res.statusText)
-    return res.json()
-  })
+  const res = await fetch(`https://registry.npmjs.org/${brand.npm.cli}/latest`)
+  if (res.status === 404) {
+    const cli: { version: string } = await Bun.file(path.resolve(import.meta.dir, "../../opencode/package.json")).json()
+    return cli.version
+  }
+  if (!res.ok) throw new Error(res.statusText)
+  const data: any = await res.json()
   return data.version as string
 }
 
