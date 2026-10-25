@@ -54,7 +54,8 @@ test("the server backs up when one is due, keeps the newest, and a restore bring
         const kept = yield* Backup.list(where.backups)
         expect(kept.map((backup) => backup.path)).toContain(middle!)
         expect(kept).toHaveLength(2)
-        expect(fs.statSync(middle!).mode & 0o777).toBe(0o600)
+        // Windows has no POSIX modes: Node reports 0o666 for any writable file.
+        if (process.platform !== "win32") expect(fs.statSync(middle!).mode & 0o777).toBe(0o600)
         return middle!
       }),
     ),
