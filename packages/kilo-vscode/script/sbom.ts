@@ -95,10 +95,10 @@ export async function vsix(input: { file: string; target: string; release: Relea
   const bom = compose({
     subject,
     product: {
-      name: "kilo-code",
+      name: Brand.name,
       version: input.release.version,
       type: "application",
-      description: `Kilo Code VS Code extension for ${input.target}`,
+      description: `${Brand.name} VS Code extension for ${input.target}`,
     },
     target: { platform: input.target, ...constraint(input.target) },
     build: {

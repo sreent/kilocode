@@ -167,18 +167,18 @@ async function clis(input: {
     const ref = `kilocode:cli:${platform}@${input.version}`
     components.push({
       type: "application",
-      name: `kilo-cli-${platform}`,
+      name: `${brand.command}-cli-${platform}`,
       version: input.version,
       ref,
-      purl: Deps.purl(`@kilocode/cli-${platform}`, input.version),
+      purl: Deps.purl(`${brand.npm.cli}-${platform}`, input.version),
       platform,
       delivery,
-      supplier: "Kilo Code",
+      supplier: brand.name,
       ...(digest ? { hashes: [{ alg: "SHA-256" as const, content: digest }] } : {}),
       description:
         delivery === "contained"
-          ? "Kilo CLI embedded in kilo-cli.zip and extracted for the current platform"
-          : "Kilo CLI release asset downloaded on first connect",
+          ? `${brand.name} CLI embedded in kilo-cli.zip and extracted for the current platform`
+          : `${brand.name} CLI release asset downloaded on first connect`,
     })
 
     const graph = await Cli.graph({ target: Cli.target(platform), subject: ref, lock: input.lock })
@@ -237,10 +237,10 @@ export async function plugin(input: Options) {
   const bom = compose({
     subject,
     product: {
-      name: "kilo-code-jetbrains",
+      name: `${brand.command}-jetbrains`,
       version: input.version,
       type: "application",
-      description: `Kilo Code JetBrains plugin (${input.variant})`,
+      description: `${brand.name} JetBrains plugin (${input.variant})`,
     },
     target: { platform: input.variant === "bundled" ? "all" : "any" },
     build: {

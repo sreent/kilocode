@@ -4,6 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import * as JetBrains from "../../packages/kilo-jetbrains/script/sbom"
 import * as VsCode from "../../packages/kilo-vscode/script/sbom"
+import brand from "../../brand/brand.json"
 import { validate } from "./sbom/index"
 
 const release = { version: "9.9.9", channel: "latest" }
@@ -88,7 +89,7 @@ describe("jetbrains plugin", () => {
         value: "Bun runtime for CLI 9.9.9 requires release-specific evidence",
       })
       for (const platform of JetBrains.PLATFORMS) {
-        expect(scope(bom, `kilo-cli-${platform}`)).toBe("optional")
+        expect(scope(bom, `${brand.command}-cli-${platform}`)).toBe("optional")
       }
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
@@ -150,7 +151,7 @@ describe("jetbrains plugin", () => {
 
       expect(await validate(bom)).toEqual([])
       for (const platform of JetBrains.PLATFORMS) {
-        expect(scope(bom, `kilo-cli-${platform}`)).toBe("required")
+        expect(scope(bom, `${brand.command}-cli-${platform}`)).toBe("required")
       }
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
