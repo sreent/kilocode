@@ -581,7 +581,8 @@ export const dict = {
   "settings.config.title": "Otvori {{scope}} TU Code konfiguracijsku datoteku",
   "settings.config.placeholder":
     "Konfiguracijske datoteke se spajaju po redu; datoteke označene kao učitane trenutno utiču na postavke.",
-  "settings.config.noWorkspace": "Otvorite fasciklu radnog prostora da uredite lokalnu TU Code konfiguracijsku datoteku.",
+  "settings.config.noWorkspace":
+    "Otvorite fasciklu radnog prostora da uredite lokalnu TU Code konfiguracijsku datoteku.",
   "settings.config.openFailed": "Nije uspjelo otvaranje {{scope}} TU Code konfiguracijske datoteke: {{message}}",
   "settings.config.source.xdg": "XDG globalna konfiguracija",
   "settings.config.source.homeKilo": "Home .kilo konfiguracija",
@@ -764,7 +765,8 @@ export const dict = {
 
   "session.messages.welcome":
     "TU Code je AI asistent za programiranje. Zatražite da gradi funkcionalnosti, ispravlja greške ili objasni vašu bazu koda.",
-  "session.workspaceScope.description": "TU Code razgovor koristi samo „{{folder}}“, prvi folder u ovom radnom prostoru.",
+  "session.workspaceScope.description":
+    "TU Code razgovor koristi samo „{{folder}}“, prvi folder u ovom radnom prostoru.",
   "session.workspaceScope.alternatives":
     "Za rad s drugim folderom, otvorite ga u zasebnom prozoru ili ga dodajte kao projekt u Agent Manager.",
   "session.workspaceScope.dismiss": "Zatvori savjet o opsegu radnog prostora",

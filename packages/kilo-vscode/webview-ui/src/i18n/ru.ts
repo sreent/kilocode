@@ -232,7 +232,8 @@ export const dict = {
     "Кнопка 'Улучшить запрос' помогает сделать ваш запрос лучше, предоставляя дополнительный контекст, уточнения или переформулировку. Попробуйте ввести запрос и снова нажать кнопку, чтобы увидеть, как это работает.",
   "prompt.action.sandbox.enable": "Включить песочницу",
   "prompt.action.sandbox.disable": "Отключить песочницу",
-  "prompt.action.sandbox.enabled": "Песочница включена. Команды оболочки агента ограничены каталогами проекта и TU Code.",
+  "prompt.action.sandbox.enabled":
+    "Песочница включена. Команды оболочки агента ограничены каталогами проекта и TU Code.",
   "prompt.action.sandbox.disabled":
     "Песочница отключена. Нажмите, чтобы ограничить запись команд оболочки агента каталогами проекта и TU Code.",
   "prompt.action.sandbox.status.enabled": "Песочница включена",
@@ -689,7 +690,8 @@ export const dict = {
   "profile.organization.signedIn": "Вы вошли как {{email}} ({{role}})",
   "profile.organization.policy": "Версия политики {{version}}, обновлена {{time}}",
   "profile.organization.gateway": "Вызовы моделей {{providers}} идут через шлюз вашей организации.",
-  "profile.organization.managed": "{{org}} управляет TU Code на этом устройстве. Войдите с учётной записью организации.",
+  "profile.organization.managed":
+    "{{org}} управляет TU Code на этом устройстве. Войдите с учётной записью организации.",
   "profile.organization.connect": "Войти в собственную организацию",
   "profile.organization.url": "URL сервера",
   "profile.organization.action.signin": "Войти",

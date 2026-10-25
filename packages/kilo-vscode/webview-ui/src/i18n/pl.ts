@@ -605,7 +605,8 @@ export const dict = {
   "workStyle.choice.visibility": "Widoczność",
   "workStyle.choice.human-in-the-loop.eyebrow": "Człowiek w pętli",
   "workStyle.choice.human-in-the-loop.title": "Najpierw przejrzyj",
-  "workStyle.choice.human-in-the-loop.description": "TU Code wstrzymuje pracę i pokazuje swój plan w trakcie działania.",
+  "workStyle.choice.human-in-the-loop.description":
+    "TU Code wstrzymuje pracę i pokazuje swój plan w trakcie działania.",
   "workStyle.choice.human-in-the-loop.permissions": "Prosi o zgodę przed edycją plików lub uruchomieniem poleceń.",
   "workStyle.choice.human-in-the-loop.bash": "Prosi o pozwolenie na każde polecenie terminala.",
   "workStyle.choice.human-in-the-loop.visibility": "Rozwija rozumowanie, polecenia i zmiany do przeglądu.",

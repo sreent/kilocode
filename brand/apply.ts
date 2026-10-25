@@ -12,11 +12,22 @@
 import { Glob } from "bun"
 import fs from "node:fs"
 import path from "node:path"
+import * as prettier from "prettier"
 import brand from "./brand.json"
 import { rules } from "./rules"
 
 const root = path.resolve(import.meta.dir, "..")
 const check = process.argv.includes("--check")
+
+// A longer name can push a line past the print width. A file Prettier had formatted is formatted
+// again after the rewrite; any other file keeps the layout upstream gave it.
+const ignore = [path.join(root, ".gitignore"), path.join(root, ".prettierignore")]
+async function format(file: string, before: string, after: string) {
+  const info = await prettier.getFileInfo(file, { ignorePath: ignore })
+  if (info.ignored || !info.inferredParser) return after
+  const options = { ...(await prettier.resolveConfig(file)), filepath: file }
+  return (await prettier.check(before, options)) ? prettier.format(after, options) : after
+}
 
 // Paths no rule touches, whatever its globs match.
 const skipped = [/(^|\/)node_modules\//, /(^|\/)dist\//, /(^|\/)build\//, /(^|\/)\.git\//, /(^|\/)\.gradle\//]
@@ -61,7 +72,7 @@ for (const rule of rules(brand)) {
     const after = rule.apply(before, file)
     if (after === before) continue
     report(file, rule.name)
-    if (!check) fs.writeFileSync(target, after)
+    if (!check) fs.writeFileSync(target, await format(target, before, after))
   }
 }
 

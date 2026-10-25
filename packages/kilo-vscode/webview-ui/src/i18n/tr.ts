@@ -142,7 +142,8 @@ export const dict = {
   "provider.connect.azure.resourceName.placeholder": "örn. my-models",
   "provider.connect.azure.baseURL.label": "Azure OpenAI uç nokta URL'si",
   "provider.connect.azure.baseURL.placeholder": "örn. https://my-models.openai.azure.com/openai",
-  "provider.connect.oauth.code.visit.prefix": "Hesabınızı bağlamak ve TU Code'da {{provider}} modellerini kullanmak için ",
+  "provider.connect.oauth.code.visit.prefix":
+    "Hesabınızı bağlamak ve TU Code'da {{provider}} modellerini kullanmak için ",
   "provider.connect.oauth.code.visit.link": "bu bağlantıya",
   "provider.connect.oauth.code.visit.suffix": " tıklayarak yetkilendirme kodunuzu alın.",
   "provider.connect.oauth.code.label": "{{method}} yetkilendirme kodu",
@@ -1222,7 +1223,8 @@ export const dict = {
   "settings.display.username.title": "Kullanıcı Adı",
   "settings.display.username.description": "Sohbetlerde görüntülenen özel kullanıcı adı",
   "settings.display.fontSize.title": "Yazı Tipi Boyutu",
-  "settings.display.fontSize.description": "TU Code webview UI yazı tipi boyutunu VS Code'dan bağımsız olarak ayarlayın.",
+  "settings.display.fontSize.description":
+    "TU Code webview UI yazı tipi boyutunu VS Code'dan bağımsız olarak ayarlayın.",
   "settings.display.reasoningDisplay.title": "Akıl Yürütme Blokları",
   "settings.display.reasoningDisplay.description":
     "Akıl yürütme bloklarının nasıl başlayacağını seçin. Genişletilmiş tam metni gösterir, Önizleme kısa ve kaydırılabilir bir önizlemeyle sınırlar, Başlık ise siz açana kadar yalnızca başlığı ve akış göstergesini gösterir.",

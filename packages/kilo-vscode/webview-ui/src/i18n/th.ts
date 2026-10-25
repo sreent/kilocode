@@ -47,7 +47,8 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "ดำเนินการต่อ",
   "provider.anaconda.action.manage": "จัดการ / รีเฟรช",
   "provider.anaconda.toast.refreshed.title": "รีเฟรช Anaconda Desktop แล้ว",
-  "provider.anaconda.toast.refreshed.description": "เซิร์ฟเวอร์ในเครื่องและโมเดลที่ใช้งานอยู่เป็นปัจจุบันใน TU Code แล้ว",
+  "provider.anaconda.toast.refreshed.description":
+    "เซิร์ฟเวอร์ในเครื่องและโมเดลที่ใช้งานอยู่เป็นปัจจุบันใน TU Code แล้ว",
   "settings.providers.note.anacondaDesktop": "เรียกใช้โมเดลที่ให้บริการในเครื่องโดย Anaconda Desktop",
   "settings.providers.tag.local": "ในเครื่อง",
 } as const
@@ -150,7 +151,8 @@ export const dict = {
   "provider.connect.oauth.code.required": "ต้องใช้รหัสการอนุญาต",
   "provider.connect.oauth.auto.visit.prefix": "เยี่ยมชม ",
   "provider.connect.oauth.auto.visit.link": "ลิงก์นี้",
-  "provider.connect.oauth.auto.visit.suffix": " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน TU Code",
+  "provider.connect.oauth.auto.visit.suffix":
+    " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน TU Code",
   "provider.connect.oauth.auto.confirmationCode": "รหัสยืนยัน",
   "provider.connect.toast.connected.title": "{{provider}} ที่เชื่อมต่อแล้ว",
   "provider.connect.toast.connected.description": "โมเดล {{provider}} พร้อมใช้งานแล้ว",
@@ -1425,7 +1427,8 @@ export const dict = {
   "settings.experimental.browserAutomation.systemChrome.description":
     "ใช้ Google Chrome ที่ติดตั้งไว้สำหรับเบราว์เซอร์ในตัว ปิดใช้งานเฉพาะเมื่อติดตั้งเบราว์เซอร์ Playwright Chromium ที่เข้ากันได้ไว้แล้วเท่านั้น",
   "settings.experimental.browserLinks.title": "เปิดลิงก์ใน",
-  "settings.experimental.browserLinks.description": "เลือกว่าเว็บลิงก์จะเปิดจากแชท TU Code ที่ใด ต้องใช้เบราว์เซอร์ในตัว",
+  "settings.experimental.browserLinks.description":
+    "เลือกว่าเว็บลิงก์จะเปิดจากแชท TU Code ที่ใด ต้องใช้เบราว์เซอร์ในตัว",
   "settings.experimental.browserLinks.external": "เบราว์เซอร์ของระบบ",
   "settings.experimental.browserLinks.integrated": "เบราว์เซอร์ในตัว",
   "chat.search.searchingHistory": "กำลังค้นหาข้อความก่อนหน้า…",

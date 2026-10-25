@@ -234,7 +234,8 @@ export const dict = {
     "Кнопка 'Покращити запит' допомагає вдосконалити ваш запит, надаючи додатковий контекст, уточнення або перефразування. Введіть запит тут і натисніть кнопку ще раз, щоб побачити, як це працює.",
   "prompt.action.sandbox.enable": "Увімкнути пісочницю",
   "prompt.action.sandbox.disable": "Вимкнути пісочницю",
-  "prompt.action.sandbox.enabled": "Пісочницю увімкнено. Команди оболонки агента обмежені каталогами проєкту та TU Code.",
+  "prompt.action.sandbox.enabled":
+    "Пісочницю увімкнено. Команди оболонки агента обмежені каталогами проєкту та TU Code.",
   "prompt.action.sandbox.disabled":
     "Пісочницю вимкнено. Натисніть, щоб обмежити запис команд оболонки агента каталогами проєкту та TU Code.",
   "prompt.action.sandbox.status.enabled": "Пісочницю увімкнено",
@@ -530,7 +531,8 @@ export const dict = {
   "settings.config.title": "Відкрити файл конфігурації TU Code ({{scope}})",
   "settings.config.placeholder":
     "Файли конфігурації об'єднуються по порядку; файли, позначені як завантажені, наразі впливають на налаштування.",
-  "settings.config.noWorkspace": "Відкрийте папку робочої області, щоб відредагувати локальний файл конфігурації TU Code.",
+  "settings.config.noWorkspace":
+    "Відкрийте папку робочої області, щоб відредагувати локальний файл конфігурації TU Code.",
   "settings.config.openFailed": "Не вдалося відкрити файл конфігурації TU Code ({{scope}}): {{message}}",
   "settings.config.source.xdg": "Глобальна конфігурація XDG",
   "settings.config.source.homeKilo": "Конфігурація .kilo (Home)",

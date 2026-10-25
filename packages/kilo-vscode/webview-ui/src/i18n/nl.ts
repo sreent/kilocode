@@ -97,7 +97,8 @@ export const dict = {
     "Gesprek teruggedraaid. De herstelstatus van de werkruimte is niet beschikbaar voor deze eerdere terugdraaiing.",
   "revert.banner.workspace.enableSnapshots": "Snapshots inschakelen",
   "revert.disabled.agentBusy": "Wacht tot de agent klaar is",
-  "revert.error.body": "De repository is mogelijk in gebruik. Probeer het opnieuw of bekijk de TU Code-logs voor details.",
+  "revert.error.body":
+    "De repository is mogelijk in gebruik. Probeer het opnieuw of bekijk de TU Code-logs voor details.",
   "command.session.compact": "Sessie comprimeren",
   "command.session.export": "Sessietranscript exporteren",
 
@@ -753,7 +754,8 @@ export const dict = {
 
   "session.messages.welcome":
     "TU Code is een AI-codeerassistent. Vraag het om features te bouwen, bugs op te lossen of je codebase uit te leggen.",
-  "session.workspaceScope.description": "De TU Code-chat gebruikt alleen ‘{{folder}}’, de eerste map in deze werkruimte.",
+  "session.workspaceScope.description":
+    "De TU Code-chat gebruikt alleen ‘{{folder}}’, de eerste map in deze werkruimte.",
   "session.workspaceScope.alternatives":
     "Om met een andere map te werken, open je deze in een eigen venster of voeg je deze als project toe in Agent Manager.",
   "session.workspaceScope.dismiss": "Hint over het bereik van de werkruimte verbergen",
@@ -1234,7 +1236,8 @@ export const dict = {
   "settings.display.username.title": "Gebruikersnaam",
   "settings.display.username.description": "Aangepaste gebruikersnaam weergegeven in gesprekken",
   "settings.display.fontSize.title": "Lettergrootte",
-  "settings.display.fontSize.description": "Pas de lettergrootte van de TU Code webview UI onafhankelijk van VS Code aan.",
+  "settings.display.fontSize.description":
+    "Pas de lettergrootte van de TU Code webview UI onafhankelijk van VS Code aan.",
   "settings.display.reasoningDisplay.title": "Redeneringsblokken",
   "settings.display.reasoningDisplay.description":
     "Kies hoe redeneringsblokken starten. Uitgeklapt toont de volledige tekst, Voorbeeld beperkt het tot een kort, scrollbaar voorbeeld, en Kop toont alleen de titel en streamingindicator totdat je het opent.",

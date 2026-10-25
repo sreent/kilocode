@@ -48,7 +48,8 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "Continuar de todos modos",
   "provider.anaconda.action.manage": "Administrar / Actualizar",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop actualizado",
-  "provider.anaconda.toast.refreshed.description": "El servidor local activo y los modelos están actualizados en TU Code.",
+  "provider.anaconda.toast.refreshed.description":
+    "El servidor local activo y los modelos están actualizados en TU Code.",
   "settings.providers.note.anacondaDesktop": "Ejecuta un modelo servido localmente por Anaconda Desktop.",
   "settings.providers.tag.local": "Local",
 } as const

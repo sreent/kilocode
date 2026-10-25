@@ -621,7 +621,8 @@ export const dict = {
   "settings.aboutKiloCode.title": "Informazioni su TU Code",
   "session.messages.welcome":
     "TU Code è un assistente AI per il coding. Chiedigli di creare feature, correggere bug o spiegare il codebase.",
-  "session.workspaceScope.description": "La chat di TU Code usa solo «{{folder}}», la prima cartella di questo workspace.",
+  "session.workspaceScope.description":
+    "La chat di TU Code usa solo «{{folder}}», la prima cartella di questo workspace.",
   "session.workspaceScope.alternatives":
     "Per lavorare con un'altra cartella, aprila in una finestra separata o aggiungila come progetto in Agent Manager.",
   "session.workspaceScope.dismiss": "Nascondi il suggerimento sull'ambito del workspace",

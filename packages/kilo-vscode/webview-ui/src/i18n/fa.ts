@@ -606,7 +606,8 @@ export const dict = {
   "profile.organization.signedIn": "وارد شده با {{email}} ({{role}})",
   "profile.organization.policy": "نسخه سیاست {{version}}، به‌روزرسانی در {{time}}",
   "profile.organization.gateway": "فراخوانی‌های مدل به {{providers}} از درگاه سازمان شما عبور می‌کنند.",
-  "profile.organization.managed": "{{org}} مدیریت TU Code را روی این دستگاه بر عهده دارد. با حساب سازمانی خود وارد شوید.",
+  "profile.organization.managed":
+    "{{org}} مدیریت TU Code را روی این دستگاه بر عهده دارد. با حساب سازمانی خود وارد شوید.",
   "profile.organization.connect": "ورود به سازمان خودمیزبان",
   "profile.organization.url": "نشانی سرور",
   "profile.organization.action.signin": "ورود",
@@ -715,7 +716,8 @@ export const dict = {
 
   "session.messages.welcome":
     "TU Code یک دستیار هوش مصنوعی برای کدنویسی است. از آن بخواهید ویژگی‌ها بسازد، باگ‌ها را رفع کند یا کدبیس شما را توضیح دهد.",
-  "session.workspaceScope.description": "گفتگوی TU Code فقط از «{{folder}}»، اولین پوشه در این فضای کاری، استفاده می‌کند.",
+  "session.workspaceScope.description":
+    "گفتگوی TU Code فقط از «{{folder}}»، اولین پوشه در این فضای کاری، استفاده می‌کند.",
   "session.workspaceScope.alternatives":
     "برای کار با پوشه‌ای دیگر، آن را در پنجره‌ای جداگانه باز کنید یا به‌عنوان پروژه به Agent Manager اضافه کنید.",
   "session.workspaceScope.dismiss": "بستن راهنمای محدودهٔ فضای کاری",

@@ -48,7 +48,8 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "このまま続行",
   "provider.anaconda.action.manage": "管理 / 更新",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop を更新しました",
-  "provider.anaconda.toast.refreshed.description": "アクティブなローカルサーバーとモデルが TU Code で最新になりました。",
+  "provider.anaconda.toast.refreshed.description":
+    "アクティブなローカルサーバーとモデルが TU Code で最新になりました。",
   "settings.providers.note.anacondaDesktop": "Anaconda Desktop によってローカルで提供されるモデルを実行します。",
   "settings.providers.tag.local": "ローカル",
 } as const
@@ -575,7 +576,8 @@ export const dict = {
   "settings.config.title": "{{scope}}のTU Code構成ファイルを開く",
   "settings.config.placeholder":
     "構成ファイルは順番にマージされます。読み込み済みとしてマークされているファイルが現在設定に影響しています。",
-  "settings.config.noWorkspace": "ローカルのTU Code構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
+  "settings.config.noWorkspace":
+    "ローカルのTU Code構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
   "settings.config.openFailed": "{{scope}}のTU Code構成ファイルを開けませんでした: {{message}}",
   "settings.config.source.xdg": "XDGグローバル構成",
   "settings.config.source.homeKilo": "Homeの.kilo構成",

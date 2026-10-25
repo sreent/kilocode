@@ -21,7 +21,8 @@ export const anacondaDesktopDict = {
     "Öffnen Sie Anaconda Desktop, schließen Sie die Einrichtung ab und melden Sie sich an. Wählen Sie dann Erneut prüfen.",
   "provider.anaconda.state.invalidConfig":
     "Die Einrichtung von Anaconda Desktop ist unvollständig. Öffnen Sie Desktop, schließen Sie die Einrichtung ab und starten Sie es bei Bedarf neu.",
-  "provider.anaconda.state.signedOut": "Öffnen Sie Anaconda Desktop und melden Sie sich an, bevor Sie TU Code verbinden.",
+  "provider.anaconda.state.signedOut":
+    "Öffnen Sie Anaconda Desktop und melden Sie sich an, bevor Sie TU Code verbinden.",
   "provider.anaconda.state.unauthorized":
     "TU Code konnte nicht auf Anaconda Desktop zugreifen. Öffnen Sie Desktop, melden Sie sich erneut an und starten Sie es bei Bedarf neu.",
   "provider.anaconda.state.unavailable":
@@ -1290,7 +1291,8 @@ export const dict = {
   "settings.display.username.title": "Benutzername",
   "settings.display.username.description": "Benutzerdefinierter Benutzername in Gesprächen",
   "settings.display.fontSize.title": "Schriftgröße",
-  "settings.display.fontSize.description": "Passen Sie die Schriftgröße der TU Code webview UI unabhängig von VS Code an.",
+  "settings.display.fontSize.description":
+    "Passen Sie die Schriftgröße der TU Code webview UI unabhängig von VS Code an.",
   "settings.display.reasoningDisplay.title": "Reasoning-Blöcke",
   "settings.display.reasoningDisplay.description":
     "Wählen Sie, wie Reasoning-Blöcke starten. Ausgeklappt zeigt den vollständigen Text, Vorschau begrenzt ihn auf eine kurze scrollbare Vorschau, und Überschrift zeigt nur den Titel und den Streaming-Indikator, bis Sie den Block öffnen.",

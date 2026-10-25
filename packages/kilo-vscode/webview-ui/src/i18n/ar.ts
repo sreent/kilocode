@@ -1419,7 +1419,8 @@ export const dict = {
   "settings.experimental.browserAutomation.systemChrome.description":
     "استخدام Google Chrome المثبّت للمتصفح المدمج. عطّله فقط عند تثبيت متصفح Playwright Chromium متوافق.",
   "settings.experimental.browserLinks.title": "فتح الروابط في",
-  "settings.experimental.browserLinks.description": "اختر مكان فتح روابط الويب من محادثات TU Code. يتطلب المتصفح المدمج.",
+  "settings.experimental.browserLinks.description":
+    "اختر مكان فتح روابط الويب من محادثات TU Code. يتطلب المتصفح المدمج.",
   "settings.experimental.browserLinks.external": "متصفح النظام",
   "settings.experimental.browserLinks.integrated": "المتصفح المدمج",
   "chat.search.searchingHistory": "جارٍ البحث في الرسائل السابقة…",

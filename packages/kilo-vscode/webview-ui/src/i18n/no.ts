@@ -653,7 +653,8 @@ export const dict = {
   "profile.organization.signedIn": "Pålogget som {{email}} ({{role}})",
   "profile.organization.policy": "Policyversjon {{version}}, oppdatert {{time}}",
   "profile.organization.gateway": "Modellkall til {{providers}} går gjennom organisasjonens gateway.",
-  "profile.organization.managed": "{{org}} administrerer TU Code på denne enheten. Logg på med organisasjonskontoen din.",
+  "profile.organization.managed":
+    "{{org}} administrerer TU Code på denne enheten. Logg på med organisasjonskontoen din.",
   "profile.organization.connect": "Logg på en selvdriftet organisasjon",
   "profile.organization.url": "Server-URL",
   "profile.organization.action.signin": "Logg på",
@@ -1456,5 +1457,6 @@ export const dict = {
   "chat.search.searchingHistory": "Søker i tidligere meldinger…",
   "browserTab.noSession":
     "Åpne nettleseren fra en økt for å forhåndsvise en lokal applikasjon eller en offentlig HTTPS-side.",
-  "browserTab.disabled": "Den integrerte nettleseren er deaktivert. Aktiver den i TU Code-innstillinger > Eksperimentelt.",
+  "browserTab.disabled":
+    "Den integrerte nettleseren er deaktivert. Aktiver den i TU Code-innstillinger > Eksperimentelt.",
 } satisfies Partial<Record<Keys, string>>

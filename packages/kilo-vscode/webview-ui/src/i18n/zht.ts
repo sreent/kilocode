@@ -146,7 +146,8 @@ export const dict = {
   "provider.connect.oauth.code.required": "授權碼為必填",
   "provider.connect.oauth.auto.visit.prefix": "造訪 ",
   "provider.connect.oauth.auto.visit.link": "此連結",
-  "provider.connect.oauth.auto.visit.suffix": " 並輸入以下程式碼，以連線你的帳戶並在 TU Code 中使用 {{provider}} 模型。",
+  "provider.connect.oauth.auto.visit.suffix":
+    " 並輸入以下程式碼，以連線你的帳戶並在 TU Code 中使用 {{provider}} 模型。",
   "provider.connect.oauth.auto.confirmationCode": "確認碼",
   "provider.connect.toast.connected.title": "{{provider}} 已連線",
   "provider.connect.toast.connected.description": "現在可以使用 {{provider}} 模型了。",
@@ -856,7 +857,8 @@ export const dict = {
     "使用相容 OpenAI 的轉錄 API 取代 Kilo Gateway。模型從 /models 讀取，音訊傳送到 /audio/transcriptions。留空則使用 Kilo Gateway。",
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "語音轉文字 API 金鑰",
-  "settings.models.speechToTextApiKey.description": "傳送到自訂轉錄基礎 URL 的 Bearer 權杖。儲存在你的 TU Code 設定檔中。",
+  "settings.models.speechToTextApiKey.description":
+    "傳送到自訂轉錄基礎 URL 的 Bearer 權杖。儲存在你的 TU Code 設定檔中。",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
     "啟用並登入 TU Code 供應商以使用 Speech to Text，或在下方設定自訂轉錄基礎 URL。",
