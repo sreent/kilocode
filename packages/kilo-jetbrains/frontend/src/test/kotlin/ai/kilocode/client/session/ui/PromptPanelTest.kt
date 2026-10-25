@@ -558,9 +558,9 @@ class PromptPanelTest : BasePlatformTestCase() {
             editor.document.insertString(0, "hello")
         }
 
-        invokeComponentAction("TU Code Session Undo", editor)
+        invokeComponentAction("tucode Session Undo", editor)
         assertEquals("", editor.document.text)
-        invokeComponentAction("TU Code Session Redo", editor)
+        invokeComponentAction("tucode Session Redo", editor)
         assertEquals("hello", editor.document.text)
     }
 
@@ -1999,7 +1999,7 @@ class PromptPanelTest : BasePlatformTestCase() {
 
     private fun invokeCompletionAction(editor: Editor) {
         val action = ActionUtil.getActions(editor.contentComponent).first { item ->
-            item.templatePresentation.text == "TU Code Prompt Completion"
+            item.templatePresentation.text == "tucode Prompt Completion"
         }
         val event = event(action, editor)
         ActionUtil.updateAction(action, event)

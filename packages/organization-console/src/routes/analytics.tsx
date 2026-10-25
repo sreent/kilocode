@@ -87,7 +87,7 @@ export function Analytics() {
   return (
     <Page
       title="Analytics"
-      description="Who in this organization uses TU Code, how much, and how its groups, sub-organizations and models compare with the period before. The same figures are in the analytics API."
+      description="Who in this organization uses tucode, how much, and how its groups, sub-organizations and models compare with the period before. The same figures are in the analytics API."
     >
       <div class="config-toolbar">
         <div class="config-toolbar-controls">
@@ -242,7 +242,7 @@ export function Analytics() {
 
               <Panel
                 flush
-                title="Not using TU Code"
+                title="Not using tucode"
                 description="Members who made no request in this range, and when they last made one. Their seats might serve someone else."
               >
                 <Show

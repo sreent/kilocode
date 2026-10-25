@@ -17,7 +17,7 @@ interface WelcomeEmptyStateProps {
   footer?: JSX.Element
 }
 
-/** Square brand mark. TU Code's mark has no animation, so it stays still on hover. */
+/** Square brand mark. tucode's mark has no animation, so it stays still on hover. */
 export const KiloLogo = () => {
   const icons = (window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI || ""
   const light =

@@ -29,7 +29,7 @@ export function product(text: string, b: Brand) {
 }
 
 /**
- * Text the agent reads about itself: the product's name, and TU Code's links and paths instead of
+ * Text the agent reads about itself: the product's name, and tucode's links and paths instead of
  * Kilo's. Kilo's documentation pages are in this repository too, under packages/kilo-docs/pages.
  */
 export function prompt(text: string, b: Brand) {
@@ -44,6 +44,32 @@ export function prompt(text: string, b: Brand) {
       .replaceAll("%ProgramData%\\kilo\\", `%ProgramData%\\${b.managed.dir}\\`),
     b,
   )
+}
+
+/**
+ * How the tree spells the brand's values once it carries them, in a fixed order so that apply.ts
+ * can pair an old spelling with the new one when brand.json changes. Besides the values the rules
+ * write, these are the spellings code derives from the name (a User-Agent drops its spaces) and
+ * Markdown links to a heading that is the name.
+ */
+export function spellings(b: Brand) {
+  return [
+    b.name,
+    b.name.replaceAll(" ", ""),
+    b.name.replaceAll(" ", "-"),
+    `#${b.name.toLowerCase().replaceAll(" ", "-")}`,
+    b.vscode.displayName,
+    b.jetbrains.name,
+    b.jetbrains.vendor,
+    `${b.vscode.publisher}.${b.vscode.name}`,
+    JSON.stringify(b.vscode.name),
+    b.repository,
+    b.image,
+    b.npm.cli,
+    `${b.npm.scope}/`,
+    b.jetbrains.id,
+    b.managed.macDomain,
+  ]
 }
 
 /** Applies `transform` to the values of double-quoted string literals, never to object keys. */
@@ -182,9 +208,12 @@ export function rules(b: Brand): Rule[] {
           .replace(/("displayName": )"[^"]*"/, `$1"${b.vscode.displayName}: AI Coding Agent"`)
           .replace(/("publisher": )"[^"]*"/, `$1"${b.vscode.publisher}"`)
           .replace(/("url": )"https:\/\/github\.com\/[^"]*\.git"/, `$1"${b.repository}.git"`)
-          .replace(/("keywords": \[[^\]]*\])/, (keywords) =>
-            keywords.replace(/"kilo",/, `"${b.command}",`).replace(/\s*"kilocode",/, ""),
-          ),
+          // Each keyword once, since the name can be the command.
+          .replace(/"keywords": (\[[^\]]*\])/, (_, list: string) => {
+            const words: string[] = JSON.parse(list)
+            const kept = words.filter((word) => word !== "kilocode").map((word) => (word === "kilo" ? b.command : word))
+            return `"keywords": ${JSON.stringify([...new Set(kept)], null, 2).replaceAll("\n", "\n  ")}`
+          }),
     },
     {
       // Changesets name the extension by its package name, which is the extension's name, and link

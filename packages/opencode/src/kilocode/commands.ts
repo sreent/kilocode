@@ -1,6 +1,6 @@
 // All CommandModules in one place so help.ts and generate-cli-docs.ts can
 // introspect them without importing index.ts (which has startup side effects).
-// When upstream adds a new command to index.ts, add it here too. TU Code leaves out the commands
+// When upstream adds a new command to index.ts, add it here too. tucode leaves out the commands
 // that need Kilo's cloud: github, remote, profile, auto and cloud.
 import { AcpCommand } from "../cli/cmd/acp"
 import { McpCommand } from "../cli/cmd/mcp"

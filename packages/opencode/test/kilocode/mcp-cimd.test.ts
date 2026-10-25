@@ -9,8 +9,8 @@ import { testEffect } from "../lib/effect"
 
 const it = testEffect(LayerNode.compile(McpAuth.node))
 
-// TU Code has no client ID metadata document of its own and never presents Kilo's, so a server that
-// supports CIMD gets a dynamic registration under TU Code's name, as one that doesn't would.
+// tucode has no client ID metadata document of its own and never presents Kilo's, so a server that
+// supports CIMD gets a dynamic registration under tucode's name, as one that doesn't would.
 
 function serve(cimd?: boolean, methods?: string[]) {
   const registrations: OAuthClientMetadata[] = []
@@ -115,7 +115,7 @@ for (const Provider of [McpOAuthProvider, McpOAuthPendingProvider]) {
         )
         yield* Effect.promise(async () => {
           expect(provider.clientMetadataUrl).toBeUndefined()
-          expect(provider.clientMetadata.client_name).toBe("TU Code")
+          expect(provider.clientMetadata.client_name).toBe("tucode")
           const expected = item.config.clientId ?? "registered"
           expect(await auth(provider, { serverUrl: fixture.url })).toBe("REDIRECT")
           expect(redirects).toHaveLength(1)

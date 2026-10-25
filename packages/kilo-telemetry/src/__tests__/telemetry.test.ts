@@ -161,7 +161,7 @@ describe("Telemetry", () => {
 
 const shell = process.platform === "win32" ? test.skip : test
 
-shell("reads conda's client ID but never starts conda, since TU Code sends no events", async () => {
+shell("reads conda's client ID but never starts conda, since tucode sends no events", async () => {
   const root = await mkdtemp(join(tmpdir(), "kilo-aau-"))
   const home = process.env.HOME
   const exe = process.env.CONDA_EXE

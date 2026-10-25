@@ -200,7 +200,7 @@ describe("Kilo CLI customizations are wired into index.ts", () => {
   const SETUP = "../../src/kilocode/cli/setup.ts"
   const BARREL = "../../src/kilocode/commands.ts"
 
-  test("CLI is branded with the TU Code command, not `kilo` or `opencode`", async () => {
+  test("CLI is branded with the tucode command, not `kilo` or `opencode`", async () => {
     const index = await file(INDEX)
     expect(index).toContain(".scriptName(Brand.command)")
     expect(index).not.toContain('.scriptName("kilo")')

@@ -211,7 +211,7 @@ intellijPlatform {
 
     pluginConfiguration {
         id = "com.tucode.jetbrains"
-        name = "TU Code"
+        name = "tucode"
         version = provider { ver }
         changeNotes = notes
 
@@ -220,7 +220,7 @@ intellijPlatform {
         }
 
         vendor {
-            name = "TU Code"
+            name = "tucode"
             url = "https://github.com/sreent/kilocode"
         }
     }

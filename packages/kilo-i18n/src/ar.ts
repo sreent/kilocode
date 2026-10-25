@@ -32,16 +32,16 @@ export const dict = {
   "marketplace.install.scope.global.description": "جميع المشاريع على هذا الجهاز. تُحفظ في إعدادات المستخدم الخاصة بك.",
   "marketplace.install.destination": "وجهة التثبيت",
   "marketplace.install.includedSkills": "المهارات المضمنة",
-  "marketplace.install.about.mcp": "يمنح خادم MCP منصة TU Code أدوات إضافية للعمل مع الخدمات الخارجية أو البرامج المحلية.",
+  "marketplace.install.about.mcp": "يمنح خادم MCP منصة tucode أدوات إضافية للعمل مع الخدمات الخارجية أو البرامج المحلية.",
   "marketplace.install.about.agent": "يضيف الوكيل دورًا قابلاً لإعادة الاستخدام بتعليماته وأذوناته الخاصة.",
-  "marketplace.install.about.skill": "تضيف المهارة تعليمات وموارد خاصة بمهام معينة يمكن لـ TU Code تحميلها عند الحاجة.",
+  "marketplace.install.about.skill": "تضيف المهارة تعليمات وموارد خاصة بمهام معينة يمكن لـ tucode تحميلها عند الحاجة.",
   "marketplace.install.mcp.warning":
-    "يمكن لخوادم MCP تشغيل أوامر محلية أو الاتصال بخدمات خارجية. ستطلب TU Code الإذن قبل استخدام أدواتها ما لم تسمح أذوناتك بذلك تلقائيًا.",
+    "يمكن لخوادم MCP تشغيل أوامر محلية أو الاتصال بخدمات خارجية. ستطلب tucode الإذن قبل استخدام أدواتها ما لم تسمح أذوناتك بذلك تلقائيًا.",
   "marketplace.install.project.warning":
     "قد تُضاف ملفات المشروع إلى نظام التحكم في الإصدارات. لا تخزّن الأسرار هنا إلا إذا كان الإعداد يشير إلى متغير بيئة.",
   "marketplace.install.learnMore": "تعرّف على كيفية عمل عمليات التثبيت من Marketplace",
   "marketplace.install.learnMcp": "معرفة المزيد عن MCP",
-  "marketplace.install.about.plugin": "تضيف إضافة أدوات وتكاملات مخصصة إلى TU Code. تعمل الإضافات بصلاحيات كاملة.",
+  "marketplace.install.about.plugin": "تضيف إضافة أدوات وتكاملات مخصصة إلى tucode. تعمل الإضافات بصلاحيات كاملة.",
   "marketplace.install.plugin.warning":
     "تشغّل الإضافات التعليمات البرمجية بصلاحيات كاملة. يمكنها قراءة ملفاتك وتغييرها وتشغيل الأوامر والوصول إلى بيانات اعتمادك وشبكتك. لا تثبّت إلا الإضافات التي تثق بها.",
   "marketplace.intro": "ثبّت وكلاء ومهارات وأدوات MCP وإضافات قابلة لإعادة الاستخدام لمشروع واحد أو لجميع المشاريع.",
@@ -117,7 +117,7 @@ export const dict = {
     "استمر في الانتظار حتى تكتمل اللقطة. تكون الدورات اللاحقة سريعة بعد إنشاء اللقطة الأولى.",
   "snapshot.slowRepo.answer.disable": "تعطيل لهذا المشروع",
   "snapshot.slowRepo.answer.disable.description":
-    "أوقف لقطات TU Code لهذا المشروع. ستفقد ميزة التراجع/الإعادة لتعديلات TU Code، لكن git سيستمر في تتبع كل شيء.",
+    "أوقف لقطات tucode لهذا المشروع. ستفقد ميزة التراجع/الإعادة لتعديلات tucode، لكن git سيستمر في تتبع كل شيء.",
 
   // Edit-tool header and shell-tool section labels
   "ui.messagePart.openInDiffViewer": "فتح في عارض الفروقات",

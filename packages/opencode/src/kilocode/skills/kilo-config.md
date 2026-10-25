@@ -1,8 +1,8 @@
-# TU Code CLI Configuration Reference
+# tucode CLI Configuration Reference
 
 All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remote well-known, global (`~/.config/tucode/kilo.json`), env `KILO_CONFIG`, project `./kilo.json`, `.kilo/kilo.json`, `KILO_CONFIG_CONTENT`, managed (see Config File Locations). Deep-merged; later wins.
 
-This also covers where TU Code looks for config files, commands, agents, and skills across project, global, and legacy paths such as `.kilo/`, `.kilocode/`, and `~/.config/tucode/`, plus Agent Manager setup/run scripts in the VS Code extension.
+This also covers where tucode looks for config files, commands, agents, and skills across project, global, and legacy paths such as `.kilo/`, `.kilocode/`, and `~/.config/tucode/`, plus Agent Manager setup/run scripts in the VS Code extension.
 
 ## Commands (`.kilo/command/*.md`)
 

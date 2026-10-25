@@ -10,7 +10,7 @@ import javax.swing.JComponent
  *
  * Located at Settings -> Tools -> Kilo -> User Profile.
  *
- * Shows the self-hosted organization the device is enrolled in, if any, and signs in to it. TU Code
+ * Shows the self-hosted organization the device is enrolled in, if any, and signs in to it. tucode
  * has no Kilo account, so Kilo's login, balance, Kilo Pass and account selector ([ProfileUi]) are not
  * shown. This is a status/action panel — it has no persistent settings, so [isModified] always
  * returns false.

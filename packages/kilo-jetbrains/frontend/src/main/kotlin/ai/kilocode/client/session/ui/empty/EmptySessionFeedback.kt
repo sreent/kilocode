@@ -119,7 +119,7 @@ internal class EmptySessionFeedback(
             XmlStringUtil.escapeString(KiloBundle.message("feedback.button"))
         )
 
-        // TU Code's repository and its issues; Kilo's Discord and support desk are Kilo's.
+        // tucode's repository and its issues; Kilo's Discord and support desk are Kilo's.
         private const val HOME_URL = Brand.REPOSITORY
         private const val GITHUB_ISSUES_URL = "${Brand.REPOSITORY}/issues"
     }

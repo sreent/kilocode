@@ -9,7 +9,7 @@ export const dict = {
   "mcp.signIn.unsupported": "{{name}} does not support OAuth sign-in.",
   "mcp.signIn.notFound": "MCP server {{name}} was not found.",
   "mcp.auth.browserFailed":
-    "TU Code could not open a browser for {{name}}. Open the authorization URL on the machine running TU Code to finish signing in.",
+    "tucode could not open a browser for {{name}}. Open the authorization URL on the machine running tucode to finish signing in.",
   "mcp.auth.browserFailed.open": "Open in Browser",
   "mcp.auth.browserFailed.copy": "Copy URL",
   "mcp.auth.resetFailed": "Could not clear the stored sign-in for {{name}}.",

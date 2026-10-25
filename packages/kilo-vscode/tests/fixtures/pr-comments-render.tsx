@@ -624,7 +624,7 @@ const retained = input().value
 
 // Send to agent hands the thread over as a structured review comment.
 const send = [...root.querySelectorAll('[data-component="button"]')].find((node) =>
-  /Fix with TU Code/.test(node.textContent ?? ""),
+  /Fix with tucode/.test(node.textContent ?? ""),
 )
 assert.ok(send, "send button is rendered")
 ;(send as HTMLButtonElement).click()
@@ -1341,7 +1341,7 @@ const remount = render(
 )
 await window.happyDOM.waitUntilComplete()
 assert.ok(successGroup()?.querySelector(".am-pr-check-group-items"))
-assert.equal(fix()?.textContent?.trim(), "Fix with TU Code")
+assert.equal(fix()?.textContent?.trim(), "Fix with tucode")
 assert.equal(fix()?.querySelector('[data-component="icon"]'), null)
 const before = sent.length
 fix()!.click()
@@ -1355,7 +1355,7 @@ assert.equal(feedback.comments[0]?.origin, "ci")
 // Draft removal and session changes are outside PRChecks. Unchanged checks
 // must remain sendable without remounting or waiting for another CI run.
 assert.equal(fix()?.disabled, false)
-assert.equal(fix()?.textContent?.trim(), "Fix with TU Code")
+assert.equal(fix()?.textContent?.trim(), "Fix with tucode")
 fix()!.click()
 assert.equal(sent.length, before + 2)
 assert.deepEqual(sent.at(-1), feedback)
@@ -1482,10 +1482,10 @@ assert.equal(fourth.querySelectorAll(".am-pr-summary-row").length, 4)
 // The review row has no target and no actions.
 assert.equal(fourth.querySelectorAll(".am-pr-summary-row:not([data-target]) button").length, 0)
 assert.match(row("checks")?.textContent ?? "", /1\/2 checks passed/)
-assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with TU Code")
-assert.equal(rowFix("comments")?.textContent?.trim(), "Fix 2 with TU Code")
+assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with tucode")
+assert.equal(rowFix("comments")?.textContent?.trim(), "Fix 2 with tucode")
 assert.match(row("conversation")?.textContent ?? "", /3 PR comments/)
-assert.equal(rowFix("conversation")?.textContent?.trim(), "Fix 1 with TU Code")
+assert.equal(rowFix("conversation")?.textContent?.trim(), "Fix 1 with tucode")
 // Discussion is lower-confidence feedback than CI or review threads.
 assert.equal(rowFix("checks")?.getAttribute("data-variant"), "primary")
 assert.equal(rowFix("comments")?.getAttribute("data-variant"), "primary")
@@ -1500,7 +1500,7 @@ assert.equal(sent.length, mark + 1)
 assert.equal(ci.autoSend, true)
 assert.equal(ci.comments[0]?.origin, "ci")
 // CI has no sent state; the button stays while failures exist.
-assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with TU Code")
+assert.equal(rowFix("checks")?.textContent?.trim(), "Fix with tucode")
 
 rowFix("comments")!.click()
 const threadsSent = sent.at(-1) as { comments: Array<{ id: string; origin: string }> }

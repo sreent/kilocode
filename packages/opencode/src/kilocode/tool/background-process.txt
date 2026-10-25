@@ -27,9 +27,9 @@ Goals:
 - Do not explore the repository, search for a deploy, or poll with bash when the goal is to wait for a deploy, build, or CI job; schedule that wait. Do not report blocked because no deploy is visible.
 
 Lifetime options for `start`:
-- By default, the process stops when its session ends, the user switches session groups, or TU Code exits.
+- By default, the process stops when its session ends, the user switches session groups, or tucode exits.
 - Set `inherit: true` only from a subagent when the process should transfer to the immediate parent session after the subagent ends. It then follows the parent session lifetime.
-- Set `persistent: true` when the process must survive both session closure and TU Code shutdown. Persistent processes are visible and manageable from every session, including after TU Code starts again.
+- Set `persistent: true` when the process must survive both session closure and tucode shutdown. Persistent processes are visible and manageable from every session, including after tucode starts again.
 - `inherit` and `persistent` cannot be combined.
 
 Only include `id` for `status`, `logs`, `stop`, and `restart`. Do not invent or pass an `id` when starting or monitoring a process.

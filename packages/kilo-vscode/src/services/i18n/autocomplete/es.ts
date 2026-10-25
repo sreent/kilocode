@@ -2,7 +2,7 @@ export const dict = {
   "kilocode:autocomplete.statusBar.enabled": "$(kilo-logo) Autocompletado",
   "kilocode:autocomplete.statusBar.snoozed": "pospuesto",
   "kilocode:autocomplete.statusBar.warning": "$(warning) Autocompletado",
-  "kilocode:autocomplete.statusBar.tooltip.basic": "Autocompletado de TU Code",
+  "kilocode:autocomplete.statusBar.tooltip.basic": "Autocompletado de tucode",
   "kilocode:autocomplete.statusBar.tooltip.noUsableProvider":
     "**No hay ningún modelo de autocompletado configurado**\n\nPara habilitar el autocompletado, añade un perfil con uno de estos proveedores compatibles: {{providers}}.\n\n[Abrir configuración]({{command}})",
   "kilocode:autocomplete.statusBar.tooltip.completionSummary":
@@ -11,14 +11,14 @@ export const dict = {
     "Autocompletados proporcionados por {{model}} mediante {{provider}}.",
   "kilocode:autocomplete.statusBar.cost.zero": "$0.00",
   "kilocode:autocomplete.statusBar.cost.lessThanCent": "<$0.01",
-  "kilocode:autocomplete.codeAction.title": "TU Code: Ediciones sugeridas",
+  "kilocode:autocomplete.codeAction.title": "tucode: Ediciones sugeridas",
   "kilocode:autocomplete.incompatibilityExtensionPopup.message":
-    "El autocompletado de TU Code está bloqueado por un conflicto con GitHub Copilot. Para solucionarlo, debes deshabilitar las sugerencias en línea de Copilot.",
+    "El autocompletado de tucode está bloqueado por un conflicto con GitHub Copilot. Para solucionarlo, debes deshabilitar las sugerencias en línea de Copilot.",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableCopilot": "Deshabilitar Copilot",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableInlineAssist": "Deshabilitar autocompletado",
   "kilocode:autocomplete.creditsExhausted.message":
-    "El autocompletado de TU Code se ha pausado. Posibles causas: tu cuenta de TU Code no tiene créditos restantes, o tu clave de API configurada (BYOK) alcanzó su límite de cuota. Agrega créditos de TU Code o revisa la configuración de tu clave de API para reanudar el autocompletado.",
+    "El autocompletado de tucode se ha pausado. Posibles causas: tu cuenta de tucode no tiene créditos restantes, o tu clave de API configurada (BYOK) alcanzó su límite de cuota. Agrega créditos de tucode o revisa la configuración de tu clave de API para reanudar el autocompletado.",
   "kilocode:autocomplete.creditsExhausted.addCredits": "Añadir créditos",
   "kilocode:autocomplete.authError.message":
-    "El autocompletado de TU Code se ha pausado por un problema de autenticación. Posibles causas: no has iniciado sesión en TU Code, o tu clave de API (BYOK) no es válida o falta. Vuelve a iniciar sesión o revisa la configuración de la clave de API de tu proveedor.",
+    "El autocompletado de tucode se ha pausado por un problema de autenticación. Posibles causas: no has iniciado sesión en tucode, o tu clave de API (BYOK) no es válida o falta. Vuelve a iniciar sesión o revisa la configuración de la clave de API de tu proveedor.",
 }

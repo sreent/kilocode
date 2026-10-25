@@ -1,4 +1,4 @@
-import "@/tucode/guard" // TU Code: refuse connections to Kilo's services in this worker too
+import "@/tucode/guard" // tucode: refuse connections to Kilo's services in this worker too
 import type { CodeIndexManager } from "@kilocode/kilo-indexing/engine"
 import { AsyncLocalStorage } from "node:async_hooks"
 import { format } from "node:util"

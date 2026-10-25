@@ -5,7 +5,7 @@ export const dict = {
   "kilocode:autocomplete.statusBar.enabled": "$(kilo-logo) تکمیل خودکار",
   "kilocode:autocomplete.statusBar.snoozed": "به تعویق افتاده",
   "kilocode:autocomplete.statusBar.warning": "$(warning) تکمیل خودکار",
-  "kilocode:autocomplete.statusBar.tooltip.basic": "تکمیل خودکار TU Code",
+  "kilocode:autocomplete.statusBar.tooltip.basic": "تکمیل خودکار tucode",
   "kilocode:autocomplete.statusBar.tooltip.noUsableProvider":
     "**هیچ مدل تکمیل خودکاری پیکربندی نشده است**\n\nبرای فعال‌سازی تکمیل خودکار، یک پروفایل با یکی از ارائه‌دهندگان پشتیبانی‌شده زیر اضافه کنید: {{providers}}.\n\n[باز کردن تنظیمات]({{command}})",
   "kilocode:autocomplete.statusBar.tooltip.completionSummary":
@@ -14,14 +14,14 @@ export const dict = {
     "تکمیل خودکار توسط {{model}} از طریق {{provider}} ارائه می‌شود.",
   "kilocode:autocomplete.statusBar.cost.zero": "۰.۰۰$",
   "kilocode:autocomplete.statusBar.cost.lessThanCent": "<۰.۰۱$",
-  "kilocode:autocomplete.codeAction.title": "TU Code: ویرایش‌های پیشنهادی",
+  "kilocode:autocomplete.codeAction.title": "tucode: ویرایش‌های پیشنهادی",
   "kilocode:autocomplete.incompatibilityExtensionPopup.message":
-    "تکمیل خودکار TU Code به دلیل تعارض با GitHub Copilot مسدود شده است. برای رفع این مشکل، باید پیشنهادات درون‌خطی Copilot را غیرفعال کنید.",
+    "تکمیل خودکار tucode به دلیل تعارض با GitHub Copilot مسدود شده است. برای رفع این مشکل، باید پیشنهادات درون‌خطی Copilot را غیرفعال کنید.",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableCopilot": "غیرفعال کردن Copilot",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableInlineAssist": "غیرفعال کردن تکمیل خودکار",
   "kilocode:autocomplete.creditsExhausted.message":
-    "تکمیل خودکار TU Code متوقف شده است. دلایل احتمالی: حساب TU Code شما اعتبار کافی ندارد، یا کلید API پیکربندی‌شده (BYOK) به سقف مجاز خود رسیده است. برای از سرگیری تکمیل خودکار، اعتبار TU Code اضافه کنید یا تنظیمات کلید API خود را بررسی کنید.",
+    "تکمیل خودکار tucode متوقف شده است. دلایل احتمالی: حساب tucode شما اعتبار کافی ندارد، یا کلید API پیکربندی‌شده (BYOK) به سقف مجاز خود رسیده است. برای از سرگیری تکمیل خودکار، اعتبار tucode اضافه کنید یا تنظیمات کلید API خود را بررسی کنید.",
   "kilocode:autocomplete.creditsExhausted.addCredits": "افزودن اعتبار",
   "kilocode:autocomplete.authError.message":
-    "تکمیل خودکار TU Code به دلیل مشکل احراز هویت متوقف شده است. دلایل احتمالی: وارد TU Code نشده‌اید، یا کلید API (BYOK) شما نامعتبر یا وارد نشده است. لطفاً دوباره وارد شوید یا تنظیمات کلید API ارائه‌دهنده خود را بررسی کنید.",
+    "تکمیل خودکار tucode به دلیل مشکل احراز هویت متوقف شده است. دلایل احتمالی: وارد tucode نشده‌اید، یا کلید API (BYOK) شما نامعتبر یا وارد نشده است. لطفاً دوباره وارد شوید یا تنظیمات کلید API ارائه‌دهنده خود را بررسی کنید.",
 }

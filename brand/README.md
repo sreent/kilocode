@@ -1,12 +1,13 @@
 # Brand
 
-TU Code's identity: its name, command, package and extension IDs, container image, managed config folder, repository, and logos. Kilo Code's names come in with every upstream merge, so the rename is a script you re-run, not a one-time edit.
+tucode's identity: its name, command, package and extension IDs, container image, managed config folder, repository, and logos. Kilo Code's names come in with every upstream merge, so the rename is a script you re-run, not a one-time edit.
 
 | File | What it holds |
 |---|---|
 | `brand.json` | The names. Every other file in the tree reads them from here or is rewritten from here. |
 | `rules.ts` | What `apply.ts` rewrites, file by file. |
 | `apply.ts` | The script that applies the rules. |
+| `applied.json` | The names the tree carries now, which `apply.ts` records. Don't edit it. |
 | `logo.svg`, `mark.svg`, `icons/` | The logo and the icon sizes the IDEs and the admin console use. |
 | `icon-font.py` | Builds `icons/icon-font.woff2`, the VS Code status bar icon, from `mark.svg`. |
 
@@ -35,11 +36,17 @@ What users see:
 
 The CLI imports `brand.json` directly (`@/tucode/brand`), so it needs no rewriting.
 
-What stays Kilo's: internal names (`KILO_*` variables, `kilo.json`, `.kilo` folders, code identifiers, setting keys), and the names of Kilo's own services where they're still mentioned ("Kilo Gateway", "Kilo account"). Keeping these keeps upstream merges small. Any other "Kilo" becomes TU Code, so text that means Kilo itself, such as a release note, names the service.
+What stays Kilo's: internal names (`KILO_*` variables, `kilo.json`, `.kilo` folders, code identifiers, setting keys), and the names of Kilo's own services where they're still mentioned ("Kilo Gateway", "Kilo account"). Keeping these keeps upstream merges small. Any other "Kilo" becomes tucode, so text that means Kilo itself, such as a release note, names the service.
+
+## Change a name
+
+Edit `brand.json`, then run `apply.ts` and `bun install`. `apply.ts` compares `brand.json` with `applied.json`, and replaces each value that changed wherever a tracked text file has it, docs, comments and tests included. `bun install` updates `bun.lock` when the VS Code extension's name changes.
+
+The command and the managed config folder are the exception: `tucode` also names folders, imports and files that keep the name (`src/tucode`, `tucode-logo.svg`), so `apply.ts` doesn't replace it. If you change either, replace their mentions in docs by hand.
 
 ## Before publishing
 
-The values in `brand.json` are placeholders. Replace them with ones you control before you publish anything, then run `apply.ts` again:
+The values in `brand.json` are placeholders. Replace them with ones you control before you publish anything:
 
 - the npm scope
 - the VS Code publisher

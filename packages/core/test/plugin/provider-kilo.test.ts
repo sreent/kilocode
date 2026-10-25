@@ -22,7 +22,7 @@ describe("KiloPlugin", () => {
     Effect.sync(() => expect(ProviderPlugins.map((item) => item.id)).toContain(PluginV2.ID.make("kilo"))),
   )
 
-  // kilocode_change start - tucode: Kilo Gateway is Kilo's cloud service, which TU Code never uses
+  // kilocode_change start - tucode: Kilo Gateway is Kilo's cloud service, which tucode never uses
   it.effect("removes the Kilo Gateway provider and leaves the others alone", () =>
     Effect.gen(function* () {
       const catalog = yield* Catalog.Service

@@ -1,6 +1,6 @@
 {
-  "name": "tu-code",
-  "displayName": "TU Code: AI Coding Agent",
+  "name": "tucode",
+  "displayName": "tucode: AI Coding Agent",
   "description": "Open Source AI coding agent that generates code from natural language, automates tasks, and runs terminal commands. Features inline autocomplete, browser automation, automated refactoring, and custom modes for planning, coding, and debugging. Supports 500+ AI models including Claude (Anthropic), Gemini, Grok, GPT, Codex and GLM.",
   "version": "7.8.17",
   "icon": "assets/icons/logo-outline-black.png",
@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "author": {
-    "name": "TU Code"
+    "name": "tucode"
   },
   "categories": [
     "AI",
@@ -31,7 +31,6 @@
   ],
   "keywords": [
     "tucode",
-    "TU Code",
     "ai",
     "agent",
     "agentic",
@@ -81,7 +80,7 @@
     ],
     "icons": {
       "kilo-logo": {
-        "description": "TU Code logo",
+        "description": "tucode logo",
         "default": {
           "fontPath": "assets/icons/kilo-icon-font.woff2",
           "fontCharacter": "\\F101"
@@ -92,7 +91,7 @@
       "activitybar": [
         {
           "id": "kilo-code-ActivityBar",
-          "title": "TU Code",
+          "title": "tucode",
           "icon": "assets/icons/kilo-light.png",
           "darkIcon": "assets/icons/kilo-dark.png"
         }
@@ -103,7 +102,7 @@
         {
           "type": "webview",
           "id": "kilo-code.SidebarProvider",
-          "name": "TU Code"
+          "name": "tucode"
         }
       ]
     },
@@ -111,53 +110,53 @@
       {
         "command": "kilo-code.new.plusButtonClicked",
         "title": "New Task",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(add)"
       },
       {
         "command": "kilo-code.new.closeTask",
         "title": "Close Task",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.closeAllTasks",
         "title": "Close All Tasks",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManagerOpen",
         "title": "Agent Manager",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(organization)"
       },
       {
         "command": "kilo-code.new.marketplaceButtonClicked",
         "title": "Marketplace",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(extensions)"
       },
       {
         "command": "kilo-code.new.historyButtonClicked",
         "title": "History",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(history)"
       },
       {
         "command": "kilo-code.new.profileButtonClicked",
         "title": "Profile",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(account)"
       },
       {
         "command": "kilo-code.new.settingsButtonClicked",
         "title": "Settings",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(settings-gear)"
       },
       {
         "command": "kilo-code.new.settingsSearch",
         "title": "Search Settings",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(search)"
       },
       {
@@ -193,7 +192,7 @@
       {
         "command": "kilo-code.new.openInTab",
         "title": "Open in Tab",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": {
           "light": "assets/icons/kilo-light.svg",
           "dark": "assets/icons/kilo-dark.svg"
@@ -202,218 +201,218 @@
       {
         "command": "kilo-code.new.openBrowser",
         "title": "Open Integrated Browser",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(globe)"
       },
       {
         "command": "kilo-code.new.showChanges",
         "title": "Show Changes",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.showMemory",
         "title": "Show Project Memory",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.toggleMemory",
         "title": "Toggle Project Memory",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.toggleCaffeination",
         "title": "Toggle Keep Awake",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.autocomplete.generateSuggestions",
         "title": "Generate Suggested Edits",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.autocomplete.cancelSuggestions",
         "title": "Cancel Suggested Edits",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.autocomplete.nextEdit.acceptOrJump",
         "title": "Next Edit: Accept or Jump to Suggested Edit",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.autocomplete.nextEdit.dismiss",
         "title": "Next Edit: Dismiss Pending Suggestion",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.previousSession",
         "title": "Agent Manager: Previous Session",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.nextSession",
         "title": "Agent Manager: Next Session",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.previousTab",
         "title": "Previous Session Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.nextTab",
         "title": "Next Session Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.previousTerminal",
         "title": "Agent Manager: Previous Terminal",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.nextTerminal",
         "title": "Agent Manager: Next Terminal",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.diagnostics",
         "title": "Agent Manager: Show Worktree Diagnostics",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.search",
         "title": "Agent Manager: Search Worktrees and Sessions",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.showTerminal",
         "title": "Agent Manager: Focus Terminal",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(terminal)"
       },
       {
         "command": "kilo-code.new.agentManager.runScript",
         "title": "Agent Manager: Run Script",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(play)"
       },
       {
         "command": "kilo-code.new.agentManager.toggleDiff",
         "title": "Agent Manager: Toggle Diff Panel",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(diff)"
       },
       {
         "command": "kilo-code.new.agentManager.showShortcuts",
         "title": "Agent Manager: Show Keyboard Shortcuts",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": "$(keyboard)"
       },
       {
         "command": "kilo-code.new.agentManager.newTab",
         "title": "Agent Manager: New Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.newTerminalTab",
         "title": "Agent Manager: New Terminal Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.newSideTerminal",
         "title": "Agent Manager: New Sidebar Terminal Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.closeTab",
         "title": "Agent Manager: Close Tab",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.newWorktree",
         "title": "Agent Manager: Configure New Worktree",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.quickWorktree",
         "title": "Agent Manager: New Worktree",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.openWorktree",
         "title": "Agent Manager: Open Worktree",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.updateFromBase",
         "title": "Agent Manager: Update from base",
-        "category": "TU Code",
+        "category": "tucode",
         "enablement": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
       },
       {
         "command": "kilo-code.new.agentManager.openPR",
         "title": "Agent Manager: Open Pull Request",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.closeWorktree",
         "title": "Agent Manager: Close Worktree",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.advancedWorktree",
         "title": "Agent Manager: Configure New Worktree",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo1",
         "title": "Agent Manager: Jump to Item 1",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo2",
         "title": "Agent Manager: Jump to Item 2",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo3",
         "title": "Agent Manager: Jump to Item 3",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo4",
         "title": "Agent Manager: Jump to Item 4",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo5",
         "title": "Agent Manager: Jump to Item 5",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo6",
         "title": "Agent Manager: Jump to Item 6",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo7",
         "title": "Agent Manager: Jump to Item 7",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo8",
         "title": "Agent Manager: Jump to Item 8",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.agentManager.jumpTo9",
         "title": "Agent Manager: Jump to Item 9",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.generateCommitMessage",
         "title": "Generate Commit Message",
-        "category": "TU Code",
+        "category": "tucode",
         "icon": {
           "light": "assets/icons/kilo-light.svg",
           "dark": "assets/icons/kilo-dark.svg"
@@ -422,87 +421,87 @@
       {
         "command": "kilo-code.new.explainCode",
         "title": "Explain Code",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.fixCode",
         "title": "Fix Code",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.improveCode",
         "title": "Improve Code",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.addToContext",
         "title": "Add to Context",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.terminalAddToContext",
         "title": "Add Terminal Content to Context",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.terminalFixCommand",
         "title": "Fix This Command",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.terminalExplainCommand",
         "title": "Explain This Command",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.focusChatInput",
         "title": "Focus Chat Input",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.toggleChatSearch",
         "title": "Toggle Chat Search",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.cycleAgentMode",
         "title": "Cycle Agent Mode",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.cyclePreviousAgentMode",
         "title": "Cycle Previous Agent Mode",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.toggleAutoApprove",
         "title": "Toggle Auto-Approve",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.generateTerminalCommand",
         "title": "Generate Terminal Command",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.takeHeapSnapshot",
         "title": "Take Heap Snapshot",
-        "category": "TU Code"
+        "category": "tucode"
       },
       {
         "command": "kilo-code.new.reload",
         "title": "Reload Config and Skills",
-        "category": "TU Code"
+        "category": "tucode"
       }
     ],
     "submenus": [
       {
         "id": "kilo-code.new.editorContextMenu",
-        "label": "TU Code"
+        "label": "tucode"
       },
       {
         "id": "kilo-code.new.terminalContextMenu",
-        "label": "TU Code"
+        "label": "tucode"
       }
     ],
     "menus": {
@@ -911,12 +910,12 @@
       }
     ],
     "configuration": {
-      "title": "TU Code",
+      "title": "tucode",
       "properties": {
         "kilo-code.new.language": {
           "type": "string",
           "default": "",
-          "description": "Override the UI language for TU Code (e.g. en, de, ja). Empty means use VS Code's display language.",
+          "description": "Override the UI language for tucode (e.g. en, de, ja). Empty means use VS Code's display language.",
           "enum": [
             "",
             "en",
@@ -969,7 +968,7 @@
         "kilo-code.new.languageCommitMessage": {
           "type": "string",
           "default": "sync",
-          "description": "Language used for AI-generated commit messages. Choose 'sync' to follow the TU Code UI language, or select a specific language.",
+          "description": "Language used for AI-generated commit messages. Choose 'sync' to follow the tucode UI language, or select a specific language.",
           "enum": [
             "sync",
             "en",
@@ -1104,7 +1103,7 @@
           "type": "boolean",
           "default": false,
           "scope": "application",
-          "description": "Experimental one-time import of supported global Claude Code instructions, simple skills, and disabled MCP definitions into TU Code. The original Claude files are never changed."
+          "description": "Experimental one-time import of supported global Claude Code instructions, simple skills, and disabled MCP definitions into tucode. The original Claude files are never changed."
         },
         "kilo-code.new.agentManager.terminalButtonDestination": {
           "type": "string",
@@ -1129,17 +1128,17 @@
         "kilo-code.new.claudeCodeCompat": {
           "type": "boolean",
           "default": false,
-          "description": "Load CLAUDE.md instructions and skills from your Claude Code configuration directory into TU Code sessions. Enable this if you want TU Code to use your Claude Code instructions and skills."
+          "description": "Load CLAUDE.md instructions and skills from your Claude Code configuration directory into tucode sessions. Enable this if you want tucode to use your Claude Code instructions and skills."
         },
         "kilo-code.new.extraCaCerts": {
           "type": "string",
           "default": "",
-          "description": "Absolute path to a PEM file containing extra CA certificates to trust when the TU Code backend makes HTTPS requests (sets NODE_EXTRA_CA_CERTS on the CLI process). Use this if you're behind a corporate proxy that performs SSL inspection. Leave empty to rely on the OS trust store."
+          "description": "Absolute path to a PEM file containing extra CA certificates to trust when the tucode backend makes HTTPS requests (sets NODE_EXTRA_CA_CERTS on the CLI process). Use this if you're behind a corporate proxy that performs SSL inspection. Leave empty to rely on the OS trust store."
         },
         "kilo-code.new.autoApprove.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Start TU Code with the main auto-approve toggle enabled. When enabled, permission prompts are approved automatically. Sandbox escalation prompts are always excluded."
+          "description": "Start tucode with the main auto-approve toggle enabled. When enabled, permission prompts are approved automatically. Sandbox escalation prompts are always excluded."
         },
         "kilo-code.new.maxCost": {
           "type": "number",
@@ -1152,7 +1151,7 @@
           "default": 13,
           "minimum": 10,
           "maximum": 24,
-          "description": "Font size in pixels for the TU Code webview UI."
+          "description": "Font size in pixels for the tucode webview UI."
         },
         "kilo-code.new.browserAutomation.enabled": {
           "type": "boolean",
@@ -1187,7 +1186,7 @@
           ],
           "default": "integrated",
           "scope": "application",
-          "description": "Choose where web links open from TU Code chats. Requires the experimental Integrated Browser."
+          "description": "Choose where web links open from tucode chats. Requires the experimental Integrated Browser."
         },
         "kilo-code.new.attention.enabled": {
           "type": "boolean",
@@ -1197,12 +1196,12 @@
         "kilo-code.new.attention.notifications": {
           "type": "boolean",
           "default": false,
-          "description": "Show VS Code notifications when TU Code completes a task or needs input. Notifications are suppressed while a TU Code panel is active."
+          "description": "Show VS Code notifications when tucode completes a task or needs input. Notifications are suppressed while a tucode panel is active."
         },
         "kilo-code.new.attention.OSNotifications": {
           "type": "boolean",
           "default": false,
-          "description": "Show native OS notification alerts when TU Code completes a task or needs input while VS Code is not active."
+          "description": "Show native OS notification alerts when tucode completes a task or needs input while VS Code is not active."
         },
         "kilo-code.new.attention.sound": {
           "type": "string",
@@ -1301,7 +1300,7 @@
           "enumDescriptions": [
             "Show work style onboarding so you can choose again",
             "Human in the Loop: review agent actions as they happen",
-            "High autonomy: let TU Code take most actions with fewer interruptions",
+            "High autonomy: let tucode take most actions with fewer interruptions",
             "Onboarding was skipped without changing work style settings"
           ],
           "description": "Preferred agent work style. Set to Unset to show the onboarding flow again."
@@ -1309,7 +1308,7 @@
         "kilo-code.new.diff.renderMarkdown": {
           "type": "boolean",
           "default": false,
-          "description": "Render Markdown files in TU Code diff viewers by default. Toggle this from a Markdown file header in the diff viewer."
+          "description": "Render Markdown files in tucode diff viewers by default. Toggle this from a Markdown file header in the diff viewer."
         },
         "kilo-code.new.diff.style": {
           "type": "string",
@@ -1317,7 +1316,7 @@
             "unified",
             "split"
           ],
-          "description": "Remembered unified/split choice for TU Code diff viewers. Set automatically the first time you toggle the style in a diff viewer."
+          "description": "Remembered unified/split choice for tucode diff viewers. Set automatically the first time you toggle the style in a diff viewer."
         }
       }
     }

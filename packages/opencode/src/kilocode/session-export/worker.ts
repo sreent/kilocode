@@ -1,4 +1,4 @@
-import "@/tucode/guard" // TU Code: refuse connections to Kilo's services in this worker too
+import "@/tucode/guard" // tucode: refuse connections to Kilo's services in this worker too
 import { Config } from "./config"
 import { Chunker } from "./worker/chunks"
 import { handleEvent } from "./worker/handlers"

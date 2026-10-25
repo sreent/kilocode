@@ -1261,7 +1261,7 @@ it.instance(
     expect(providers[ProviderV2.ID.make("nvidia")].options.headers).toEqual({
       "HTTP-Referer": Brand.repository, // kilocode_change - tucode
       "X-Title": Brand.name, // kilocode_change - tucode
-      "X-BILLING-INVOKE-ORIGIN": "TUCode", // kilocode_change - tucode
+      "X-BILLING-INVOKE-ORIGIN": "tucode", // kilocode_change - tucode
     })
   }),
   { config: { provider: { nvidia: { options: { apiKey: "test-api-key" } } } } },
@@ -1274,7 +1274,7 @@ it.instance(
     expect(providers[ProviderV2.ID.make("nvidia")].options.headers).toEqual({
       "HTTP-Referer": Brand.repository, // kilocode_change - tucode
       "X-Title": Brand.name, // kilocode_change - tucode
-      "X-BILLING-INVOKE-ORIGIN": "TUCode", // kilocode_change - tucode
+      "X-BILLING-INVOKE-ORIGIN": "tucode", // kilocode_change - tucode
     })
   }),
   { config: { provider: { nvidia: { options: { apiKey: "test-api-key", baseURL: "http://localhost:8000/v1" } } } } },

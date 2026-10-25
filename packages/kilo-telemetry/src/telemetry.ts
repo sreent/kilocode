@@ -126,7 +126,7 @@ export namespace Telemetry {
     const enabled = level ? level === "all" : options.enabled
     Client.setEnabled(enabled)
 
-    // Client.isEnabled() is false without a PostHog client, so TU Code never starts conda for a join key.
+    // Client.isEnabled() is false without a PostHog client, so tucode never starts conda for a join key.
     await Promise.all([Identity.getMachineId(), Client.isEnabled() ? refreshConda() : Promise.resolve()])
 
     initialized = true

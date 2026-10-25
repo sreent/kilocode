@@ -2156,7 +2156,7 @@ const prPanelStatus: PRStatus = {
     failed: 0,
     pending: 0,
     checks: [
-      { name: "TU Code Review", status: "success", duration: "2m 41s" },
+      { name: "tucode Review", status: "success", duration: "2m 41s" },
       { name: "build", status: "success", duration: "1m 12s" },
       { name: "test", status: "success", duration: "4m 03s" },
     ],

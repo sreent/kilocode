@@ -86,7 +86,7 @@ function Header(props: { account: Me }) {
   const scope = useOrg()
   return (
     <header class="app-header">
-      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="TU Code Organization home">
+      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="tucode Organization home">
         <img
           class="header-mark header-mark-logo"
           src={`${import.meta.env.BASE_URL}tucode-logo.svg`}

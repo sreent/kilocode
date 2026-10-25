@@ -1,6 +1,6 @@
 /**
  * HistoryView component
- * Unified panel for local and optional worktree session history. TU Code has no Kilo cloud
+ * Unified panel for local and optional worktree session history. tucode has no Kilo cloud
  * sessions, so there is no cloud tab or cloud import.
  */
 

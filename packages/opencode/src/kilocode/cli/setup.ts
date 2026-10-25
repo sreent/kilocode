@@ -38,7 +38,7 @@ export namespace KiloCli {
 
   // Register only the Kilo-specific commands. Upstream commands stay in index.ts's chain so
   // upstream merges that add or remove commands keep working without touching this file.
-  // TU Code leaves out the commands that need Kilo's cloud: cloud, profile, auto and remote.
+  // tucode leaves out the commands that need Kilo's cloud: cloud, profile, auto and remote.
   export function register<T>(cli: Argv<T>): Argv<T> {
     cli
       .command(KiloConsoleCommand)
@@ -104,7 +104,7 @@ export namespace KiloCli {
     if (!organization.telemetry) Telemetry.setEnabled(false)
     // kilocode_change end
 
-    // TU Code has no Kilo account, so it neither migrates the legacy Kilo CLI sign-in
+    // tucode has no Kilo account, so it neither migrates the legacy Kilo CLI sign-in
     // (~/.kilocode/cli/config.json) nor identifies the user to telemetry.
     Telemetry.trackCliStart()
     // Overlap the event upload with command execution so exit is not delayed by

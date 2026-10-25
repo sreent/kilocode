@@ -8,13 +8,17 @@
 //
 //   bun brand/apply.ts          rewrite the tree
 //   bun brand/apply.ts --check  list what would change, and exit 1 if anything would
+//
+// brand/applied.json records the brand the tree carries. When brand.json changes a value, the old
+// one is replaced wherever the tree spells it, in every tracked text file but bun.lock, which
+// `bun install` rewrites.
 
 import { Glob } from "bun"
 import fs from "node:fs"
 import path from "node:path"
 import * as prettier from "prettier"
 import brand from "./brand.json"
-import { rules } from "./rules"
+import { rules, spellings } from "./rules"
 
 const root = path.resolve(import.meta.dir, "..")
 const check = process.argv.includes("--check")
@@ -36,6 +40,45 @@ let changed = 0
 const report = (file: string, rule: string) => {
   changed++
   console.log(`${check ? "would change" : "changed"} ${file} (${rule})`)
+}
+
+const record = path.join(root, "brand", "applied.json")
+const applied: typeof brand = fs.existsSync(record) ? JSON.parse(fs.readFileSync(record, "utf8")) : brand
+const next = spellings(brand)
+const swaps = new Map<string, string>()
+spellings(applied).forEach((old, index) => {
+  const value = next.at(index)
+  if (!old || value == null || old === value || swaps.has(old)) return
+  swaps.set(old, value)
+})
+if (swaps.size > 0) {
+  // One pass, longest spelling first, so a replacement is never replaced again. A spelling that
+  // starts or ends with a letter must not be part of a longer name there.
+  const pattern = new RegExp(
+    [...swaps.keys()]
+      .sort((a, b) => b.length - a.length)
+      .map(
+        (value) =>
+          (/^\w/.test(value) ? "(?<!\\w)" : "") +
+          value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+          (/\w$/.test(value) ? "(?!\\w)" : ""),
+      )
+      .join("|"),
+    "g",
+  )
+  const tracked = Bun.spawnSync(["git", "ls-files", "-z"], { cwd: root }).stdout.toString().split("\0")
+  for (const file of tracked.filter(Boolean).sort()) {
+    if (["brand/brand.json", "brand/applied.json", "bun.lock"].includes(file)) continue
+    const target = path.join(root, file)
+    if (!fs.existsSync(target)) continue
+    const bytes = fs.readFileSync(target)
+    if (bytes.includes(0)) continue
+    const before = bytes.toString("utf8")
+    const after = before.replace(pattern, (match) => swaps.get(match) ?? match)
+    if (after === before) continue
+    report(file, "Brand values")
+    if (!check) fs.writeFileSync(target, await format(target, before, after))
+  }
 }
 
 for (const rule of rules(brand)) {
@@ -74,6 +117,12 @@ for (const rule of rules(brand)) {
     report(file, rule.name)
     if (!check) fs.writeFileSync(target, await format(target, before, after))
   }
+}
+
+const content = JSON.stringify(brand, null, 2) + "\n"
+if (!fs.existsSync(record) || fs.readFileSync(record, "utf8") !== content) {
+  report("brand/applied.json", "Applied brand")
+  if (!check) fs.writeFileSync(record, content)
 }
 
 console.log(

@@ -1045,20 +1045,20 @@ export class WorktreeManager {
   async ensureGitExclude(): Promise<void> {
     const target = await this.excludeTarget()
     const items = [
-      [".kilo/worktrees/", "TU Code agent worktrees"],
+      [".kilo/worktrees/", "tucode agent worktrees"],
       [".kilo/agent-manager.json", "Kilo Agent Manager state"],
-      [".kilo/setup-script", "TU Code worktree setup script"],
-      [".kilo/setup-script.sh", "TU Code worktree setup script"],
-      [".kilo/setup-script.ps1", "TU Code worktree setup script"],
-      [".kilo/setup-script.cmd", "TU Code worktree setup script"],
-      [".kilo/setup-script.bat", "TU Code worktree setup script"],
-      [".kilocode/worktrees/", "TU Code legacy agent worktrees"],
+      [".kilo/setup-script", "tucode worktree setup script"],
+      [".kilo/setup-script.sh", "tucode worktree setup script"],
+      [".kilo/setup-script.ps1", "tucode worktree setup script"],
+      [".kilo/setup-script.cmd", "tucode worktree setup script"],
+      [".kilo/setup-script.bat", "tucode worktree setup script"],
+      [".kilocode/worktrees/", "tucode legacy agent worktrees"],
       [".kilocode/agent-manager.json", "Kilo Agent Manager legacy state"],
-      [".kilocode/setup-script", "TU Code legacy worktree setup script"],
-      [".kilocode/setup-script.sh", "TU Code legacy worktree setup script"],
-      [".kilocode/setup-script.ps1", "TU Code legacy worktree setup script"],
-      [".kilocode/setup-script.cmd", "TU Code legacy worktree setup script"],
-      [".kilocode/setup-script.bat", "TU Code legacy worktree setup script"],
+      [".kilocode/setup-script", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.sh", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.ps1", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.cmd", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.bat", "tucode legacy worktree setup script"],
     ] as const
 
     for (const [entry, comment] of items) {

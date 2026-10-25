@@ -194,7 +194,7 @@ describe("scheduled reports", () => {
     expect(stamp[2]).toBe(signature(secret, Number(stamp[1]), message.body))
     const text: string = JSON.parse(message.body).text
     expect(text).toStartWith("*Acme: AI use, ")
-    expect(text).toContain("$12.50 spent (up 25% on the week before), 1 request. 1 of 2 members used TU Code.")
+    expect(text).toContain("$12.50 spent (up 25% on the week before), 1 request. 1 of 2 members used tucode.")
     expect(text).toContain("Top spenders: ada@acme.com ($12.50)")
 
     // Due reports go out once, then wait for the next period.

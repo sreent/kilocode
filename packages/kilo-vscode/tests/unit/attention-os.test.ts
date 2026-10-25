@@ -73,7 +73,7 @@ describe("OS attention notifications", () => {
       cmd: "osascript",
       args: [
         "-e",
-        'display notification "Kilo said \\"done\\" Workspace: repo Session: path\\\\name" with title "TU Code"',
+        'display notification "Kilo said \\"done\\" Workspace: repo Session: path\\\\name" with title "tucode"',
       ],
     })
   })
@@ -82,9 +82,9 @@ describe("OS attention notifications", () => {
     expect(notificationCommand(notice, "linux")).toEqual({
       cmd: "notify-send",
       args: [
-        "--app-name=TU Code",
+        "--app-name=tucode",
         "--urgency=normal",
-        "TU Code",
+        "tucode",
         "Kilo task completed.\nWorkspace: kilo-vscode\nSession: Add notifications",
       ],
     })

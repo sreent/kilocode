@@ -18,7 +18,7 @@ export interface ProfileViewProps {
   onRefreshProviderUsage?: () => void
 }
 
-// TU Code has no Kilo account, so the profile shows the organization and the usage of the providers
+// tucode has no Kilo account, so the profile shows the organization and the usage of the providers
 // people connect themselves.
 const ProfileView: Component<ProfileViewProps> = (props) => {
   const vscode = useVSCode()

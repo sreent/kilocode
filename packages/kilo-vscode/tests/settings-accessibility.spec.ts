@@ -15,7 +15,7 @@ const NAMES = [
   "Commit Message",
   "Experimental",
   "Language",
-  "About TU Code",
+  "About tucode",
 ]
 
 function story(page: Page) {

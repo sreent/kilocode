@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test"
 import { blocked } from "../../src/tucode/guard"
 
-describe("TU Code network guard", () => {
+describe("tucode network guard", () => {
   test("names Kilo's service hosts and nothing else", () => {
     expect(blocked("https://api.kilo.ai/api/profile")).toBe("api.kilo.ai")
     expect(blocked("https://ai-gateway.kilo.ai/api/v1/models")).toBe("ai-gateway.kilo.ai")
@@ -21,7 +21,7 @@ describe("TU Code network guard", () => {
   test("refuses fetch and WebSocket connections to Kilo's services before they open", async () => {
     const error = await fetch("https://api.kilo.ai/api/profile").catch((err: unknown) => err)
     expect(error).toBeInstanceOf(TypeError)
-    expect(String(error)).toContain("TU Code does not connect to Kilo's services (api.kilo.ai)")
+    expect(String(error)).toContain("tucode does not connect to Kilo's services (api.kilo.ai)")
     expect(() => new WebSocket("wss://events.kiloapps.io")).toThrow("events.kiloapps.io")
   })
 

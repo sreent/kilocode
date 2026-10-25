@@ -77,7 +77,7 @@ class GhBannerTest : BasePlatformTestCase() {
         // banner explains the wait instead of offering an action that would not help.
         assertTrue(edt { banner.isVisible })
         assertEquals(
-            "GitHub is rate limiting this token, so pull request badges may be out of date. TU Code retries automatically.",
+            "GitHub is rate limiting this token, so pull request badges may be out of date. tucode retries automatically.",
             edt { banner.text },
         )
         assertNotNull(edt { links(banner).singleOrNull { it.text == "Learn more" } })
@@ -104,7 +104,7 @@ class GhBannerTest : BasePlatformTestCase() {
         assertTrue(edt { banner.isVisible })
         assertEquals(
             "gh did not answer in time, so pull request badges may be out of date. " +
-                "TU Code retries less often until it does.",
+                "tucode retries less often until it does.",
             edt { banner.text },
         )
         assertTrue(edt { links(banner).none { it.text == "Authorize" } })
@@ -134,7 +134,7 @@ class GhBannerTest : BasePlatformTestCase() {
 
         val disable = edt { links(banner).single { it.text == "Turn off GitHub integration" } }
         assertEquals(
-            "TU Code stops running gh. You can turn this back on in Settings | Tools | TU Code | Integrations.",
+            "tucode stops running gh. You can turn this back on in Settings | Tools | tucode | Integrations.",
             edt { disable.toolTipText },
         )
 

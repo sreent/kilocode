@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "ไม่พร้อมใช้งาน",
   "provider.anaconda.state.unsupported": "Anaconda Desktop ไม่รองรับบน {{platform}}",
   "provider.anaconda.state.notInstalled":
-    "ติดตั้ง Anaconda Desktop บนเครื่องนี้ แล้วกลับมาที่นี่ TU Code จะไม่เรียกใช้ตัวติดตั้งให้คุณ",
+    "ติดตั้ง Anaconda Desktop บนเครื่องนี้ แล้วกลับมาที่นี่ tucode จะไม่เรียกใช้ตัวติดตั้งให้คุณ",
   "provider.anaconda.state.notRunning":
     "เปิด Anaconda Desktop ตั้งค่าให้เสร็จและลงชื่อเข้าใช้ แล้วเลือกตรวจสอบอีกครั้ง",
   "provider.anaconda.state.invalidConfig":
     "การตั้งค่า Anaconda Desktop ยังไม่สมบูรณ์ เปิด Desktop ตั้งค่าให้เสร็จ และรีสตาร์ทหากจำเป็น",
-  "provider.anaconda.state.signedOut": "เปิด Anaconda Desktop และลงชื่อเข้าใช้ก่อนเชื่อมต่อ TU Code",
+  "provider.anaconda.state.signedOut": "เปิด Anaconda Desktop และลงชื่อเข้าใช้ก่อนเชื่อมต่อ tucode",
   "provider.anaconda.state.unauthorized":
-    "TU Code ไม่สามารถเข้าถึง Anaconda Desktop ได้ เปิด Desktop ลงชื่อเข้าใช้อีกครั้ง และรีสตาร์ทหากจำเป็น",
+    "tucode ไม่สามารถเข้าถึง Anaconda Desktop ได้ เปิด Desktop ลงชื่อเข้าใช้อีกครั้ง และรีสตาร์ทหากจำเป็น",
   "provider.anaconda.state.unavailable": "Anaconda Desktop ยังไม่ตอบสนอง เปิดและรอให้แอปพลิเคชันเริ่มทำงานเสร็จ",
   "provider.anaconda.state.noModel":
     "ใน Anaconda Desktop ดาวน์โหลดโมเดลสร้างข้อความ เลือกโมเดลที่รองรับการเรียกใช้เครื่องมือเมื่อเป็นไปได้ แล้วเริ่มเซิร์ฟเวอร์ของโมเดลนั้น",
@@ -30,7 +30,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "เซิร์ฟเวอร์การอนุมานที่ใช้งานอยู่ยังไม่พร้อมใช้งาน ตรวจสอบใน Anaconda Desktop และรีสตาร์ทเซิร์ฟเวอร์หากจำเป็น",
   "provider.anaconda.state.ready":
-    "TU Code พบเซิร์ฟเวอร์สร้างข้อความในเครื่องที่พร้อมใช้งาน และสามารถนำเข้าการตั้งค่าการเชื่อมต่อปัจจุบันได้",
+    "tucode พบเซิร์ฟเวอร์สร้างข้อความในเครื่องที่พร้อมใช้งาน และสามารถนำเข้าการตั้งค่าการเชื่อมต่อปัจจุบันได้",
   "provider.anaconda.server": "เซิร์ฟเวอร์การอนุมานที่ใช้งานอยู่",
   "provider.anaconda.context": "หน้าต่างบริบท",
   "provider.anaconda.contextValue": "{{count}} โทเค็น",
@@ -48,7 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.manage": "จัดการ / รีเฟรช",
   "provider.anaconda.toast.refreshed.title": "รีเฟรช Anaconda Desktop แล้ว",
   "provider.anaconda.toast.refreshed.description":
-    "เซิร์ฟเวอร์ในเครื่องและโมเดลที่ใช้งานอยู่เป็นปัจจุบันใน TU Code แล้ว",
+    "เซิร์ฟเวอร์ในเครื่องและโมเดลที่ใช้งานอยู่เป็นปัจจุบันใน tucode แล้ว",
   "settings.providers.note.anacondaDesktop": "เรียกใช้โมเดลที่ให้บริการในเครื่องโดย Anaconda Desktop",
   "settings.providers.tag.local": "ในเครื่อง",
 } as const
@@ -97,7 +97,7 @@ export const dict = {
     "ย้อนกลับการสนทนาแล้ว ไม่ทราบสถานะการกู้คืนพื้นที่ทำงานสำหรับการย้อนกลับก่อนหน้านี้",
   "revert.banner.workspace.enableSnapshots": "เปิดใช้งานสแนปชอต",
   "revert.disabled.agentBusy": "รอให้เอเจนต์ทำงานเสร็จ",
-  "revert.error.body": "ที่เก็บข้อมูลอาจกำลังถูกใช้งาน ลองอีกครั้ง หรือดูรายละเอียดในบันทึกของ TU Code",
+  "revert.error.body": "ที่เก็บข้อมูลอาจกำลังถูกใช้งาน ลองอีกครั้ง หรือดูรายละเอียดในบันทึกของ tucode",
   "command.session.compact": "บีบอัดเซสชัน",
   "command.session.export": "ส่งออกบันทึกเซสชัน",
 
@@ -122,7 +122,7 @@ export const dict = {
   "provider.connect.status.waiting": "รอการอนุญาต...",
   "provider.connect.status.failed": "การอนุญาตล้มเหลว: {{error}}",
   "provider.connect.apiKey.description":
-    "ป้อนคีย์ API ของ {{provider}} เพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน TU Code",
+    "ป้อนคีย์ API ของ {{provider}} เพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน tucode",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -145,14 +145,14 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": "เยี่ยมชม ",
   "provider.connect.oauth.code.visit.link": "ลิงก์นี้",
   "provider.connect.oauth.code.visit.suffix":
-    " เพื่อรวบรวมรหัสการอนุญาตของคุณเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน TU Code",
+    " เพื่อรวบรวมรหัสการอนุญาตของคุณเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน tucode",
   "provider.connect.oauth.code.label": "รหัสการอนุญาต {{method}}",
   "provider.connect.oauth.code.placeholder": "รหัสการอนุญาต",
   "provider.connect.oauth.code.required": "ต้องใช้รหัสการอนุญาต",
   "provider.connect.oauth.auto.visit.prefix": "เยี่ยมชม ",
   "provider.connect.oauth.auto.visit.link": "ลิงก์นี้",
   "provider.connect.oauth.auto.visit.suffix":
-    " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน TU Code",
+    " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน tucode",
   "provider.connect.oauth.auto.confirmationCode": "รหัสยืนยัน",
   "provider.connect.toast.connected.title": "{{provider}} ที่เชื่อมต่อแล้ว",
   "provider.connect.toast.connected.description": "โมเดล {{provider}} พร้อมใช้งานแล้ว",
@@ -234,9 +234,9 @@ export const dict = {
   "prompt.action.sandbox.enable": "เปิดใช้งาน sandbox",
   "prompt.action.sandbox.disable": "ปิดใช้งาน sandbox",
   "prompt.action.sandbox.enabled":
-    "เปิดใช้งาน sandbox แล้ว คำสั่ง shell ของ agent ถูกจำกัดไว้ที่โฟลเดอร์โปรเจ็กต์และ TU Code",
+    "เปิดใช้งาน sandbox แล้ว คำสั่ง shell ของ agent ถูกจำกัดไว้ที่โฟลเดอร์โปรเจ็กต์และ tucode",
   "prompt.action.sandbox.disabled":
-    "ปิดใช้งาน sandbox อยู่ คลิกเพื่อจำกัดการเขียนคำสั่ง shell ของ agent ไว้ที่โฟลเดอร์โปรเจ็กต์และ TU Code",
+    "ปิดใช้งาน sandbox อยู่ คลิกเพื่อจำกัดการเขียนคำสั่ง shell ของ agent ไว้ที่โฟลเดอร์โปรเจ็กต์และ tucode",
   "prompt.action.sandbox.status.enabled": "เปิด sandbox แล้ว",
   "prompt.action.sandbox.status.disabled": "ปิด sandbox แล้ว",
   "prompt.action.sandbox.filesystem": "ระบบไฟล์",
@@ -245,7 +245,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "บล็อก",
   "prompt.action.sandbox.network.allowed": "อนุญาต",
   "prompt.action.sandbox.unrestricted": "ไม่จำกัด",
-  "prompt.action.sandbox.description.enabled": "เขียนได้เฉพาะในโฟลเดอร์โปรเจ็กต์และ TU Code",
+  "prompt.action.sandbox.description.enabled": "เขียนได้เฉพาะในโฟลเดอร์โปรเจ็กต์และ tucode",
   "prompt.action.sandbox.description.escalation":
     "กฎสิทธิ์และการอนุมัติอัตโนมัติมีผลภายในแซนด์บ็อกซ์ คำสั่งที่ต้องออกจากแซนด์บ็อกซ์จะถามเสมอ",
   "prompt.action.sandbox.description.disabled": "คลิกเพื่อจำกัดการเขียนในระบบไฟล์และการเข้าถึงเครือข่าย",
@@ -260,7 +260,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "กำลังถอดเสียง... คลิกเพื่อยกเลิก",
   "speechToText.tooltip.error": "การป้อนข้อมูลด้วยเสียงล้มเหลว คลิกเพื่อล้าง",
   "speechToText.error.title": "การป้อนข้อมูลด้วยเสียงล้มเหลว",
-  "speechToText.error.loginRequired": "ลงชื่อเข้าใช้ TU Code เพื่อใช้การป้อนข้อมูลด้วยเสียง",
+  "speechToText.error.loginRequired": "ลงชื่อเข้าใช้ tucode เพื่อใช้การป้อนข้อมูลด้วยเสียง",
   "speechToText.error.emptyTranscript": "ตรวจไม่พบเสียงพูด",
 
   "prompt.toast.promptSendFailed.title": "ไม่สามารถส่งพร้อมท์",
@@ -305,7 +305,7 @@ export const dict = {
     "การดำเนินการนี้จะรันคำสั่งทั้งหมดโดยไม่มีการจำกัดระบบไฟล์และเครือข่าย สำหรับคำสั่งนี้เท่านั้น Git ต้องเขียนลงใน .git ซึ่งเป็นแบบอ่านอย่างเดียวในแซนด์บ็อกซ์ และอยู่นอก worktree สำหรับ worktree ที่เชื่อมโยง กฎอนุญาตของ Bash และการอนุมัติอัตโนมัติจะไม่อนุมัติพร้อมท์นี้โดยอัตโนมัติ",
   "ui.permission.manageAutoApprove": "จัดการกฎการอนุมัติอัตโนมัติ",
   "ui.permission.reject": "ปฏิเสธ",
-  "ui.permission.feedbackPlaceholder": "บอก TU Code ว่าควรทำต่างออกไปอย่างไร",
+  "ui.permission.feedbackPlaceholder": "บอก tucode ว่าควรทำต่างออกไปอย่างไร",
   "ui.permission.feedbackHint": "Enter เพื่อปฏิเสธ, Esc เพื่อยกเลิก",
   "ui.permission.doomLoop.prompt": "ตรวจพบการวนซ้ำที่อาจเกิดขึ้นในเครื่องมือ {{tool}} ต้องการดำเนินการต่อหรือไม่",
   "ui.permission.doomLoop.rule": "เรียกใช้ {{tool}} ต่อไป",
@@ -353,7 +353,7 @@ export const dict = {
   "session.messages.loadEarlier": "โหลดข้อความก่อนหน้า",
   "session.messages.loading": "กำลังโหลดข้อความ...",
 
-  "sidebar.topBar.label": "การนำทาง TU Code",
+  "sidebar.topBar.label": "การนำทาง tucode",
   "sidebar.topBar.newTask": "งานใหม่",
   "sidebar.topBar.history": "ประวัติ",
   "sidebar.topBar.agentManager": "ตัวจัดการเอเจนต์",
@@ -455,10 +455,10 @@ export const dict = {
     "เปิดใช้งานการทำดัชนีสำหรับพื้นที่ทำงานนี้เมื่อการทำดัชนีแบบโกลบอลถูกปิดใช้งาน",
   "settings.indexing.provider.title": "ผู้ให้บริการการฝัง",
   "settings.indexing.provider.description": "เลือกผู้ให้บริการที่ใช้สร้างการฝังสำหรับการค้นหาเชิงความหมาย",
-  "settings.indexing.kiloModel.title": "พรีเซ็ตโมเดล TU Code",
-  "settings.indexing.kiloModel.description": "เลือกโมเดลการฝังที่ TU Code โฮสต์และรองรับ",
-  "settings.indexing.kiloSignIn.title": "ต้องลงชื่อเข้าใช้ TU Code",
-  "settings.indexing.kiloSignIn.description": "ลงชื่อเข้าใช้ TU Code เพื่อใช้การฝังแบบโฮสต์",
+  "settings.indexing.kiloModel.title": "พรีเซ็ตโมเดล tucode",
+  "settings.indexing.kiloModel.description": "เลือกโมเดลการฝังที่ tucode โฮสต์และรองรับ",
+  "settings.indexing.kiloSignIn.title": "ต้องลงชื่อเข้าใช้ tucode",
+  "settings.indexing.kiloSignIn.description": "ลงชื่อเข้าใช้ tucode เพื่อใช้การฝังแบบโฮสต์",
   "settings.indexing.model.title": "โมเดลการฝัง",
   "settings.indexing.model.description": "แทนที่โมเดลการฝังเริ่มต้นสำหรับผู้ให้บริการที่เลือก",
   "settings.indexing.dimension.title": "ขนาดเวกเตอร์",
@@ -571,11 +571,11 @@ export const dict = {
   "settings.config.status.loadedLegacy": "โหลดการตั้งค่าแบบเก่าแล้ว",
   "settings.config.status.notLoaded": "ยังไม่ได้โหลด",
   "settings.config.status.create": "ไม่พบ - สร้างไฟล์นี้",
-  "settings.config.title": "เปิดไฟล์การตั้งค่า TU Code ({{scope}})",
+  "settings.config.title": "เปิดไฟล์การตั้งค่า tucode ({{scope}})",
   "settings.config.placeholder":
     "ไฟล์การตั้งค่าจะถูกผสานตามลำดับ ไฟล์ที่ถูกทำเครื่องหมายว่าโหลดแล้วจะมีผลกับการตั้งค่าในปัจจุบัน",
-  "settings.config.noWorkspace": "เปิดโฟลเดอร์พื้นที่ทำงานเพื่อแก้ไขไฟล์การตั้งค่า TU Code ภายใน",
-  "settings.config.openFailed": "ไม่สามารถเปิดไฟล์การตั้งค่า TU Code ({{scope}}): {{message}}",
+  "settings.config.noWorkspace": "เปิดโฟลเดอร์พื้นที่ทำงานเพื่อแก้ไขไฟล์การตั้งค่า tucode ภายใน",
+  "settings.config.openFailed": "ไม่สามารถเปิดไฟล์การตั้งค่า tucode ({{scope}}): {{message}}",
   "settings.config.source.xdg": "การตั้งค่า XDG ทั่วโลก",
   "settings.config.source.homeKilo": "การตั้งค่า .kilo ของ Home",
   "settings.config.source.homeKilocode": "การตั้งค่า .kilocode ของ Home",
@@ -631,7 +631,7 @@ export const dict = {
   "feedback.button": "ข้อเสนอแนะและการสนับสนุน",
   "feedback.dialog.message": "เรายินดีรับฟังข้อเสนอแนะของคุณหรือช่วยแก้ไขปัญหาที่คุณพบ",
   "feedback.dialog.github": "รายงานปัญหาบน GitHub",
-  "workStyle.onboarding.welcome": "ยินดีต้อนรับสู่ TU Code",
+  "workStyle.onboarding.welcome": "ยินดีต้อนรับสู่ tucode",
   "workStyle.onboarding.title": "เลือกวิธีที่คุณต้องการทำงาน",
   "workStyle.onboarding.settingsNote": "คุณสามารถเปลี่ยนตัวเลือกเหล่านี้ได้ทุกเมื่อใน",
   "workStyle.onboarding.settings": "การตั้งค่า",
@@ -641,7 +641,7 @@ export const dict = {
   "workStyle.choice.visibility": "การแสดงผล",
   "workStyle.choice.human-in-the-loop.eyebrow": "มีผู้ใช้ร่วมตรวจสอบ",
   "workStyle.choice.human-in-the-loop.title": "ตรวจสอบก่อน",
-  "workStyle.choice.human-in-the-loop.description": "TU Code จะหยุดและแสดงแผนให้คุณเห็นระหว่างการทำงาน",
+  "workStyle.choice.human-in-the-loop.description": "tucode จะหยุดและแสดงแผนให้คุณเห็นระหว่างการทำงาน",
   "workStyle.choice.human-in-the-loop.permissions": "ขออนุญาตก่อนแก้ไขไฟล์หรือเรียกใช้คำสั่ง",
   "workStyle.choice.human-in-the-loop.bash": "ขออนุญาตเมื่อเรียกใช้คำสั่งเทอร์มินัลทุกคำสั่ง",
   "workStyle.choice.human-in-the-loop.visibility": "ขยายเหตุผล คำสั่ง และการแก้ไขเพื่อการตรวจสอบ",
@@ -657,7 +657,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "คัดลอกรหัสไปยังคลิปบอร์ดแล้ว",
   "deviceAuth.toast.errorCopied": "คัดลอกข้อผิดพลาดไปยังคลิปบอร์ดแล้ว",
   "deviceAuth.status.initiating": "กำลังเริ่มเข้าสู่ระบบ...",
-  "deviceAuth.title": "เข้าสู่ระบบ TU Code",
+  "deviceAuth.title": "เข้าสู่ระบบ tucode",
   "deviceAuth.step1": "ขั้นตอนที่ 1: เปิด URL นี้",
   "deviceAuth.action.copyUrl": "คัดลอก URL",
   "deviceAuth.action.openBrowser": "เปิดเบราว์เซอร์",
@@ -684,7 +684,7 @@ export const dict = {
   "profile.organization.signedIn": "ลงชื่อเข้าใช้เป็น {{email}} ({{role}})",
   "profile.organization.policy": "นโยบายเวอร์ชัน {{version}} อัปเดตเมื่อ {{time}}",
   "profile.organization.gateway": "การเรียกใช้โมเดลไปยัง {{providers}} จะผ่านเกตเวย์ขององค์กรคุณ",
-  "profile.organization.managed": "{{org}} จัดการ TU Code บนอุปกรณ์นี้ ลงชื่อเข้าใช้ด้วยบัญชีองค์กรของคุณ",
+  "profile.organization.managed": "{{org}} จัดการ tucode บนอุปกรณ์นี้ ลงชื่อเข้าใช้ด้วยบัญชีองค์กรของคุณ",
   "profile.organization.connect": "ลงชื่อเข้าใช้องค์กรที่โฮสต์เอง",
   "profile.organization.url": "URL ของเซิร์ฟเวอร์",
   "profile.organization.action.signin": "ลงชื่อเข้าใช้",
@@ -752,10 +752,10 @@ export const dict = {
 
   "settings.experimental.title": "ทดลอง",
   "settings.language.title": "ภาษา",
-  "settings.aboutKiloCode.title": "เกี่ยวกับ TU Code",
+  "settings.aboutKiloCode.title": "เกี่ยวกับ tucode",
 
-  "session.messages.welcome": "TU Code เป็นผู้ช่วยเขียนโค้ด AI ขอให้สร้างฟีเจอร์ แก้ไขบัก หรืออธิบายโค้ดเบสของคุณ",
-  "session.workspaceScope.description": "แชต TU Code ใช้เฉพาะ “{{folder}}” ซึ่งเป็นโฟลเดอร์แรกในพื้นที่ทำงานนี้",
+  "session.messages.welcome": "tucode เป็นผู้ช่วยเขียนโค้ด AI ขอให้สร้างฟีเจอร์ แก้ไขบัก หรืออธิบายโค้ดเบสของคุณ",
+  "session.workspaceScope.description": "แชต tucode ใช้เฉพาะ “{{folder}}” ซึ่งเป็นโฟลเดอร์แรกในพื้นที่ทำงานนี้",
   "session.workspaceScope.alternatives":
     "หากต้องการทำงานกับโฟลเดอร์อื่น ให้เปิดโฟลเดอร์นั้นในหน้าต่างแยกต่างหาก หรือเพิ่มเป็นโปรเจกต์ใน Agent Manager",
   "session.workspaceScope.dismiss": "ปิดคำแนะนำเกี่ยวกับขอบเขตพื้นที่ทำงาน",
@@ -801,7 +801,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "กำลังพิจารณาขั้นตอนถัดไป...",
 
   "dialog.model.noProviders": "ไม่มีผู้ให้บริการ",
-  "dialog.model.unavailable": "ไม่สามารถใช้โมเดล TU Code ได้",
+  "dialog.model.unavailable": "ไม่สามารถใช้โมเดล tucode ได้",
 
   "prompt.placeholder.connecting": "กำลังเชื่อมต่อกับเซิร์ฟเวอร์...",
   "prompt.placeholder.error": "การเชื่อมต่อล้มเหลว ตรวจสอบแผงเอาต์พุตหรือรีสตาร์ทส่วนขยาย",
@@ -842,10 +842,10 @@ export const dict = {
   "settings.aboutKiloCode.exportSettings": "ส่งออก",
   "settings.aboutKiloCode.importSettings": "นำเข้า",
   "settings.aboutKiloCode.importSettings.invalidJson": "ไฟล์ JSON ไม่ถูกต้อง กรุณาเลือกไฟล์การตั้งค่าที่ถูกต้อง",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "ไฟล์ไม่มีการตั้งค่า TU Code ที่ถูกต้อง",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "ไฟล์ไม่มีการตั้งค่า tucode ที่ถูกต้อง",
   "settings.aboutKiloCode.importSettings.tooLarge": "ไฟล์มีขนาดใหญ่เกินไป ไฟล์การตั้งค่าต้องมีขนาดไม่เกิน 1 MB",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "ไฟล์นี้ถูกส่งออกจาก TU Code เวอร์ชันใหม่กว่า การตั้งค่าบางรายการอาจถูกข้ามไป",
+    "ไฟล์นี้ถูกส่งออกจาก tucode เวอร์ชันใหม่กว่า การตั้งค่าบางรายการอาจถูกข้ามไป",
   "settings.aboutKiloCode.importSettings.success": "นำเข้าการตั้งค่าแล้ว ตรวจสอบการเปลี่ยนแปลงด้านบน จากนั้นคลิกบันทึก",
 
   "settings.aboutKiloCode.telemetry.title": "Telemetry",
@@ -860,7 +860,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.skills": "ทักษะ",
 
   "settings.browser.description":
-    "กำหนดค่าการทำงานอัตโนมัติของเบราว์เซอร์ในตัวที่ขับเคลื่อนโดย Playwright TU Code สามารถนำทาง โต้ตอบ และจับภาพหน้าจอของหน้าเว็บในเซสชันของคุณได้",
+    "กำหนดค่าการทำงานอัตโนมัติของเบราว์เซอร์ในตัวที่ขับเคลื่อนโดย Playwright tucode สามารถนำทาง โต้ตอบ และจับภาพหน้าจอของหน้าเว็บในเซสชันของคุณได้",
   "settings.browser.enable.title": "เปิดใช้งานการทำงานอัตโนมัติของเบราว์เซอร์",
   "settings.browser.enable.description":
     "เปิดใช้งานเบราว์เซอร์ Agent Manager แบบแยกตามเซสชันสำหรับแอปพลิเคชันในเครื่องและหน้าเว็บ HTTPS สาธารณะ",
@@ -888,10 +888,10 @@ export const dict = {
     "เล่นเสียงเมื่อเซสชันเสร็จสิ้น เกิดข้อผิดพลาด หรือต้องการให้คุณป้อนข้อมูล",
   "settings.notifications.workbench.title": "เปิดใช้การแจ้งเตือนของ VS Code",
   "settings.notifications.workbench.description":
-    "แสดงการแจ้งเตือนของ VS Code เมื่อ TU Code ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูล",
+    "แสดงการแจ้งเตือนของ VS Code เมื่อ tucode ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูล",
   "settings.notifications.os.title": "เปิดใช้การแจ้งเตือนของระบบปฏิบัติการ",
   "settings.notifications.os.description":
-    "แสดงการแจ้งเตือนแบบเนทีฟของระบบปฏิบัติการเมื่อ TU Code ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูลขณะที่ VS Code ไม่ได้ใช้งานอยู่",
+    "แสดงการแจ้งเตือนแบบเนทีฟของระบบปฏิบัติการเมื่อ tucode ทำงานเสร็จหรือต้องการให้คุณป้อนข้อมูลขณะที่ VS Code ไม่ได้ใช้งานอยู่",
   "settings.notifications.testSound": "ทดสอบ",
   "settings.notifications.testOS": "ทดสอบ",
   "settings.notifications.testOS.testing": "กำลังส่งการแจ้งเตือนทดสอบ…",
@@ -909,7 +909,7 @@ export const dict = {
   "settings.experimental.batch.description": "เปิดใช้งานการประมวลผลแบทช์ของการเรียกเครื่องมือ",
   "settings.experimental.imageGeneration.title": "การสร้างภาพ",
   "settings.experimental.imageGeneration.description": "เปิดใช้งานการสร้างภาพด้วย AI",
-  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "tucode Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "แชร์กระดานระหว่างเซสชันหลักกับเอเจนต์ย่อยที่รับมอบหมายงานจากเซสชันนั้น รวมถึงเอเจนต์ย่อยที่ซ้อนกัน ใช้สำหรับการลองแก้ปัญหาแบบขนานหรืองานที่เสริมกัน ไม่ใช่สำหรับทุกงาน",
   "settings.experimental.imageGenerationModel.title": "โมเดลภาพ",
@@ -925,12 +925,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "คีย์ API สำหรับแปลงเสียงเป็นข้อความ",
   "settings.models.speechToTextApiKey.description":
-    "โทเค็น Bearer ที่ส่งไปยัง URL พื้นฐานการถอดเสียงของคุณเอง จัดเก็บอยู่ในไฟล์ตั้งค่า TU Code ของคุณ",
+    "โทเค็น Bearer ที่ส่งไปยัง URL พื้นฐานการถอดเสียงของคุณเอง จัดเก็บอยู่ในไฟล์ตั้งค่า tucode ของคุณ",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "เปิดใช้งานและลงชื่อเข้าใช้ผู้ให้บริการ TU Code เพื่อใช้ Speech to Text หรือกำหนด URL พื้นฐานสำหรับการถอดเสียงเองด้านล่าง",
+    "เปิดใช้งานและลงชื่อเข้าใช้ผู้ให้บริการ tucode เพื่อใช้ Speech to Text หรือกำหนด URL พื้นฐานสำหรับการถอดเสียงเองด้านล่าง",
   "settings.models.speechToText.remoteDescription":
-    "การป้อนด้วยเสียงไม่พร้อมใช้งานในหน้าต่างระยะไกล เปิด TU Code ในหน้าต่างภายในเครื่องเพื่อใช้ไมโครโฟน",
+    "การป้อนด้วยเสียงไม่พร้อมใช้งานในหน้าต่างระยะไกล เปิด tucode ในหน้าต่างภายในเครื่องเพื่อใช้ไมโครโฟน",
   "settings.models.speechToTextModel.title": "โมเดลแปลงเสียงเป็นข้อความ",
   "settings.models.speechToTextModel.description": "เลือกโมเดลการถอดเสียง Kilo Gateway สำหรับการป้อนข้อมูลด้วยเสียง",
   "settings.experimental.nativeNotebookTools.title": "เครื่องมือโน้ตบุ๊กดั้งเดิม",
@@ -1046,7 +1046,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "ตัวแปรที่ส่งไปยังกระบวนการเซิร์ฟเวอร์ MCP",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "ปล่อยไว้ที่อัตโนมัติ เว้นแต่เซิร์ฟเวอร์ต้องการไคลเอ็นต์ที่ลงทะเบียนไว้ล่วงหน้า ไคลเอ็นต์ซีเคร็ตจะถูกจัดเก็บไว้ในไฟล์การกำหนดค่า TU Code ของคุณ",
+    "ปล่อยไว้ที่อัตโนมัติ เว้นแต่เซิร์ฟเวอร์ต้องการไคลเอ็นต์ที่ลงทะเบียนไว้ล่วงหน้า ไคลเอ็นต์ซีเคร็ตจะถูกจัดเก็บไว้ในไฟล์การกำหนดค่า tucode ของคุณ",
   "settings.agentBehaviour.editMcp.oauth.mode": "โหมด",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "อัตโนมัติ",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "ปิดใช้งาน",
@@ -1086,7 +1086,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "ความเข้ากันได้กับ Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "โหลดไฟล์ Claude Code",
   "settings.agentBehaviour.claudeCompat.description":
-    "โหลดคำแนะนำและทักษะจาก CLAUDE.md ในไดเรกทอรีการกำหนดค่า Claude Code ของคุณลงในเซสชัน เปิดใช้งานตัวเลือกนี้หากคุณต้องการให้ TU Code ใช้คำแนะนำและทักษะจาก Claude Code ของคุณ จำเป็นต้องรีสตาร์ท",
+    "โหลดคำแนะนำและทักษะจาก CLAUDE.md ในไดเรกทอรีการกำหนดค่า Claude Code ของคุณลงในเซสชัน เปิดใช้งานตัวเลือกนี้หากคุณต้องการให้ tucode ใช้คำแนะนำและทักษะจาก Claude Code ของคุณ จำเป็นต้องรีสตาร์ท",
   "settings.agentBehaviour.mcpDetail.command": "คำสั่ง",
   "settings.agentBehaviour.mcpDetail.args": "อาร์กิวเมนต์",
   "settings.agentBehaviour.mcpDetail.env": "สภาพแวดล้อม",
@@ -1113,7 +1113,7 @@ export const dict = {
     "กำหนดเส้นทางการเรียกใช้เครื่องมือ MCP ผ่านรันไทม์ JavaScript ที่จำกัดขอบเขตพร้อมการค้นหาเครื่องมือตามต้องการ แทนการเปิดเผยเครื่องมือ MCP แต่ละรายการโดยตรง ช่วยประหยัดบริบทเมื่อมีเครื่องมือ MCP เชื่อมต่ออยู่เป็นจำนวนมาก",
   "settings.sandboxing.enabled.title": "Sandbox",
   "settings.sandboxing.enabled.description":
-    "เรียกใช้คำสั่ง shell ของ agent ใน sandbox ระดับระบบปฏิบัติการที่จำกัดการเขียนไปยังโฟลเดอร์สถานะของโปรเจ็กต์และ TU Code",
+    "เรียกใช้คำสั่ง shell ของ agent ใน sandbox ระดับระบบปฏิบัติการที่จำกัดการเขียนไปยังโฟลเดอร์สถานะของโปรเจ็กต์และ tucode",
 
   "settings.autoApprove.description":
     "กำหนดวิธีอนุญาตการทำงานของเครื่องมือ โดยค่าเริ่มต้นเครื่องมือส่วนใหญ่คืออนุญาต ส่วน doom_loop และ external_directory ค่าเริ่มต้นคือถาม",
@@ -1154,7 +1154,7 @@ export const dict = {
   "settings.checkpoints.enable.description": "สร้างจุดตรวจก่อนแก้ไขไฟล์",
   "settings.autoCleanup.enable.title": "เปิดการล้างเซสชันอัตโนมัติ",
   "settings.autoCleanup.enable.description":
-    "ล้างประวัติเซสชันเก่าโดยอัตโนมัติหลังจากผ่านไปตามจำนวนวันที่กำหนด ครอบคลุมทุกโปรเจกต์และไคลเอนต์ TU Code ทุกตัวบนเครื่องนี้ ไม่ใช่แค่หน้าต่างนี้ เซสชันที่กำลังทำงานและเซสชันที่มี fork ล่าสุดจะไม่ถูกลบเด็ดขาด การลบเป็นการถาวร",
+    "ล้างประวัติเซสชันเก่าโดยอัตโนมัติหลังจากผ่านไปตามจำนวนวันที่กำหนด ครอบคลุมทุกโปรเจกต์และไคลเอนต์ tucode ทุกตัวบนเครื่องนี้ ไม่ใช่แค่หน้าต่างนี้ เซสชันที่กำลังทำงานและเซสชันที่มี fork ล่าสุดจะไม่ถูกลบเด็ดขาด การลบเป็นการถาวร",
   "settings.autoCleanup.defaultRetention.title": "เก็บเซสชันไว้ (วัน)",
   "settings.autoCleanup.defaultRetention.description": "ระยะเวลาที่เก็บประวัติเซสชันก่อนการล้างอัตโนมัติจะลบ",
   "settings.autoCleanup.lastRun.title": "การล้างล่าสุด",
@@ -1171,7 +1171,7 @@ export const dict = {
     "กำลังลบเซสชัน: ประมวลผลแล้ว {{processed}}/{{total}} (ลบแล้ว {{deleted}}, ล้มเหลว {{failed}})",
   "settings.autoCleanup.runNow": "รันการล้างเดี๋ยวนี้",
   "settings.autoCleanup.runNow.confirm":
-    "ลบเซสชันที่หมดอายุอย่างถาวรทั่วทุกโปรเจกต์และไคลเอนต์ TU Code ทุกตัวบนเครื่องนี้หรือไม่?",
+    "ลบเซสชันที่หมดอายุอย่างถาวรทั่วทุกโปรเจกต์และไคลเอนต์ tucode ทุกตัวบนเครื่องนี้หรือไม่?",
   "settings.autoCleanup.stop": "หยุดการล้างข้อมูล",
   "settings.autoCleanup.progress.cancelling": "กำลังหยุดการล้างเซสชัน...",
   "settings.autoCleanup.lastRun.cancelled": "ถูกยกเลิก",
@@ -1204,7 +1204,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "ตรวจสอบ",
   "chat.memory.project.disabled": "ปิดใช้ความจำของโปรเจกต์แล้ว",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use tucode.",
   "chat.memory.command.failed": "คำสั่งความจำล้มเหลว",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1238,7 +1238,7 @@ export const dict = {
   "settings.display.username.title": "ชื่อผู้ใช้",
   "settings.display.username.description": "ชื่อผู้ใช้กำหนดเองในบทสนทนา",
   "settings.display.fontSize.title": "ขนาดฟอนต์",
-  "settings.display.fontSize.description": "ปรับขนาดฟอนต์ webview UI ของ TU Code แยกเป็นอิสระจาก VS Code.",
+  "settings.display.fontSize.description": "ปรับขนาดฟอนต์ webview UI ของ tucode แยกเป็นอิสระจาก VS Code.",
   "settings.display.reasoningDisplay.title": "บล็อกเหตุผล",
   "settings.display.reasoningDisplay.description":
     "เลือกวิธีที่บล็อกเหตุผลเริ่มต้น ขยายจะแสดงข้อความเต็ม ตัวอย่างจะจำกัดให้เป็นตัวอย่างสั้นที่เลื่อนได้ และหัวข้อจะแสดงเฉพาะชื่อเรื่องและตัวบ่งชี้การสตรีมจนกว่าคุณจะเปิดมัน",
@@ -1386,7 +1386,7 @@ export const dict = {
     "ไฟล์ที่ถูกแก้ไขในแผนผังการทำงานแต่ยังไม่ได้ staged และไฟล์ที่ไม่ได้ติดตาม (ใหม่)",
   "diffViewer.source.session.label": "เซสชัน",
   "diffViewer.source.session.tooltip":
-    "ไฟล์ที่ TU Code แก้ไขในช่วงเซสชันปัจจุบัน โดยอิงจากสแน็ปช็อตต่อเทิร์น จะรีเซ็ตเมื่อเริ่มเซสชันใหม่",
+    "ไฟล์ที่ tucode แก้ไขในช่วงเซสชันปัจจุบัน โดยอิงจากสแน็ปช็อตต่อเทิร์น จะรีเซ็ตเมื่อเริ่มเซสชันใหม่",
   "diffViewer.group.session": "เซสชัน",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "โพสต์ไปยัง GitHub",
@@ -1396,7 +1396,7 @@ export const dict = {
   "diffViewer.comment.openPR": "เปิด Pull Request",
   "diffViewer.comment.localChanges": "การเปลี่ยนแปลงในเครื่อง",
   "diffViewer.comment.prChanges": "การเปลี่ยนแปลงของ PR",
-  "diffViewer.comment.sendToKilo": "ส่งไปยัง TU Code",
+  "diffViewer.comment.sendToKilo": "ส่งไปยัง tucode",
   "diffViewer.comment.sendToGithub": "ส่งไปยัง GitHub #{{number}}",
   "diffViewer.comment.chooseDestination": "เลือกปลายทาง",
   "diffViewer.notice.snapshotsDisabled":
@@ -1428,10 +1428,10 @@ export const dict = {
     "ใช้ Google Chrome ที่ติดตั้งไว้สำหรับเบราว์เซอร์ในตัว ปิดใช้งานเฉพาะเมื่อติดตั้งเบราว์เซอร์ Playwright Chromium ที่เข้ากันได้ไว้แล้วเท่านั้น",
   "settings.experimental.browserLinks.title": "เปิดลิงก์ใน",
   "settings.experimental.browserLinks.description":
-    "เลือกว่าเว็บลิงก์จะเปิดจากแชท TU Code ที่ใด ต้องใช้เบราว์เซอร์ในตัว",
+    "เลือกว่าเว็บลิงก์จะเปิดจากแชท tucode ที่ใด ต้องใช้เบราว์เซอร์ในตัว",
   "settings.experimental.browserLinks.external": "เบราว์เซอร์ของระบบ",
   "settings.experimental.browserLinks.integrated": "เบราว์เซอร์ในตัว",
   "chat.search.searchingHistory": "กำลังค้นหาข้อความก่อนหน้า…",
   "browserTab.noSession": "เปิดเบราว์เซอร์จากเซสชันเพื่อดูตัวอย่างแอปพลิเคชันในเครื่องหรือหน้า HTTPS สาธารณะ",
-  "browserTab.disabled": "เบราว์เซอร์ในตัวถูกปิดใช้งาน เปิดใช้งานได้ในการตั้งค่า TU Code > ทดลอง",
+  "browserTab.disabled": "เบราว์เซอร์ในตัวถูกปิดใช้งาน เปิดใช้งานได้ในการตั้งค่า tucode > ทดลอง",
 }

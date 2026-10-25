@@ -57,7 +57,7 @@ export function Reports() {
   return (
     <Page
       title="Scheduled reports"
-      description="A summary of the organization's AI use after each week or month: spend and how it moved, requests, how many members used TU Code, the top models and spenders. Posted to a webhook an hour after the period ends, in UTC."
+      description="A summary of the organization's AI use after each week or month: spend and how it moved, requests, how many members used tucode, the top models and spenders. Posted to a webhook an hour after the period ends, in UTC."
     >
       <Panel title="Reports" flush>
         <Show when={!reports.error} fallback={<Failure error={reports.error} />}>

@@ -15,7 +15,7 @@ export interface InjectedPrompt {
 
 /** What the user bubble shows for a prompt that Kilo composed or extended. */
 export interface InjectedView {
-  /** Header label, e.g. "Sent by TU Code · /review branch". */
+  /** Header label, e.g. "Sent by tucode · /review branch". */
   label: string
   /** Collapsed body. Undefined when the full text is short enough to show as is. */
   preview?: string

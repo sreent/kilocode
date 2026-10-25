@@ -11,7 +11,7 @@ export namespace Client {
   let directory = ""
   const pending = new Set<string>()
 
-  // TU Code sends no product analytics. init never creates a PostHog client, so capture, alias and
+  // tucode sends no product analytics. init never creates a PostHog client, so capture, alias and
   // flush do nothing and nothing reaches PostHog, whatever the telemetry settings say.
   export function init(dir = "") {
     directory = dir

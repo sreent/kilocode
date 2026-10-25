@@ -2,7 +2,7 @@ import { Brand } from "@/tucode/brand"
 
 const owner = new URL(Brand.repository).pathname.split("/")[1]
 
-// TU Code's packages, from brand/brand.json. It is published only as an npm package; the Homebrew,
+// tucode's packages, from brand/brand.json. It is published only as an npm package; the Homebrew,
 // Chocolatey and Scoop names are the command's, so they match nothing Kilo publishes and find TU
 // Code only where someone has packaged it under that name.
 export const Npm = {

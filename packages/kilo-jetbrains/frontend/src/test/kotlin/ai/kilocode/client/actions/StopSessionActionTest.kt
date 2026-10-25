@@ -21,7 +21,7 @@ class StopSessionActionTest : BasePlatformTestCase() {
         assertTrue(event.presentation.isEnabled)
         assertEquals(1, ctx.stopped)
         assertEquals("Stop Session", action.templatePresentation.text)
-        assertEquals("Stop the current TU Code session", action.templatePresentation.description)
+        assertEquals("Stop the current tucode session", action.templatePresentation.description)
     }
 
     fun `test update disables action without prompt context`() {

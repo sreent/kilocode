@@ -59,7 +59,7 @@ it.instance(
 )
 
 it.instance(
-  "getSmallModel never falls back to Kilo Gateway, which TU Code doesn't have, even when kilo is configured",
+  "getSmallModel never falls back to Kilo Gateway, which tucode doesn't have, even when kilo is configured",
   Effect.gen(function* () {
     const model = yield* Provider.use.getSmallModel(ProviderV2.ID.make("test-provider"))
     expect(model?.providerID).not.toBe("kilo")

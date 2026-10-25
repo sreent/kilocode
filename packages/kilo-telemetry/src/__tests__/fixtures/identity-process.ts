@@ -1,4 +1,4 @@
-// Records every request the telemetry package makes. TU Code sends none, so the list must stay empty.
+// Records every request the telemetry package makes. tucode sends none, so the list must stay empty.
 const requests: { method: string; url: string }[] = []
 globalThis.fetch = Object.assign(
   async (url: string | URL | Request, options?: RequestInit) => {

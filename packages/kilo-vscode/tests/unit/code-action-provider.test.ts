@@ -29,14 +29,14 @@ describe("KiloCodeActionProvider", () => {
       it("returns Add, Explain, Improve actions", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(0) as never)
         const titles = result.map((a) => a.title)
-        expect(titles).toContain("Add to TU Code")
-        expect(titles).toContain("Explain with TU Code")
-        expect(titles).toContain("Improve with TU Code")
+        expect(titles).toContain("Add to tucode")
+        expect(titles).toContain("Explain with tucode")
+        expect(titles).toContain("Improve with tucode")
       })
 
       it("does not include Fix action", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(0) as never)
-        expect(result.map((a) => a.title)).not.toContain("Fix with TU Code")
+        expect(result.map((a) => a.title)).not.toContain("Fix with tucode")
       })
 
       it("returns exactly 3 actions", () => {
@@ -62,15 +62,15 @@ describe("KiloCodeActionProvider", () => {
       it("returns Add and Fix actions", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(2) as never)
         const titles = result.map((a) => a.title)
-        expect(titles).toContain("Add to TU Code")
-        expect(titles).toContain("Fix with TU Code")
+        expect(titles).toContain("Add to tucode")
+        expect(titles).toContain("Fix with tucode")
       })
 
       it("does not include Explain or Improve actions", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(1) as never)
         const titles = result.map((a) => a.title)
-        expect(titles).not.toContain("Explain with TU Code")
-        expect(titles).not.toContain("Improve with TU Code")
+        expect(titles).not.toContain("Explain with tucode")
+        expect(titles).not.toContain("Improve with tucode")
       })
 
       it("returns exactly 2 actions", () => {
@@ -80,19 +80,19 @@ describe("KiloCodeActionProvider", () => {
 
       it("Fix action is preferred", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(1) as never)
-        const fix = result.find((a) => a.title === "Fix with TU Code")
+        const fix = result.find((a) => a.title === "Fix with tucode")
         expect(fix?.isPreferred).toBe(true)
       })
 
       it("Fix action uses QuickFix kind", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(1) as never)
-        const fix = result.find((a) => a.title === "Fix with TU Code")
+        const fix = result.find((a) => a.title === "Fix with tucode")
         expect(fix?.kind.value).toBe("quickfix")
       })
 
       it("uses correct Fix command ID", () => {
         const result = provider.provideCodeActions({} as never, makeRange(false) as never, makeContext(1) as never)
-        const fix = result.find((a) => a.title === "Fix with TU Code")
+        const fix = result.find((a) => a.title === "Fix with tucode")
         expect(fix?.command?.command).toBe("kilo-code.new.fixCode")
       })
     })

@@ -1,1 +1,1 @@
-export const EXTENSION_DISPLAY_NAME = "TU Code"
+export const EXTENSION_DISPLAY_NAME = "tucode"

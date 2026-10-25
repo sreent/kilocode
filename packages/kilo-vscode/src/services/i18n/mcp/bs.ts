@@ -5,7 +5,7 @@ export const dict = {
   "mcp.signIn.unsupported": "{{name}} ne podržava OAuth prijavu.",
   "mcp.signIn.notFound": "MCP server {{name}} nije pronađen.",
   "mcp.auth.browserFailed":
-    "TU Code nije mogao otvoriti pretraživač za {{name}}. Otvori URL za autorizaciju na uređaju na kojem radi TU Code da bi završio prijavu.",
+    "tucode nije mogao otvoriti pretraživač za {{name}}. Otvori URL za autorizaciju na uređaju na kojem radi tucode da bi završio prijavu.",
   "mcp.auth.browserFailed.open": "Otvori u pretraživaču",
   "mcp.auth.browserFailed.copy": "Kopiraj URL",
   "mcp.auth.resetFailed": "Nije moguće obrisati sačuvanu prijavu za {{name}}.",

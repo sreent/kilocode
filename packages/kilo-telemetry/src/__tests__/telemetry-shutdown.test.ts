@@ -3,7 +3,7 @@ import { Client } from "../client.js"
 import { Telemetry } from "../telemetry.js"
 
 describe("Telemetry.shutdown", () => {
-  test("returns at once, since TU Code never creates a PostHog client", async () => {
+  test("returns at once, since tucode never creates a PostHog client", async () => {
     Client.init()
     expect(Client.getClient()).toBeNull()
     Client.setEnabled(true)

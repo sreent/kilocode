@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "Non disponibile",
   "provider.anaconda.state.unsupported": "Anaconda Desktop non è supportato su {{platform}}.",
   "provider.anaconda.state.notInstalled":
-    "Installa Anaconda Desktop su questo computer, poi torna qui. TU Code non esegue il programma di installazione per te.",
+    "Installa Anaconda Desktop su questo computer, poi torna qui. tucode non esegue il programma di installazione per te.",
   "provider.anaconda.state.notRunning":
     "Apri Anaconda Desktop, completa la configurazione e accedi, poi scegli Controlla di nuovo.",
   "provider.anaconda.state.invalidConfig":
     "La configurazione di Anaconda Desktop è incompleta. Apri Desktop, completa la configurazione e riavvialo se necessario.",
-  "provider.anaconda.state.signedOut": "Apri Anaconda Desktop e accedi prima di connettere TU Code.",
+  "provider.anaconda.state.signedOut": "Apri Anaconda Desktop e accedi prima di connettere tucode.",
   "provider.anaconda.state.unauthorized":
-    "TU Code non è riuscito ad accedere ad Anaconda Desktop. Apri Desktop, accedi di nuovo e riavvialo se necessario.",
+    "tucode non è riuscito ad accedere ad Anaconda Desktop. Apri Desktop, accedi di nuovo e riavvialo se necessario.",
   "provider.anaconda.state.unavailable":
     "Anaconda Desktop non risponde ancora. Aprilo e attendi che l'applicazione finisca di avviarsi.",
   "provider.anaconda.state.noModel":
@@ -31,7 +31,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "Il server di inferenza attivo non è ancora integro. Controllalo in Anaconda Desktop e riavvia il server se necessario.",
   "provider.anaconda.state.ready":
-    "TU Code ha trovato un server locale di generazione del testo integro e può importare le sue attuali impostazioni di connessione.",
+    "tucode ha trovato un server locale di generazione del testo integro e può importare le sue attuali impostazioni di connessione.",
   "provider.anaconda.server": "Server di inferenza attivo",
   "provider.anaconda.context": "Finestra di contesto",
   "provider.anaconda.contextValue": "{{count}} token",
@@ -48,7 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "Continua comunque",
   "provider.anaconda.action.manage": "Gestisci / Aggiorna",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop aggiornato",
-  "provider.anaconda.toast.refreshed.description": "Il server locale attivo e i modelli sono aggiornati in TU Code.",
+  "provider.anaconda.toast.refreshed.description": "Il server locale attivo e i modelli sono aggiornati in tucode.",
   "settings.providers.note.anacondaDesktop": "Esegui un modello servito localmente da Anaconda Desktop.",
   "settings.providers.tag.local": "Locale",
 } as const
@@ -94,7 +94,7 @@ export const dict = {
     "Conversazione ripristinata. Lo stato del ripristino dell'area di lavoro non è disponibile per questo ripristino precedente.",
   "revert.banner.workspace.enableSnapshots": "Abilita snapshot",
   "revert.disabled.agentBusy": "Attendi che l'agente finisca",
-  "revert.error.body": "Il repository potrebbe essere in uso. Riprova o controlla i log di TU Code per i dettagli.",
+  "revert.error.body": "Il repository potrebbe essere in uso. Riprova o controlla i log di tucode per i dettagli.",
   "command.session.compact": "Compatta sessione",
   "dialog.provider.search.placeholder": "Cerca provider",
   "dialog.provider.empty": "Nessun provider trovato",
@@ -114,7 +114,7 @@ export const dict = {
   "provider.connect.status.waiting": "In attesa di autorizzazione...",
   "provider.connect.status.failed": "Autorizzazione non riuscita: {{error}}",
   "provider.connect.apiKey.description":
-    "Inserisci la tua API key {{provider}} per connettere l'account e usare i modelli {{provider}} in TU Code.",
+    "Inserisci la tua API key {{provider}} per connettere l'account e usare i modelli {{provider}} in tucode.",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -127,14 +127,14 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": "Visita ",
   "provider.connect.oauth.code.visit.link": "questo link",
   "provider.connect.oauth.code.visit.suffix":
-    " per ottenere il codice di autorizzazione, connettere l'account e usare i modelli {{provider}} in TU Code.",
+    " per ottenere il codice di autorizzazione, connettere l'account e usare i modelli {{provider}} in tucode.",
   "provider.connect.oauth.code.label": "Codice di autorizzazione {{method}}",
   "provider.connect.oauth.code.placeholder": "Codice di autorizzazione",
   "provider.connect.oauth.code.required": "Codice di autorizzazione obbligatorio",
   "provider.connect.oauth.auto.visit.prefix": "Visita ",
   "provider.connect.oauth.auto.visit.link": "questo link",
   "provider.connect.oauth.auto.visit.suffix":
-    " e inserisci il codice qui sotto per connettere l'account e usare i modelli {{provider}} in TU Code.",
+    " e inserisci il codice qui sotto per connettere l'account e usare i modelli {{provider}} in tucode.",
   "provider.connect.oauth.auto.confirmationCode": "Codice di conferma",
   "provider.connect.toast.connected.title": "{{provider}} connesso",
   "provider.connect.toast.connected.description": "I modelli {{provider}} sono ora disponibili.",
@@ -233,7 +233,7 @@ export const dict = {
     "Questo esegue l'intero comando senza le restrizioni di filesystem e rete, solo per questo comando. Git deve scrivere in .git, che è di sola lettura nella sandbox e si trova fuori dall'albero di lavoro in un worktree collegato. Le regole di autorizzazione Bash e l'approvazione automatica non approvano mai automaticamente questa richiesta.",
   "ui.permission.manageAutoApprove": "Gestisci regole approvazione automatica",
   "ui.permission.reject": "Rifiuta",
-  "ui.permission.feedbackPlaceholder": "Di' a TU Code cosa fare diversamente",
+  "ui.permission.feedbackPlaceholder": "Di' a tucode cosa fare diversamente",
   "ui.permission.feedbackHint": "Enter per rifiutare, Esc per annullare",
   "ui.permission.doomLoop.prompt": "Rilevato un potenziale ciclo nello strumento {{tool}}. Continuare l'esecuzione?",
   "ui.permission.doomLoop.rule": "Continua le chiamate a {{tool}}",
@@ -413,11 +413,11 @@ export const dict = {
   "settings.config.status.loadedLegacy": "config legacy caricata",
   "settings.config.status.notLoaded": "non caricata",
   "settings.config.status.create": "non trovata - crea questo file",
-  "settings.config.title": "Apri file config TU Code {{scope}}",
+  "settings.config.title": "Apri file config tucode {{scope}}",
   "settings.config.placeholder":
     "I file config vengono uniti in ordine; i file marcati come caricati influenzano attualmente le impostazioni.",
-  "settings.config.noWorkspace": "Apri una cartella workspace per modificare il file config TU Code locale.",
-  "settings.config.openFailed": "Apertura file config TU Code {{scope}} non riuscita: {{message}}",
+  "settings.config.noWorkspace": "Apri una cartella workspace per modificare il file config tucode locale.",
+  "settings.config.openFailed": "Apertura file config tucode {{scope}} non riuscita: {{message}}",
   "settings.config.source.xdg": "Config globale XDG",
   "settings.config.source.homeKilo": "Config home .kilo",
   "settings.config.source.homeKilocode": "Config home .kilocode",
@@ -470,7 +470,7 @@ export const dict = {
   "feedback.button": "Feedback e supporto",
   "feedback.dialog.message": "Ci piacerebbe ricevere feedback o aiutarti con eventuali problemi.",
   "feedback.dialog.github": "Segnala un problema su GitHub",
-  "workStyle.onboarding.welcome": "Ti diamo il benvenuto in TU Code",
+  "workStyle.onboarding.welcome": "Ti diamo il benvenuto in tucode",
   "workStyle.onboarding.title": "Scegli come vuoi lavorare",
   "workStyle.onboarding.settingsNote": "Puoi modificare queste opzioni in qualsiasi momento in",
   "workStyle.onboarding.settings": "Impostazioni.",
@@ -480,7 +480,7 @@ export const dict = {
   "workStyle.choice.visibility": "Visibilità",
   "workStyle.choice.human-in-the-loop.eyebrow": "Supervisione umana",
   "workStyle.choice.human-in-the-loop.title": "Prima la revisione",
-  "workStyle.choice.human-in-the-loop.description": "TU Code si mette in pausa e ti mostra il suo piano mentre lavora.",
+  "workStyle.choice.human-in-the-loop.description": "tucode si mette in pausa e ti mostra il suo piano mentre lavora.",
   "workStyle.choice.human-in-the-loop.permissions": "Chiede conferma prima di modificare file o eseguire comandi.",
   "workStyle.choice.human-in-the-loop.bash": "Chiede l'autorizzazione per ogni comando del terminale.",
   "workStyle.choice.human-in-the-loop.visibility": "Espande ragionamento, comandi e modifiche per la revisione.",
@@ -496,7 +496,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "Codice copiato negli appunti",
   "deviceAuth.toast.errorCopied": "Errore copiato negli appunti",
   "deviceAuth.status.initiating": "Avvio accesso...",
-  "deviceAuth.title": "Accedi a TU Code",
+  "deviceAuth.title": "Accedi a tucode",
   "deviceAuth.step1": "Passaggio 1: apri questo URL",
   "deviceAuth.action.copyUrl": "Copia URL",
   "deviceAuth.action.openBrowser": "Apri browser",
@@ -523,7 +523,7 @@ export const dict = {
   "profile.organization.gateway":
     "Le chiamate ai modelli di {{providers}} passano dal gateway della tua organizzazione.",
   "profile.organization.managed":
-    "{{org}} gestisce TU Code su questo dispositivo. Accedi con l'account della tua organizzazione.",
+    "{{org}} gestisce tucode su questo dispositivo. Accedi con l'account della tua organizzazione.",
   "profile.organization.connect": "Accedi a un'organizzazione self-hosted",
   "profile.organization.url": "URL del server",
   "profile.organization.action.signin": "Accedi",
@@ -618,11 +618,11 @@ export const dict = {
   "settings.indexing.tuning.description": "Parametro avanzato per ricerca e batching.",
   "settings.experimental.title": "Sperimentale",
   "settings.language.title": "Lingua",
-  "settings.aboutKiloCode.title": "Informazioni su TU Code",
+  "settings.aboutKiloCode.title": "Informazioni su tucode",
   "session.messages.welcome":
-    "TU Code è un assistente AI per il coding. Chiedigli di creare feature, correggere bug o spiegare il codebase.",
+    "tucode è un assistente AI per il coding. Chiedigli di creare feature, correggere bug o spiegare il codebase.",
   "session.workspaceScope.description":
-    "La chat di TU Code usa solo «{{folder}}», la prima cartella di questo workspace.",
+    "La chat di tucode usa solo «{{folder}}», la prima cartella di questo workspace.",
   "session.workspaceScope.alternatives":
     "Per lavorare con un'altra cartella, aprila in una finestra separata o aggiungila come progetto in Agent Manager.",
   "session.workspaceScope.dismiss": "Nascondi il suggerimento sull'ambito del workspace",
@@ -640,7 +640,7 @@ export const dict = {
   "session.status.retry": "Riprovo...",
   "session.status.working": "Al lavoro...",
   "session.status.offline": "Rete disconnessa - riconnessione...",
-  "sidebar.topBar.label": "Navigazione TU Code",
+  "sidebar.topBar.label": "Navigazione tucode",
   "sidebar.topBar.newTask": "Nuova Attività",
   "sidebar.topBar.history": "Cronologia",
   "sidebar.topBar.agentManager": "Agent Manager",
@@ -674,7 +674,7 @@ export const dict = {
   "ui.sessionTurn.status.thinking": "Sto pensando...",
   "ui.sessionTurn.status.consideringNextSteps": "Valutazione prossimi passi...",
   "dialog.model.noProviders": "Nessun provider",
-  "dialog.model.unavailable": "Modelli TU Code non disponibili",
+  "dialog.model.unavailable": "Modelli tucode non disponibili",
   "prompt.placeholder.connecting": "Connessione al server...",
   "prompt.placeholder.default":
     "Scrivi un messaggio, @ per menzionare i file... (Invio per inviare, Maiusc+Invio per nuova riga)",
@@ -712,10 +712,10 @@ export const dict = {
   "settings.aboutKiloCode.exportSettings": "Esporta",
   "settings.aboutKiloCode.importSettings": "Importa",
   "settings.aboutKiloCode.importSettings.invalidJson": "File JSON non valido. Seleziona un file impostazioni valido.",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "Il file non contiene impostazioni TU Code valide.",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "Il file non contiene impostazioni tucode valide.",
   "settings.aboutKiloCode.importSettings.tooLarge": "File troppo grande. I file impostazioni devono essere sotto 1 MB.",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "Questo file è stato esportato da una versione più recente di TU Code. Alcune impostazioni potrebbero essere ignorate.",
+    "Questo file è stato esportato da una versione più recente di tucode. Alcune impostazioni potrebbero essere ignorate.",
   "settings.aboutKiloCode.importSettings.success":
     "Impostazioni importate. Controlla le modifiche sopra, poi fai clic su Salva.",
   "settings.aboutKiloCode.telemetry.title": "Telemetria",
@@ -728,7 +728,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.workflows": "Workflow",
   "settings.agentBehaviour.subtab.skills": "Skill",
   "settings.browser.description":
-    "Configura l'automazione del browser integrata basata su Playwright. TU Code può navigare, interagire e acquisire screenshot delle pagine web nelle tue sessioni.",
+    "Configura l'automazione del browser integrata basata su Playwright. tucode può navigare, interagire e acquisire screenshot delle pagine web nelle tue sessioni.",
   "settings.browser.enable.title": "Abilita automazione browser",
   "settings.browser.enable.description":
     "Abilita il browser di Agent Manager dedicato a ciascuna sessione per le applicazioni locali e le pagine HTTPS pubbliche.",
@@ -757,10 +757,10 @@ export const dict = {
     "Riproduci suoni quando le sessioni si concludono, si verifica un errore o è richiesto il tuo intervento",
   "settings.notifications.workbench.title": "Abilita le notifiche di VS Code",
   "settings.notifications.workbench.description":
-    "Mostra notifiche di VS Code quando TU Code completa un'attività o richiede il tuo intervento",
+    "Mostra notifiche di VS Code quando tucode completa un'attività o richiede il tuo intervento",
   "settings.notifications.os.title": "Abilita le notifiche del sistema operativo",
   "settings.notifications.os.description":
-    "Mostra avvisi di notifica nativi del sistema operativo quando TU Code completa un'attività o richiede il tuo intervento mentre VS Code non è attivo.",
+    "Mostra avvisi di notifica nativi del sistema operativo quando tucode completa un'attività o richiede il tuo intervento mentre VS Code non è attivo.",
   "settings.notifications.testSound": "Prova",
   "settings.notifications.testOS": "Prova",
   "settings.notifications.testOS.testing": "Invio della notifica di prova…",
@@ -781,7 +781,7 @@ export const dict = {
     "Abilita l'indicizzazione semantica del codebase e il tool semantic_search. Richiede configurazione indicizzazione.",
   "settings.experimental.imageGeneration.title": "Generazione di immagini",
   "settings.experimental.imageGeneration.description": "Abilita la generazione di immagini con AI",
-  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "tucode Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "Condividi una board tra una sessione principale e i suoi sotto-agenti incaricati dei task, inclusi quelli annidati. Usala per tentativi di soluzione in parallelo o attività complementari, non per ogni task.",
   "settings.experimental.imageGenerationModel.title": "Modello di immagine",
@@ -844,9 +844,9 @@ export const dict = {
   "prompt.action.sandbox.enable": "Abilita sandbox",
   "prompt.action.sandbox.disable": "Disabilita sandbox",
   "prompt.action.sandbox.enabled":
-    "Sandbox abilitata. I comandi shell dell'agente sono limitati alle directory del progetto e di TU Code.",
+    "Sandbox abilitata. I comandi shell dell'agente sono limitati alle directory del progetto e di tucode.",
   "prompt.action.sandbox.disabled":
-    "Sandbox disabilitata. Fai clic per limitare le scritture dei comandi shell dell'agente alle directory del progetto e di TU Code.",
+    "Sandbox disabilitata. Fai clic per limitare le scritture dei comandi shell dell'agente alle directory del progetto e di tucode.",
   "prompt.action.sandbox.status.enabled": "Sandbox abilitata",
   "prompt.action.sandbox.status.disabled": "Sandbox disabilitata",
   "prompt.action.sandbox.filesystem": "File system",
@@ -855,7 +855,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "Bloccata",
   "prompt.action.sandbox.network.allowed": "Consentita",
   "prompt.action.sandbox.unrestricted": "Senza restrizioni",
-  "prompt.action.sandbox.description.enabled": "Le scritture sono limitate alle directory del progetto e di TU Code.",
+  "prompt.action.sandbox.description.enabled": "Le scritture sono limitate alle directory del progetto e di tucode.",
   "prompt.action.sandbox.description.escalation":
     "Le regole di autorizzazione e l'approvazione automatica si applicano all'interno della sandbox. I comandi che devono uscirne chiedono sempre.",
   "prompt.action.sandbox.description.disabled":
@@ -867,7 +867,7 @@ export const dict = {
     "Instrada le chiamate agli strumenti MCP attraverso un runtime JavaScript confinato con rilevamento degli strumenti su richiesta, invece di esporre direttamente ogni strumento MCP. Risparmia contesto quando sono connessi molti strumenti MCP.",
   "settings.sandboxing.enabled.title": "Sandbox",
   "settings.sandboxing.enabled.description":
-    "Esegui i comandi shell dell'agente all'interno di un sandbox a livello di sistema operativo che limita le scritture alle directory di stato del progetto e di TU Code",
+    "Esegui i comandi shell dell'agente all'interno di un sandbox a livello di sistema operativo che limita le scritture alle directory di stato del progetto e di tucode",
 
   "settings.agentBehaviour.skillPaths": "Percorsi cartelle skill",
   "settings.agentBehaviour.skillUrls": "URL skill",
@@ -888,7 +888,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "Compatibilità Claude Code",
   "settings.agentBehaviour.claudeCompat.title": "Carica file Claude Code",
   "settings.agentBehaviour.claudeCompat.description":
-    "Carica istruzioni CLAUDE.md e skill dalla directory di configurazione Claude Code nelle sessioni. Abilitalo se vuoi che TU Code usi istruzioni e skill di Claude Code. Richiede riavvio.",
+    "Carica istruzioni CLAUDE.md e skill dalla directory di configurazione Claude Code nelle sessioni. Abilitalo se vuoi che tucode usi istruzioni e skill di Claude Code. Richiede riavvio.",
   "settings.agentBehaviour.removeMcp.title": "Rimuovi server MCP",
   "settings.agentBehaviour.removeMcp.confirm":
     'Rimuovere il server MCP "{{name}}"? Questo lo rimuoverà dalla configurazione.',
@@ -911,7 +911,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "Variabili passate al processo del server MCP.",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "Lasciare su Automatico a meno che il server non richieda un client pre-registrato. Un client secret viene memorizzato nel file di configurazione di TU Code.",
+    "Lasciare su Automatico a meno che il server non richieda un client pre-registrato. Un client secret viene memorizzato nel file di configurazione di tucode.",
   "settings.agentBehaviour.editMcp.oauth.mode": "Modalità",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "Automatica",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "Disabilitata",
@@ -1033,7 +1033,7 @@ export const dict = {
     "Crea checkpoint prima delle modifiche ai file così puoi ripristinare stati precedenti",
   "settings.autoCleanup.enable.title": "Abilita pulizia automatica delle sessioni",
   "settings.autoCleanup.enable.description":
-    "Elimina automaticamente la vecchia cronologia delle sessioni dopo un numero fisso di giorni, in tutti i progetti e in tutti i client TU Code di questo computer, non solo in questa finestra. Le sessioni in esecuzione e quelle con un fork recente non vengono mai eliminate. L'eliminazione è permanente.",
+    "Elimina automaticamente la vecchia cronologia delle sessioni dopo un numero fisso di giorni, in tutti i progetti e in tutti i client tucode di questo computer, non solo in questa finestra. Le sessioni in esecuzione e quelle con un fork recente non vengono mai eliminate. L'eliminazione è permanente.",
   "settings.autoCleanup.defaultRetention.title": "Conserva sessioni per (giorni)",
   "settings.autoCleanup.defaultRetention.description":
     "Per quanto tempo viene conservata la cronologia delle sessioni prima che la pulizia automatica la elimini.",
@@ -1053,7 +1053,7 @@ export const dict = {
     "Eliminazione delle sessioni: {{processed}}/{{total}} elaborate ({{deleted}} eliminate, {{failed}} non riuscite)",
   "settings.autoCleanup.runNow": "Esegui pulizia ora",
   "settings.autoCleanup.runNow.confirm":
-    "Eliminare definitivamente le sessioni scadute in tutti i progetti e in tutti i client TU Code di questo computer?",
+    "Eliminare definitivamente le sessioni scadute in tutti i progetti e in tutti i client tucode di questo computer?",
   "settings.autoCleanup.stop": "Interrompi pulizia",
   "settings.autoCleanup.progress.cancelling": "Interruzione della pulizia delle sessioni...",
   "settings.autoCleanup.lastRun.cancelled": "interrotta",
@@ -1083,7 +1083,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "Ispeziona",
   "chat.memory.project.disabled": "Memoria del progetto disattivata",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use tucode.",
   "chat.memory.command.failed": "Comando memoria non riuscito",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1120,7 +1120,7 @@ export const dict = {
   "settings.display.username.description": "Nome utente personalizzato mostrato nelle conversazioni",
   "settings.display.fontSize.title": "Dimensione font",
   "settings.display.fontSize.description":
-    "Regola la dimensione del font della webview TU Code indipendentemente da VS Code.",
+    "Regola la dimensione del font della webview tucode indipendentemente da VS Code.",
   "settings.display.reasoningDisplay.title": "Blocchi di ragionamento",
   "settings.display.reasoningDisplay.description":
     "Scegli come iniziano i blocchi di ragionamento. Espansi mostra il testo completo, Anteprima lo limita a una breve anteprima scorrevole, e Intestazione mostra solo il titolo e l'indicatore di streaming finché non lo apri.",
@@ -1276,7 +1276,7 @@ export const dict = {
     "File modificati nel working tree ma non ancora sottoposti a staging, più file non tracciati (nuovi).",
   "diffViewer.source.session.label": "Sessione",
   "diffViewer.source.session.tooltip":
-    "File modificati da TU Code durante la sessione corrente, basati su snapshot per turno. Si resetta quando inizi una nuova sessione.",
+    "File modificati da tucode durante la sessione corrente, basati su snapshot per turno. Si resetta quando inizi una nuova sessione.",
   "diffViewer.group.session": "Sessione",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "Pubblica su GitHub",
@@ -1286,7 +1286,7 @@ export const dict = {
   "diffViewer.comment.openPR": "Apri pull request",
   "diffViewer.comment.localChanges": "Modifiche locali",
   "diffViewer.comment.prChanges": "Modifiche della PR",
-  "diffViewer.comment.sendToKilo": "Invia a TU Code",
+  "diffViewer.comment.sendToKilo": "Invia a tucode",
   "diffViewer.comment.sendToGithub": "Invia a GitHub #{{number}}",
   "diffViewer.comment.chooseDestination": "Scegli destinazione",
   "diffViewer.notice.snapshotsDisabled":
@@ -1333,12 +1333,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "Chiave API Da voce a testo",
   "settings.models.speechToTextApiKey.description":
-    "Token bearer inviato all'URL di base di trascrizione personalizzato. Salvato nel tuo file di configurazione TU Code.",
+    "Token bearer inviato all'URL di base di trascrizione personalizzato. Salvato nel tuo file di configurazione tucode.",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "Abilita e accedi al provider TU Code per usare Da voce a testo, oppure imposta di seguito un URL di base di trascrizione personalizzato.",
+    "Abilita e accedi al provider tucode per usare Da voce a testo, oppure imposta di seguito un URL di base di trascrizione personalizzato.",
   "settings.models.speechToText.remoteDescription":
-    "L'input vocale non è disponibile nelle finestre remote. Apri TU Code in una finestra locale per usare il microfono.",
+    "L'input vocale non è disponibile nelle finestre remote. Apri tucode in una finestra locale per usare il microfono.",
   "settings.models.speechToTextModel.title": "Modello Da voce a testo",
   "settings.models.speechToTextModel.description": "Scegli il modello di trascrizione Kilo Gateway per l'input vocale.",
 
@@ -1365,10 +1365,10 @@ export const dict = {
   "settings.indexing.projectEnable.title": "Abilita per questo progetto",
   "settings.indexing.projectEnable.description":
     "Abilita l'indicizzazione per questo workspace quando l'indicizzazione globale è disattivata.",
-  "settings.indexing.kiloModel.title": "Preset modello TU Code",
-  "settings.indexing.kiloModel.description": "Scegli un modello embedding ospitato da TU Code.",
-  "settings.indexing.kiloSignIn.title": "Accesso TU Code richiesto",
-  "settings.indexing.kiloSignIn.description": "Accedi a TU Code per usare gli embedding ospitati.",
+  "settings.indexing.kiloModel.title": "Preset modello tucode",
+  "settings.indexing.kiloModel.description": "Scegli un modello embedding ospitato da tucode.",
+  "settings.indexing.kiloSignIn.title": "Accesso tucode richiesto",
+  "settings.indexing.kiloSignIn.description": "Accedi a tucode per usare gli embedding ospitati.",
 
   // Azure provider
   "provider.connect.azure.endpointType.label": "Seleziona configurazione endpoint Azure",
@@ -1421,7 +1421,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "Trascrizione... Fai clic per annullare.",
   "speechToText.tooltip.error": "Input vocale fallito. Fai clic per cancellare.",
   "speechToText.error.title": "Input vocale fallito",
-  "speechToText.error.loginRequired": "Accedi a TU Code per usare l'input vocale.",
+  "speechToText.error.loginRequired": "Accedi a tucode per usare l'input vocale.",
   "speechToText.error.emptyTranscript": "Nessun parlato rilevato.",
   "chat.search.placeholder": "Cerca nella chat…",
   "chat.search.toggle": "Cerca nella chat",
@@ -1441,11 +1441,11 @@ export const dict = {
     "Usa il Google Chrome installato per il Browser integrato. Disattivalo solo se è già installato un browser Playwright Chromium compatibile.",
   "settings.experimental.browserLinks.title": "Apri i link in",
   "settings.experimental.browserLinks.description":
-    "Scegli dove aprire i link web dalle chat di TU Code. Richiede il Browser integrato.",
+    "Scegli dove aprire i link web dalle chat di tucode. Richiede il Browser integrato.",
   "settings.experimental.browserLinks.external": "Browser di sistema",
   "settings.experimental.browserLinks.integrated": "Browser integrato",
   "chat.search.searchingHistory": "Ricerca nei messaggi precedenti…",
   "browserTab.noSession":
     "Apri il browser da una sessione per visualizzare in anteprima un'applicazione locale o una pagina HTTPS pubblica.",
-  "browserTab.disabled": "Il browser integrato è disabilitato. Abilitalo in Impostazioni TU Code > Sperimentale.",
+  "browserTab.disabled": "Il browser integrato è disabilitato. Abilitalo in Impostazioni tucode > Sperimentale.",
 } as const

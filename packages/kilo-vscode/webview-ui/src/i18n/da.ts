@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "Utilgængelig",
   "provider.anaconda.state.unsupported": "Anaconda Desktop understøttes ikke på {{platform}}.",
   "provider.anaconda.state.notInstalled":
-    "Installer Anaconda Desktop på denne maskine, og vend derefter tilbage hertil. TU Code kører ikke installationsprogrammet for dig.",
+    "Installer Anaconda Desktop på denne maskine, og vend derefter tilbage hertil. tucode kører ikke installationsprogrammet for dig.",
   "provider.anaconda.state.notRunning":
     "Åbn Anaconda Desktop, færdiggør opsætningen og log ind, og vælg derefter Tjek igen.",
   "provider.anaconda.state.invalidConfig":
     "Opsætningen af Anaconda Desktop er ufuldstændig. Åbn Desktop, færdiggør opsætningen, og genstart den om nødvendigt.",
-  "provider.anaconda.state.signedOut": "Åbn Anaconda Desktop og log ind, før du forbinder TU Code.",
+  "provider.anaconda.state.signedOut": "Åbn Anaconda Desktop og log ind, før du forbinder tucode.",
   "provider.anaconda.state.unauthorized":
-    "TU Code kunne ikke få adgang til Anaconda Desktop. Åbn Desktop, log ind igen, og genstart den om nødvendigt.",
+    "tucode kunne ikke få adgang til Anaconda Desktop. Åbn Desktop, log ind igen, og genstart den om nødvendigt.",
   "provider.anaconda.state.unavailable":
     "Anaconda Desktop svarer ikke endnu. Åbn den, og vent på, at applikationen er færdig med at starte.",
   "provider.anaconda.state.noModel":
@@ -31,7 +31,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "Den aktive inferensserver er ikke sund endnu. Tjek den i Anaconda Desktop, og genstart serveren om nødvendigt.",
   "provider.anaconda.state.ready":
-    "TU Code fandt en sund lokal tekstgenereringsserver og kan importere dens aktuelle forbindelsesindstillinger.",
+    "tucode fandt en sund lokal tekstgenereringsserver og kan importere dens aktuelle forbindelsesindstillinger.",
   "provider.anaconda.server": "Aktiv inferensserver",
   "provider.anaconda.context": "Kontekstvindue",
   "provider.anaconda.contextValue": "{{count}} tokens",
@@ -48,7 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "Fortsæt alligevel",
   "provider.anaconda.action.manage": "Administrer / Opdater",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop opdateret",
-  "provider.anaconda.toast.refreshed.description": "Den aktive lokale server og modeller er opdaterede i TU Code.",
+  "provider.anaconda.toast.refreshed.description": "Den aktive lokale server og modeller er opdaterede i tucode.",
   "settings.providers.note.anacondaDesktop": "Kør en model, der serveres lokalt af Anaconda Desktop.",
   "settings.providers.tag.local": "Lokal",
 } as const
@@ -97,7 +97,7 @@ export const dict = {
     "Samtalen blev gendannet. Status for gendannelse af arbejdsområdet er ikke tilgængelig for denne tidligere gendannelse.",
   "revert.banner.workspace.enableSnapshots": "Aktivér snapshots",
   "revert.disabled.agentBusy": "Vent på at agenten er færdig",
-  "revert.error.body": "Lageret er muligvis i brug. Prøv igen, eller se TU Code-loggene for detaljer.",
+  "revert.error.body": "Lageret er muligvis i brug. Prøv igen, eller se tucode-loggene for detaljer.",
   "command.session.compact": "Komprimér session",
   "command.session.export": "Eksporter sessionsudskrift",
 
@@ -122,7 +122,7 @@ export const dict = {
   "provider.connect.status.waiting": "Venter på godkendelse...",
   "provider.connect.status.failed": "Godkendelse mislykkedes: {{error}}",
   "provider.connect.apiKey.description":
-    "Indtast din {{provider}} API-nøgle for at forbinde din konto og bruge {{provider}} modeller i TU Code.",
+    "Indtast din {{provider}} API-nøgle for at forbinde din konto og bruge {{provider}} modeller i tucode.",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -145,14 +145,14 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": "Besøg ",
   "provider.connect.oauth.code.visit.link": "dette link",
   "provider.connect.oauth.code.visit.suffix":
-    " for at hente din godkendelseskode for at forbinde din konto og bruge {{provider}} modeller i TU Code.",
+    " for at hente din godkendelseskode for at forbinde din konto og bruge {{provider}} modeller i tucode.",
   "provider.connect.oauth.code.label": "{{method}} godkendelseskode",
   "provider.connect.oauth.code.placeholder": "Godkendelseskode",
   "provider.connect.oauth.code.required": "Godkendelseskode er påkrævet",
   "provider.connect.oauth.auto.visit.prefix": "Besøg ",
   "provider.connect.oauth.auto.visit.link": "dette link",
   "provider.connect.oauth.auto.visit.suffix":
-    " og indtast koden nedenfor for at forbinde din konto og bruge {{provider}} modeller i TU Code.",
+    " og indtast koden nedenfor for at forbinde din konto og bruge {{provider}} modeller i tucode.",
   "provider.connect.oauth.auto.confirmationCode": "Bekræftelseskode",
   "provider.connect.toast.connected.title": "{{provider}} forbundet",
   "provider.connect.toast.connected.description": "{{provider}} modeller er nu tilgængelige.",
@@ -234,9 +234,9 @@ export const dict = {
   "prompt.action.sandbox.enable": "Aktivér sandbox",
   "prompt.action.sandbox.disable": "Deaktivér sandbox",
   "prompt.action.sandbox.enabled":
-    "Sandbox er aktiveret. Shell-kommandoer for agenten er begrænset til projekt- og TU Code-mapperne.",
+    "Sandbox er aktiveret. Shell-kommandoer for agenten er begrænset til projekt- og tucode-mapperne.",
   "prompt.action.sandbox.disabled":
-    "Sandbox er deaktiveret. Klik for at begrænse skrivning af shell-kommandoer for agenten til projekt- og TU Code-mapperne.",
+    "Sandbox er deaktiveret. Klik for at begrænse skrivning af shell-kommandoer for agenten til projekt- og tucode-mapperne.",
   "prompt.action.sandbox.status.enabled": "Sandbox aktiveret",
   "prompt.action.sandbox.status.disabled": "Sandbox deaktiveret",
   "prompt.action.sandbox.filesystem": "Filsystem",
@@ -245,7 +245,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "Blokeret",
   "prompt.action.sandbox.network.allowed": "Tilladt",
   "prompt.action.sandbox.unrestricted": "Ubegrænset",
-  "prompt.action.sandbox.description.enabled": "Skrivning er begrænset til projekt- og TU Code-mapperne.",
+  "prompt.action.sandbox.description.enabled": "Skrivning er begrænset til projekt- og tucode-mapperne.",
   "prompt.action.sandbox.description.escalation":
     "Tilladelsesregler og automatisk godkendelse gælder i sandkassen. Kommandoer, der skal forlade den, spørger altid.",
   "prompt.action.sandbox.description.disabled": "Klik for at begrænse skriveadgang til filsystemet og netværksadgang.",
@@ -260,7 +260,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "Transskriberer... Klik for at annullere.",
   "speechToText.tooltip.error": "Stemmeinput mislykkedes. Klik for at rydde.",
   "speechToText.error.title": "Stemmeinput mislykkedes",
-  "speechToText.error.loginRequired": "Log ind på TU Code for at bruge stemmeinput.",
+  "speechToText.error.loginRequired": "Log ind på tucode for at bruge stemmeinput.",
   "speechToText.error.emptyTranscript": "Ingen tale blev registreret.",
 
   "prompt.toast.promptSendFailed.title": "Kunne ikke sende forespørgsel",
@@ -305,7 +305,7 @@ export const dict = {
     "Dette kører hele kommandoen uden begrænsninger for filsystem og netværk, kun for denne kommando. Git skal skrive til .git, som er skrivebeskyttet i sandkassen og ligger uden for worktreet i et linket worktree. Bash-tilladelsesregler og automatisk godkendelse godkender aldrig denne anmodning automatisk.",
   "ui.permission.manageAutoApprove": "Administrer regler for automatisk godkendelse",
   "ui.permission.reject": "Afvis",
-  "ui.permission.feedbackPlaceholder": "Fortæl TU Code, hvad den skal gøre anderledes",
+  "ui.permission.feedbackPlaceholder": "Fortæl tucode, hvad den skal gøre anderledes",
   "ui.permission.feedbackHint": "Enter for at afvise, Esc for at annullere",
   "ui.permission.doomLoop.prompt": "Der blev registreret en mulig løkke for værktøjet {{tool}}. Fortsæt kørslen?",
   "ui.permission.doomLoop.rule": "Fortsæt {{tool}}-kald",
@@ -352,7 +352,7 @@ export const dict = {
   "session.messages.loadEarlier": "Indlæs tidligere beskeder",
   "session.messages.loading": "Indlæser beskeder...",
 
-  "sidebar.topBar.label": "TU Code-navigation",
+  "sidebar.topBar.label": "tucode-navigation",
   "sidebar.topBar.newTask": "Ny Opgave",
   "sidebar.topBar.history": "Historik",
   "sidebar.topBar.agentManager": "Agent Manager",
@@ -457,10 +457,10 @@ export const dict = {
   "settings.indexing.provider.title": "Embedding-udbyder",
   "settings.indexing.provider.description":
     "Vælg udbyderen, der bruges til at generere embeddings til semantisk søgning.",
-  "settings.indexing.kiloModel.title": "TU Code-modelpreset",
-  "settings.indexing.kiloModel.description": "Vælg en understøttet TU Code-hostet embedding-model.",
-  "settings.indexing.kiloSignIn.title": "TU Code-login kræves",
-  "settings.indexing.kiloSignIn.description": "Log ind på TU Code for at bruge hostede embeddings.",
+  "settings.indexing.kiloModel.title": "tucode-modelpreset",
+  "settings.indexing.kiloModel.description": "Vælg en understøttet tucode-hostet embedding-model.",
+  "settings.indexing.kiloSignIn.title": "tucode-login kræves",
+  "settings.indexing.kiloSignIn.description": "Log ind på tucode for at bruge hostede embeddings.",
   "settings.indexing.model.title": "Embedding-model",
   "settings.indexing.model.description": "Overskriv standard embedding-modellen for den valgte udbyder.",
   "settings.indexing.providerField.description": "Udbyderspecifik forbindelsesindstilling.",
@@ -575,11 +575,11 @@ export const dict = {
   "settings.config.status.loadedLegacy": "indlæst forældet konfiguration",
   "settings.config.status.notLoaded": "ikke indlæst",
   "settings.config.status.create": "ikke fundet - opret denne fil",
-  "settings.config.title": "Åbn {{scope}} TU Code konfigurationsfil",
+  "settings.config.title": "Åbn {{scope}} tucode konfigurationsfil",
   "settings.config.placeholder":
     "Konfigurationsfiler flettes i rækkefølge; filer markeret som indlæst påvirker i øjeblikket indstillingerne.",
-  "settings.config.noWorkspace": "Åbn en arbejdsområdemappe for at redigere den lokale TU Code konfigurationsfil.",
-  "settings.config.openFailed": "Kunne ikke åbne {{scope}} TU Code konfigurationsfil: {{message}}",
+  "settings.config.noWorkspace": "Åbn en arbejdsområdemappe for at redigere den lokale tucode konfigurationsfil.",
+  "settings.config.openFailed": "Kunne ikke åbne {{scope}} tucode konfigurationsfil: {{message}}",
   "settings.config.source.xdg": "XDG global konfiguration",
   "settings.config.source.homeKilo": "Home .kilo konfiguration",
   "settings.config.source.homeKilocode": "Home .kilocode konfiguration",
@@ -636,7 +636,7 @@ export const dict = {
   "feedback.button": "Feedback & support",
   "feedback.dialog.message": "Vi vil gerne høre din feedback eller hjælpe med eventuelle problemer, du oplever.",
   "feedback.dialog.github": "Rapportér et problem på GitHub",
-  "workStyle.onboarding.welcome": "Velkommen til TU Code",
+  "workStyle.onboarding.welcome": "Velkommen til tucode",
   "workStyle.onboarding.title": "Vælg, hvordan du vil arbejde",
   "workStyle.onboarding.settingsNote": "Du kan til enhver tid ændre disse valg under",
   "workStyle.onboarding.settings": "Indstillinger.",
@@ -646,7 +646,7 @@ export const dict = {
   "workStyle.choice.visibility": "Synlighed",
   "workStyle.choice.human-in-the-loop.eyebrow": "Menneskelig kontrol",
   "workStyle.choice.human-in-the-loop.title": "Gennemgå først",
-  "workStyle.choice.human-in-the-loop.description": "TU Code holder pause og viser dig sin plan undervejs.",
+  "workStyle.choice.human-in-the-loop.description": "tucode holder pause og viser dig sin plan undervejs.",
   "workStyle.choice.human-in-the-loop.permissions":
     "Spørger om tilladelse, før filer redigeres eller kommandoer køres.",
   "workStyle.choice.human-in-the-loop.bash": "Spørger om tilladelse til alle terminalkommandoer.",
@@ -664,7 +664,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "Kode kopieret til udklipsholder",
   "deviceAuth.toast.errorCopied": "Fejl kopieret til udklipsholder",
   "deviceAuth.status.initiating": "Starter login...",
-  "deviceAuth.title": "Log ind på TU Code",
+  "deviceAuth.title": "Log ind på tucode",
   "deviceAuth.step1": "Trin 1: Åbn denne URL",
   "deviceAuth.action.copyUrl": "Kopiér URL",
   "deviceAuth.action.openBrowser": "Åbn browser",
@@ -691,7 +691,7 @@ export const dict = {
   "profile.organization.signedIn": "Logget ind som {{email}} ({{role}})",
   "profile.organization.policy": "Politikversion {{version}}, opdateret {{time}}",
   "profile.organization.gateway": "Modelkald til {{providers}} går gennem din organisations gateway.",
-  "profile.organization.managed": "{{org}} administrerer TU Code på denne enhed. Log ind med din organisationskonto.",
+  "profile.organization.managed": "{{org}} administrerer tucode på denne enhed. Log ind med din organisationskonto.",
   "profile.organization.connect": "Log ind på en selvhostet organisation",
   "profile.organization.url": "Server-URL",
   "profile.organization.action.signin": "Log ind",
@@ -759,12 +759,12 @@ export const dict = {
 
   "settings.experimental.title": "Eksperimentelt",
   "settings.language.title": "Sprog",
-  "settings.aboutKiloCode.title": "Om TU Code",
+  "settings.aboutKiloCode.title": "Om tucode",
 
   "session.messages.welcome":
-    "TU Code er en AI-kodningsassistent. Bed den om at bygge funktioner, rette fejl eller forklare din kodebase.",
+    "tucode er en AI-kodningsassistent. Bed den om at bygge funktioner, rette fejl eller forklare din kodebase.",
   "session.workspaceScope.description":
-    "TU Code-chatten bruger kun “{{folder}}”, den første mappe i dette arbejdsområde.",
+    "tucode-chatten bruger kun “{{folder}}”, den første mappe i dette arbejdsområde.",
   "session.workspaceScope.alternatives":
     "Hvis du vil arbejde med en anden mappe, skal du åbne den i sit eget vindue eller tilføje den som et projekt i Agent Manager.",
   "session.workspaceScope.dismiss": "Skjul oplysningen om arbejdsområdets afgrænsning",
@@ -810,7 +810,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "Overvejer næste trin...",
 
   "dialog.model.noProviders": "Ingen udbydere",
-  "dialog.model.unavailable": "TU Code-modeller er ikke tilgængelige",
+  "dialog.model.unavailable": "tucode-modeller er ikke tilgængelige",
 
   "prompt.placeholder.connecting": "Opretter forbindelse til server...",
   "prompt.placeholder.error": "Forbindelse mislykkedes. Tjek outputpanelet eller genstart udvidelsen.",
@@ -853,10 +853,10 @@ export const dict = {
   "settings.aboutKiloCode.exportSettings": "Eksportér",
   "settings.aboutKiloCode.importSettings": "Importér",
   "settings.aboutKiloCode.importSettings.invalidJson": "Ugyldig JSON-fil. Vælg venligst en gyldig indstillingsfil.",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "Filen indeholder ikke gyldige TU Code-indstillinger.",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "Filen indeholder ikke gyldige tucode-indstillinger.",
   "settings.aboutKiloCode.importSettings.tooLarge": "Filen er for stor. Indstillingsfiler skal være under 1 MB.",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "Denne fil blev eksporteret fra en nyere version af TU Code. Nogle indstillinger kan blive ignoreret.",
+    "Denne fil blev eksporteret fra en nyere version af tucode. Nogle indstillinger kan blive ignoreret.",
   "settings.aboutKiloCode.importSettings.success":
     "Indstillinger importeret. Gennemgå ændringerne ovenfor, og klik derefter på Gem.",
 
@@ -872,7 +872,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.skills": "Færdigheder",
 
   "settings.browser.description":
-    "Konfigurér indbygget browserautomatisering drevet af Playwright. TU Code kan navigere, interagere med og tage skærmbilleder af websider i dine sessioner.",
+    "Konfigurér indbygget browserautomatisering drevet af Playwright. tucode kan navigere, interagere med og tage skærmbilleder af websider i dine sessioner.",
   "settings.browser.enable.title": "Aktivér browserautomatisering",
   "settings.browser.enable.description":
     "Aktivér den sessionsspecifikke browser i Agent Manager til lokale applikationer og offentlige HTTPS-sider.",
@@ -902,10 +902,10 @@ export const dict = {
     "Afspil lyde, når sessioner fuldføres, der opstår en fejl, eller der er brug for input fra dig",
   "settings.notifications.workbench.title": "Aktivér VS Code-notifikationer",
   "settings.notifications.workbench.description":
-    "Vis VS Code-notifikationer, når TU Code fuldfører en opgave eller har brug for input fra dig",
+    "Vis VS Code-notifikationer, når tucode fuldfører en opgave eller har brug for input fra dig",
   "settings.notifications.os.title": "Aktivér OS-notifikationer",
   "settings.notifications.os.description":
-    "Vis oprindelige OS-notifikationsadvarsler, når TU Code fuldfører en opgave eller har brug for input fra dig, mens VS Code ikke er aktiv.",
+    "Vis oprindelige OS-notifikationsadvarsler, når tucode fuldfører en opgave eller har brug for input fra dig, mens VS Code ikke er aktiv.",
   "settings.notifications.testSound": "Test",
   "settings.notifications.testOS": "Test",
   "settings.notifications.testOS.testing": "Sender testnotifikation…",
@@ -923,7 +923,7 @@ export const dict = {
   "settings.experimental.batch.description": "Aktiver batchbehandling af flere værktøjskald",
   "settings.experimental.imageGeneration.title": "Billedgenerering",
   "settings.experimental.imageGeneration.description": "Aktiver AI-billedgenerering",
-  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "tucode Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "Del et board mellem en hovedsession og dens underagenter til opgaveløsning, herunder indlejrede underagenter. Brug det til parallelle løsningsforsøg eller arbejdsopgaver, der supplerer hinanden, ikke til alle opgaver.",
   "settings.experimental.imageGenerationModel.title": "Billedmodel",
@@ -939,12 +939,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "Tale til tekst-API-nøgle",
   "settings.models.speechToTextApiKey.description":
-    "Bearer-token, der sendes til den egne transskriptions-basis-URL. Gemmes i din TU Code-konfigurationsfil.",
+    "Bearer-token, der sendes til den egne transskriptions-basis-URL. Gemmes i din tucode-konfigurationsfil.",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "Aktivér og log ind på TU Code-udbyderen for at bruge Speech to Text, eller angiv en egen transskriptions-basis-URL nedenfor.",
+    "Aktivér og log ind på tucode-udbyderen for at bruge Speech to Text, eller angiv en egen transskriptions-basis-URL nedenfor.",
   "settings.models.speechToText.remoteDescription":
-    "Stemmeinput er ikke tilgængelig i fjernvinduer. Åbn TU Code i et lokalt vindue for at bruge mikrofonen.",
+    "Stemmeinput er ikke tilgængelig i fjernvinduer. Åbn tucode i et lokalt vindue for at bruge mikrofonen.",
   "settings.models.speechToTextModel.title": "Model til tale til tekst",
   "settings.models.speechToTextModel.description": "Vælg Kilo Gateway-transskriptionsmodellen til stemmeinput.",
   "settings.experimental.nativeNotebookTools.title": "Indbyggede notebook-værktøjer",
@@ -1061,7 +1061,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "Variabler der sendes til MCP-serverprocessen.",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "Lad stå på Automatisk, med mindre serveren kræver en forudregistreret klient. En klienthemmelighed gemmes i din TU Code-konfigurationsfil.",
+    "Lad stå på Automatisk, med mindre serveren kræver en forudregistreret klient. En klienthemmelighed gemmes i din tucode-konfigurationsfil.",
   "settings.agentBehaviour.editMcp.oauth.mode": "Tilstand",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "Automatisk",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "Deaktiveret",
@@ -1101,7 +1101,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "Claude Code-kompatibilitet",
   "settings.agentBehaviour.claudeCompat.title": "Indlæs Claude Code-filer",
   "settings.agentBehaviour.claudeCompat.description":
-    "Indlæs CLAUDE.md-instruktioner og -færdigheder fra din Claude Code-konfigurationsmappe i sessioner. Aktivér dette, hvis du vil have TU Code til at bruge dine Claude Code-instruktioner og -færdigheder. Kræver genstart.",
+    "Indlæs CLAUDE.md-instruktioner og -færdigheder fra din Claude Code-konfigurationsmappe i sessioner. Aktivér dette, hvis du vil have tucode til at bruge dine Claude Code-instruktioner og -færdigheder. Kræver genstart.",
   "settings.agentBehaviour.mcpDetail.command": "Kommando",
   "settings.agentBehaviour.mcpDetail.args": "Argumenter",
   "settings.agentBehaviour.mcpDetail.env": "Miljø",
@@ -1127,7 +1127,7 @@ export const dict = {
     "Ruter MCP-værktøjskald gennem en afgrænset JavaScript-runtime med behovsbaseret værktøjsregistrering i stedet for at eksponere hvert MCP-værktøj direkte. Sparer kontekst, når mange MCP-værktøjer er forbundet.",
   "settings.sandboxing.enabled.title": "Sandbox",
   "settings.sandboxing.enabled.description":
-    "Kør shell-kommandoer for agenten i en sandbox på operativsystemniveau, der begrænser skrivning til projekt- og TU Code-tilstandsmapperne",
+    "Kør shell-kommandoer for agenten i en sandbox på operativsystemniveau, der begrænser skrivning til projekt- og tucode-tilstandsmapperne",
 
   "settings.autoApprove.description":
     "Definer, hvordan værktøjer må køre. De fleste værktøjer er som standard indstillet til Tillad. doom_loop og external_directory er som standard indstillet til Spørg.",
@@ -1173,7 +1173,7 @@ export const dict = {
   "settings.checkpoints.enable.description": "Opret kontrolpunkter før filredigeringer",
   "settings.autoCleanup.enable.title": "Aktivér automatisk oprydning af sessioner",
   "settings.autoCleanup.enable.description":
-    "Sletter automatisk gammel sessionshistorik efter et fast antal dage, på tværs af alle projekter og alle TU Code-klienter på denne maskine, ikke kun i dette vindue. Kørende sessioner og sessioner med en nylig forgrening slettes aldrig. Sletning er permanent.",
+    "Sletter automatisk gammel sessionshistorik efter et fast antal dage, på tværs af alle projekter og alle tucode-klienter på denne maskine, ikke kun i dette vindue. Kørende sessioner og sessioner med en nylig forgrening slettes aldrig. Sletning er permanent.",
   "settings.autoCleanup.defaultRetention.title": "Behold sessioner i (dage)",
   "settings.autoCleanup.defaultRetention.description":
     "Hvor længe sessionshistorik bevares, før automatisk oprydning sletter den.",
@@ -1191,7 +1191,7 @@ export const dict = {
     "Sletter sessioner: {{processed}}/{{total}} behandlet ({{deleted}} slettet, {{failed}} fejlede)",
   "settings.autoCleanup.runNow": "Kør oprydning nu",
   "settings.autoCleanup.runNow.confirm":
-    "Slet udløbne sessioner permanent på tværs af alle projekter og alle TU Code-klienter på denne maskine?",
+    "Slet udløbne sessioner permanent på tværs af alle projekter og alle tucode-klienter på denne maskine?",
   "settings.autoCleanup.stop": "Stop oprydning",
   "settings.autoCleanup.progress.cancelling": "Stopper oprydning af sessioner...",
   "settings.autoCleanup.lastRun.cancelled": "afbrudt",
@@ -1225,7 +1225,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "Inspicér",
   "chat.memory.project.disabled": "Projekthukommelse deaktiveret",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use tucode.",
   "chat.memory.command.failed": "Hukommelseskommando mislykkedes",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1261,7 +1261,7 @@ export const dict = {
   "settings.display.username.title": "Brugernavn",
   "settings.display.username.description": "Brugerdefineret brugernavn i samtaler",
   "settings.display.fontSize.title": "Skriftstørrelse",
-  "settings.display.fontSize.description": "Juster skriftstørrelsen for TU Code webview UI uafhængigt af VS Code.",
+  "settings.display.fontSize.description": "Juster skriftstørrelsen for tucode webview UI uafhængigt af VS Code.",
   "settings.display.reasoningDisplay.title": "Ræsonnementsblokke",
   "settings.display.reasoningDisplay.description":
     "Vælg, hvordan ræsonnementsblokke starter. Foldet ud viser hele teksten, Forhåndsvisning begrænser den til en kort rulbar forhåndsvisning, og Overskrift viser kun titlen og streamingindikatoren, indtil du åbner den.",
@@ -1411,7 +1411,7 @@ export const dict = {
     "Filer ændret i dit arbejdsbibliotek, men ikke stagede endnu, samt ikke-sporede (nye) filer.",
   "diffViewer.source.session.label": "Session",
   "diffViewer.source.session.tooltip":
-    "Filer ændret af TU Code i den aktuelle session, baseret på snapshots pr. tur. Nulstilles, når du starter en ny session.",
+    "Filer ændret af tucode i den aktuelle session, baseret på snapshots pr. tur. Nulstilles, når du starter en ny session.",
   "diffViewer.group.session": "Session",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "Udgiv på GitHub",
@@ -1421,7 +1421,7 @@ export const dict = {
   "diffViewer.comment.openPR": "Åbn PR",
   "diffViewer.comment.localChanges": "Lokale ændringer",
   "diffViewer.comment.prChanges": "PR-ændringer",
-  "diffViewer.comment.sendToKilo": "Send til TU Code",
+  "diffViewer.comment.sendToKilo": "Send til tucode",
   "diffViewer.comment.sendToGithub": "Send til GitHub #{{number}}",
   "diffViewer.comment.chooseDestination": "Vælg destination",
   "diffViewer.notice.snapshotsDisabled":
@@ -1453,11 +1453,11 @@ export const dict = {
     "Brug den installerede Google Chrome til den integrerede browser. Deaktivér kun, når en kompatibel Playwright Chromium-browser allerede er installeret.",
   "settings.experimental.browserLinks.title": "Åbn links i",
   "settings.experimental.browserLinks.description":
-    "Vælg, hvor web-links åbnes fra TU Code-chats. Kræver den integrerede browser.",
+    "Vælg, hvor web-links åbnes fra tucode-chats. Kræver den integrerede browser.",
   "settings.experimental.browserLinks.external": "Systembrowser",
   "settings.experimental.browserLinks.integrated": "Integreret browser",
   "chat.search.searchingHistory": "Søger i tidligere beskeder…",
   "browserTab.noSession":
     "Åbn browseren fra en session for at forhåndsvise en lokal applikation eller en offentlig HTTPS-side.",
-  "browserTab.disabled": "Den integrerede browser er deaktiveret. Aktivér den i TU Code-indstillinger > Eksperimentel.",
+  "browserTab.disabled": "Den integrerede browser er deaktiveret. Aktivér den i tucode-indstillinger > Eksperimentel.",
 }

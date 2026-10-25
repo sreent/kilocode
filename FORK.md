@@ -1,6 +1,6 @@
 # About this fork
 
-This repository is **TU Code**, a fork of [Kilo Code](https://github.com/Kilo-Org/kilocode), the open-source AI coding agent, which is itself a fork of [OpenCode](https://opencode.ai). On top of upstream it adds **self-hosted organizations**: single sign-on, SCIM, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. They are standard features of TU Code, not a separate enterprise tier. TU Code carries its own name and never connects to Kilo's services (see [TU Code](#tu-code)).
+This repository is **tucode**, a fork of [Kilo Code](https://github.com/Kilo-Org/kilocode), the open-source AI coding agent, which is itself a fork of [OpenCode](https://opencode.ai). On top of upstream it adds **self-hosted organizations**: single sign-on, SCIM, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. They are standard features of tucode, not a separate enterprise tier. tucode carries its own name and never connects to Kilo's services (see [tucode](#tucode)).
 
 Upstream Kilo offers similar features in its hosted Enterprise plan, on a backend that is not open source. The open-source repository contains only the clients (CLI, VS Code extension, JetBrains plugin), so this fork implements both sides itself:
 
@@ -14,15 +14,15 @@ Upstream Kilo offers similar features in its hosted Enterprise plan, on a backen
 - Imported from Kilo-Org/kilocode release `v7.8.17` (commit `eb11204e8f`) **with full git history**, so upstream releases can be merged normally (see [Keeping up with upstream](#keeping-up-with-upstream)).
 - Upstream is MIT licensed (Copyright (c) 2026 Kilo Code, Copyright (c) 2025 opencode). `LICENSE` is unchanged and must stay with every copy. New code in this fork is also MIT; add your own copyright line to `LICENSE` if you want one.
 
-## TU Code
+## tucode
 
-MIT covers the code, not names or logos. "Kilo" and "Kilo Code" identify Kilo's products, so this fork ships as **TU Code**, with its own command, packages, icons and identities, and claims no Kilo affiliation.
+MIT covers the code, not names or logos. "Kilo" and "Kilo Code" identify Kilo's products, so this fork ships as **tucode**, with its own command, packages, icons and identities, and claims no Kilo affiliation.
 
 ### The brand
 
 [`brand/brand.json`](brand/README.md) holds every name: the product, the `tucode` command, the npm packages, the container image, the VS Code and JetBrains identities, the managed config folder and the repository. `bun brand/apply.ts` rewrites what users see across the tree from it, and `--check` lists what would still change. Run it after every merge from Kilo upstream, because each merge brings new text in Kilo's name.
 
-The values in `brand.json` are placeholders. Replace them with ones you control (npm scope, VS Code publisher, JetBrains plugin ID and vendor, container image, repository) before you publish anything.
+The values in `brand.json` are placeholders. Replace them with ones you control (npm scope, VS Code publisher, JetBrains plugin ID and vendor, container image, repository) before you publish anything, then run `apply.ts` again: it replaces each value that changed wherever the tree has it.
 
 What users see is renamed. Internal names stay, which keeps upstream merges small:
 
@@ -32,11 +32,11 @@ What users see is renamed. Internal names stay, which keeps upstream merges smal
 - the workspace package `@kilocode/cli`
 - code identifiers
 
-Because the setting keys, command IDs and the JetBrains plugin's internal IDs stay Kilo's, TU Code and Kilo Code can't be installed side by side in the same editor.
+Because the setting keys, command IDs and the JetBrains plugin's internal IDs stay Kilo's, tucode and Kilo Code can't be installed side by side in the same editor.
 
 ### Kilo's services
 
-TU Code never talks to Kilo's services:
+tucode never talks to Kilo's services:
 
 | Service | What changed |
 |---|---|
@@ -44,11 +44,11 @@ TU Code never talks to Kilo's services:
 | Kilo Gateway | Removed from the model catalog, even with `KILO_API_KEY` set; autocomplete runs through Mistral or Inception providers people connect themselves |
 | Cloud sessions, sharing, remote control, marketplace | Gone from VS Code and JetBrains. The TUI still lists `/share`, which fails. The CLI code that needs a Kilo sign-in stays, dormant |
 | Product analytics | Never start |
-| Updates | Come from TU Code's npm package, and install themselves only with `autoupdate: true` |
+| Updates | Come from tucode's npm package, and install themselves only with `autoupdate: true` |
 
 A guard installed first in every CLI entry point and worker refuses connections to `kilo.ai`, `kilocode.ai`, `kilosessions.ai` and `kiloapps.io`, so a path the rename missed fails instead of reaching Kilo.
 
-TU Code keeps its files under `tucode` (`~/.config/tucode`, `~/.local/share/tucode`), apart from an installed Kilo's, and reads managed settings from `/etc/tucode`.
+tucode keeps its files under `tucode` (`~/.config/tucode`, `~/.local/share/tucode`), apart from an installed Kilo's, and reads managed settings from `/etc/tucode`.
 
 ### Publishing
 
@@ -67,7 +67,7 @@ The JetBrains plugin builds against the CLI in this repository. A release build 
 | `packages/organization-console/` | Admin console |
 | `packages/opencode/src/organization/` | Client: deployment settings, policy fetch and cache, enforcement, usage reporting, `tucode org` command |
 | `packages/opencode/test/organization/` | Contract tests that run the client against the real organization server |
-| `brand/` | TU Code's names, logos and the script that applies them (see [TU Code](#tu-code)) |
+| `brand/` | tucode's names, logos and the script that applies them (see [tucode](#tucode)) |
 | `packages/opencode/src/tucode/`, `packages/core/src/tucode/` | The brand as code, and the guard that refuses connections to Kilo's services |
 | `packages/opencode/test/tucode/` | Tests for the guard and the missing Kilo Gateway |
 | `FORK.md` | This file |
@@ -141,11 +141,11 @@ Client-side enforcement guards against mistakes and drift, not against a user wh
 
 With none of these present, every hook is a no-op and the CLI behaves exactly like upstream.
 
-Settings from before these features were renamed still apply: a managed `enterprise.json` while no `organization.json` exists, and each `KILO_ENTERPRISE_*` variable while its `KILO_ORG*` counterpart is unset, so devices and CI set up earlier stay enrolled. Stored sign-ins don't carry over: people run `tucode org login` once more. `KILO_ORG_ID` is unrelated: it selects an organization on Kilo's hosted service, which TU Code doesn't use.
+Settings from before these features were renamed still apply: a managed `enterprise.json` while no `organization.json` exists, and each `KILO_ENTERPRISE_*` variable while its `KILO_ORG*` counterpart is unset, so devices and CI set up earlier stay enrolled. Stored sign-ins don't carry over: people run `tucode org login` once more. `KILO_ORG_ID` is unrelated: it selects an organization on Kilo's hosted service, which tucode doesn't use.
 
 ### Signing in from the IDEs
 
-People sign in from their IDE's profile: the Profile page in VS Code, and Settings → Tools → TU Code → User Profile in JetBrains IDEs. Both show the organization, who is signed in, the policy version, gateway providers and why the agent is blocked, and sign in with the same device code as `tucode org login`. On a device that isn't enrolled, a small link on the same page connects to an organization. Both drive the CLI's `/kilo/org` routes, and a sign-in or sign-out reloads the providers, models and agents the policy shapes.
+People sign in from their IDE's profile: the Profile page in VS Code, and Settings → Tools → tucode → User Profile in JetBrains IDEs. Both show the organization, who is signed in, the policy version, gateway providers and why the agent is blocked, and sign in with the same device code as `tucode org login`. On a device that isn't enrolled, a small link on the same page connects to an organization. Both drive the CLI's `/kilo/org` routes, and a sign-in or sign-out reloads the providers, models and agents the policy shapes.
 
 JetBrains builds use the CLI in this repository (`kilo.cli.pinned=false` in `packages/kilo-jetbrains/gradle.properties`). Build it first with `./gradlew :backend:buildRepoCli`: a plugin built without it bundles no CLI, and tries to download the CLI release of its version when it starts.
 

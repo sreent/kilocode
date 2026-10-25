@@ -39,7 +39,7 @@ describe("model not found errors", () => {
 })
 
 describe("remote config authentication errors", () => {
-  test("uses the TU Code login command", () => {
+  test("uses the tucode login command", () => {
     const error = FormatError({
       _tag: "ConfigRemoteAuthError",
       url: "https://example.com/config.json",

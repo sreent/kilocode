@@ -522,7 +522,7 @@ export const layer = Layer.effect(
         if (!cfg.token || state.denied)
           return `Your organization (${cfg.org}) requires you to sign in. ${
             // The IDEs sign in from their profile page; the terminal has a command for it.
-            Flag.KILO_CLIENT === "cli" ? "Run `tucode org login`." : "Sign in from your TU Code profile."
+            Flag.KILO_CLIENT === "cli" ? "Run `tucode org login`." : "Sign in from your tucode profile."
           }`
         return `Cannot load your organization's policy from ${cfg.url}${state.error ? ` (${state.error})` : ""}.`
       }

@@ -51,7 +51,7 @@ export const layer: Layer.Layer<Service, never, Core.Service | Config.Service | 
         delete providers.kilo
 
         const cfg = yield* config.get()
-        // TU Code: Kilo Gateway is Kilo's cloud service, so it is always disabled.
+        // tucode: Kilo Gateway is Kilo's cloud service, so it is always disabled.
         const disabled = new Set([...(cfg.disabled_providers ?? []), "kilo"])
         const enabled = cfg.enabled_providers ? new Set(cfg.enabled_providers) : undefined
         const allowed = (!enabled || enabled.has("kilo")) && !disabled.has("kilo")

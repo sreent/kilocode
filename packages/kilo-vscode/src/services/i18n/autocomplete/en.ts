@@ -5,7 +5,7 @@ export const dict = {
   "kilocode:autocomplete.statusBar.enabled": "$(kilo-logo) Autocomplete",
   "kilocode:autocomplete.statusBar.snoozed": "snoozed",
   "kilocode:autocomplete.statusBar.warning": "$(warning) Autocomplete",
-  "kilocode:autocomplete.statusBar.tooltip.basic": "TU Code Autocomplete",
+  "kilocode:autocomplete.statusBar.tooltip.basic": "tucode Autocomplete",
   "kilocode:autocomplete.statusBar.tooltip.noUsableProvider":
     "**No autocomplete model configured**\n\nTo enable autocomplete, add a profile with one of these supported providers: {{providers}}.\n\n[Open Settings]({{command}})",
   "kilocode:autocomplete.statusBar.tooltip.completionSummary":
@@ -13,14 +13,14 @@ export const dict = {
   "kilocode:autocomplete.statusBar.tooltip.providerInfo": "Autocompletions provided by {{model}} via {{provider}}.",
   "kilocode:autocomplete.statusBar.cost.zero": "$0.00",
   "kilocode:autocomplete.statusBar.cost.lessThanCent": "<$0.01",
-  "kilocode:autocomplete.codeAction.title": "TU Code: Suggested Edits",
+  "kilocode:autocomplete.codeAction.title": "tucode: Suggested Edits",
   "kilocode:autocomplete.incompatibilityExtensionPopup.message":
-    "The TU Code Autocomplete is being blocked by a conflict with GitHub Copilot. To fix this, you must disable Copilot's inline suggestions.",
+    "The tucode Autocomplete is being blocked by a conflict with GitHub Copilot. To fix this, you must disable Copilot's inline suggestions.",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableCopilot": "Disable Copilot",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableInlineAssist": "Disable Autocomplete",
   "kilocode:autocomplete.creditsExhausted.message":
-    "TU Code Autocomplete has been paused. Possible causes: your Kilo account has no remaining credits, or your configured API key (BYOK) has reached its quota limit. Add Kilo credits or check your API key configuration to resume autocomplete.",
+    "tucode Autocomplete has been paused. Possible causes: your Kilo account has no remaining credits, or your configured API key (BYOK) has reached its quota limit. Add Kilo credits or check your API key configuration to resume autocomplete.",
   "kilocode:autocomplete.creditsExhausted.addCredits": "Add Credits",
   "kilocode:autocomplete.authError.message":
-    "TU Code Autocomplete has been paused due to an authentication issue. Possible causes: you are not signed in to TU Code, or your API key (BYOK) is invalid or missing. Please sign in again or check your provider API key settings.",
+    "tucode Autocomplete has been paused due to an authentication issue. Possible causes: you are not signed in to tucode, or your API key (BYOK) is invalid or missing. Please sign in again or check your provider API key settings.",
 }

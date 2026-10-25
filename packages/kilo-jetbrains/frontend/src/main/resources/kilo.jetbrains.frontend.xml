@@ -66,7 +66,7 @@
                 bundle="messages.KiloBundle"
                 key="settings.providers.displayName"/>
 
-        <!-- TU Code: no Marketplace page, because the marketplace is Kilo's service. -->
+        <!-- tucode: no Marketplace page, because the marketplace is Kilo's service. -->
 
         <applicationConfigurable
                 parentId="ai.kilocode.jetbrains.settings"
@@ -514,7 +514,7 @@
             <reference ref="$Copy"/>
             <separator/>
             <reference ref="Kilo.Session.CopyId"/>
-            <!-- TU Code: no Kilo.Session.CopyShareLink or Kilo.Session.Share, because sharing publishes the session to Kilo's service. -->
+            <!-- tucode: no Kilo.Session.CopyShareLink or Kilo.Session.Share, because sharing publishes the session to Kilo's service. -->
             <separator/>
             <reference ref="Kilo.StopSession"/>
         </group>
@@ -539,7 +539,7 @@
             <reference ref="Kilo.CliGroup"/>
             <separator/>
             <reference ref="Kilo.Session.CopyId"/>
-            <!-- TU Code: no sharing, as in the context menu above. -->
+            <!-- tucode: no sharing, as in the context menu above. -->
         </group>
     </actions>
 </idea-plugin>

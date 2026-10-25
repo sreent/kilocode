@@ -112,11 +112,11 @@ export function notificationCommand(
     }
   }
   if (platform === "darwin") {
-    return { cmd: "osascript", args: ["-e", `display notification "${apple(text(notice))}" with title "TU Code"`] }
+    return { cmd: "osascript", args: ["-e", `display notification "${apple(text(notice))}" with title "tucode"`] }
   }
   if (platform === "linux") {
     // Only the body is markup; the summary is taken literally.
-    return { cmd: "notify-send", args: ["--app-name=TU Code", "--urgency=normal", "TU Code", pango(text(notice))] }
+    return { cmd: "notify-send", args: ["--app-name=tucode", "--urgency=normal", "tucode", pango(text(notice))] }
   }
 }
 

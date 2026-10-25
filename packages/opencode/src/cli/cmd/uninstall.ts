@@ -262,7 +262,7 @@ async function getShellConfigFile(): Promise<string | null> {
     if (!exists) continue
 
     const content = await Filesystem.readText(file).catch(() => "")
-    // kilocode_change start - tucode: only TU Code's own marker, never an installed Kilo's or opencode's
+    // kilocode_change start - tucode: only tucode's own marker, never an installed Kilo's or opencode's
     if (content.includes(`# ${Brand.command}`) || content.includes(`.${Brand.command}/bin`)) {
       return file
     }
@@ -282,7 +282,7 @@ async function cleanShellConfig(file: string) {
   for (const line of lines) {
     const trimmed = line.trim()
 
-    // kilocode_change start - tucode: only TU Code's own marker, never an installed Kilo's or opencode's
+    // kilocode_change start - tucode: only tucode's own marker, never an installed Kilo's or opencode's
     const bin = `.${Brand.command}/bin`
     if (trimmed === `# ${Brand.command}`) {
       skip = true

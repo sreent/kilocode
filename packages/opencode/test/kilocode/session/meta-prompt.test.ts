@@ -3,7 +3,7 @@ import type { Provider } from "@/provider/provider"
 import { SystemPrompt } from "@/session/system"
 import { Brand } from "@/tucode/brand"
 
-test("Muse Spark identifies as TU Code and uses TU Code's documentation", () => {
+test("Muse Spark identifies as tucode and uses tucode's documentation", () => {
   const prompt = SystemPrompt.provider({ api: { id: "meta/muse-spark-preview" } } as Provider.Model)[0]
   expect(prompt).toContain(`You are ${Brand.name}`)
   expect(prompt).toContain("Muse Spark")

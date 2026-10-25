@@ -2,7 +2,7 @@
 package ai.kilocode
 
 object Brand {
-    const val NAME = "TU Code"
+    const val NAME = "tucode"
     const val COMMAND = "tucode"
     const val CLI = "@tucode/cli"
     const val PLUGIN_ID = "com.tucode.jetbrains"

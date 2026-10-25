@@ -1,5 +1,5 @@
 {
-  "name": "TU Code",
+  "name": "tucode",
   "command": "tucode",
   "npm": {
     "scope": "@tucode",
@@ -8,13 +8,13 @@
   "image": "ghcr.io/sreent/tucode",
   "vscode": {
     "publisher": "tucode",
-    "name": "tu-code",
-    "displayName": "TU Code"
+    "name": "tucode",
+    "displayName": "tucode"
   },
   "jetbrains": {
     "id": "com.tucode.jetbrains",
-    "name": "TU Code",
-    "vendor": "TU Code"
+    "name": "tucode",
+    "vendor": "tucode"
   },
   "managed": {
     "dir": "tucode",

@@ -10,7 +10,7 @@ import { Flag } from "./flag/flag"
 import { makeGlobalNode } from "./effect/app-node"
 import { Brand } from "./tucode/brand" // kilocode_change - tucode
 
-const app = Brand.command // kilocode_change - tucode: TU Code keeps its own data, config and state apart from an installed Kilo's
+const app = Brand.command // kilocode_change - tucode: tucode keeps its own data, config and state apart from an installed Kilo's
 // kilocode_change start
 // Defensively strip newline characters from the resolved XDG paths.
 // If `$HOME` (or any `$XDG_*_HOME` override) has a trailing newline in

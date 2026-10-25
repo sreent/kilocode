@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "利用できません",
   "provider.anaconda.state.unsupported": "Anaconda Desktop は {{platform}} ではサポートされていません。",
   "provider.anaconda.state.notInstalled":
-    "このマシンに Anaconda Desktop をインストールしてから、ここに戻ってください。TU Code はインストーラーを実行しません。",
+    "このマシンに Anaconda Desktop をインストールしてから、ここに戻ってください。tucode はインストーラーを実行しません。",
   "provider.anaconda.state.notRunning":
     "Anaconda Desktop を開いてセットアップを完了しサインインしてから、再確認を選択してください。",
   "provider.anaconda.state.invalidConfig":
     "Anaconda Desktop のセットアップが完了していません。Desktop を開いてセットアップを完了し、必要に応じて再起動してください。",
-  "provider.anaconda.state.signedOut": "TU Code を接続する前に、Anaconda Desktop を開いてサインインしてください。",
+  "provider.anaconda.state.signedOut": "tucode を接続する前に、Anaconda Desktop を開いてサインインしてください。",
   "provider.anaconda.state.unauthorized":
-    "TU Code は Anaconda Desktop にアクセスできませんでした。Desktop を開いて再度サインインし、必要に応じて再起動してください。",
+    "tucode は Anaconda Desktop にアクセスできませんでした。Desktop を開いて再度サインインし、必要に応じて再起動してください。",
   "provider.anaconda.state.unavailable":
     "Anaconda Desktop はまだ応答していません。開いてアプリケーションの起動が完了するまでお待ちください。",
   "provider.anaconda.state.noModel":
@@ -31,7 +31,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "アクティブな推論サーバーはまだ正常ではありません。Anaconda Desktop で確認し、必要に応じてサーバーを再起動してください。",
   "provider.anaconda.state.ready":
-    "TU Code は正常なローカルのテキスト生成サーバーを見つけ、現在の接続設定をインポートできます。",
+    "tucode は正常なローカルのテキスト生成サーバーを見つけ、現在の接続設定をインポートできます。",
   "provider.anaconda.server": "アクティブな推論サーバー",
   "provider.anaconda.context": "コンテキストウィンドウ",
   "provider.anaconda.contextValue": "{{count}} トークン",
@@ -48,8 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "このまま続行",
   "provider.anaconda.action.manage": "管理 / 更新",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop を更新しました",
-  "provider.anaconda.toast.refreshed.description":
-    "アクティブなローカルサーバーとモデルが TU Code で最新になりました。",
+  "provider.anaconda.toast.refreshed.description": "アクティブなローカルサーバーとモデルが tucode で最新になりました。",
   "settings.providers.note.anacondaDesktop": "Anaconda Desktop によってローカルで提供されるモデルを実行します。",
   "settings.providers.tag.local": "ローカル",
 } as const
@@ -99,7 +98,7 @@ export const dict = {
   "revert.banner.workspace.enableSnapshots": "スナップショットを有効にする",
   "revert.disabled.agentBusy": "エージェントの完了を待ってください",
   "revert.error.body":
-    "リポジトリが使用中の可能性があります。もう一度お試しいただくか、詳細は TU Code のログを確認してください。",
+    "リポジトリが使用中の可能性があります。もう一度お試しいただくか、詳細は tucode のログを確認してください。",
   "command.session.compact": "セッションを圧縮",
   "command.session.export": "セッション記録をエクスポート",
 
@@ -124,7 +123,7 @@ export const dict = {
   "provider.connect.status.waiting": "認証を待機中...",
   "provider.connect.status.failed": "認証に失敗しました: {{error}}",
   "provider.connect.apiKey.description":
-    "{{provider}}のAPIキーを入力してアカウントを接続し、TU Codeで{{provider}}モデルを使用します。",
+    "{{provider}}のAPIキーを入力してアカウントを接続し、tucodeで{{provider}}モデルを使用します。",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -147,14 +146,14 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": " ",
   "provider.connect.oauth.code.visit.link": "このリンク",
   "provider.connect.oauth.code.visit.suffix":
-    " にアクセスして認証コードを取得し、アカウントを接続してTU Codeで{{provider}}モデルを使用してください。",
+    " にアクセスして認証コードを取得し、アカウントを接続してtucodeで{{provider}}モデルを使用してください。",
   "provider.connect.oauth.code.label": "{{method}} 認証コード",
   "provider.connect.oauth.code.placeholder": "認証コード",
   "provider.connect.oauth.code.required": "認証コードが必要です",
   "provider.connect.oauth.auto.visit.prefix": " ",
   "provider.connect.oauth.auto.visit.link": "このリンク",
   "provider.connect.oauth.auto.visit.suffix":
-    " にアクセスし、以下のコードを入力してアカウントを接続し、TU Codeで{{provider}}モデルを使用してください。",
+    " にアクセスし、以下のコードを入力してアカウントを接続し、tucodeで{{provider}}モデルを使用してください。",
   "provider.connect.oauth.auto.confirmationCode": "確認コード",
   "provider.connect.toast.connected.title": "{{provider}}が接続されました",
   "provider.connect.toast.connected.description": "{{provider}}モデルが使用可能になりました。",
@@ -235,9 +234,9 @@ export const dict = {
   "prompt.action.sandbox.enable": "サンドボックスを有効化",
   "prompt.action.sandbox.disable": "サンドボックスを無効化",
   "prompt.action.sandbox.enabled":
-    "サンドボックスが有効です。エージェントのシェルコマンドは、プロジェクトおよびTU Codeディレクトリに制限されています。",
+    "サンドボックスが有効です。エージェントのシェルコマンドは、プロジェクトおよびtucodeディレクトリに制限されています。",
   "prompt.action.sandbox.disabled":
-    "サンドボックスが無効です。クリックしてエージェントのシェルコマンドの書き込みをプロジェクトおよびTU Codeディレクトリに制限します。",
+    "サンドボックスが無効です。クリックしてエージェントのシェルコマンドの書き込みをプロジェクトおよびtucodeディレクトリに制限します。",
   "prompt.action.sandbox.status.enabled": "サンドボックス有効",
   "prompt.action.sandbox.status.disabled": "サンドボックス無効",
   "prompt.action.sandbox.filesystem": "ファイルシステム",
@@ -246,7 +245,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "ブロック",
   "prompt.action.sandbox.network.allowed": "許可",
   "prompt.action.sandbox.unrestricted": "制限なし",
-  "prompt.action.sandbox.description.enabled": "書き込みはプロジェクトおよびTU Codeディレクトリ内に制限されます。",
+  "prompt.action.sandbox.description.enabled": "書き込みはプロジェクトおよびtucodeディレクトリ内に制限されます。",
   "prompt.action.sandbox.description.escalation":
     "許可ルールと自動承認はサンドボックス内で適用されます。サンドボックスから出る必要があるコマンドは常に確認します。",
   "prompt.action.sandbox.description.disabled":
@@ -262,7 +261,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "文字起こし中... クリックしてキャンセル。",
   "speechToText.tooltip.error": "音声入力に失敗しました。クリックしてクリア。",
   "speechToText.error.title": "音声入力に失敗しました",
-  "speechToText.error.loginRequired": "音声入力を使用するにはTU Codeにサインインしてください。",
+  "speechToText.error.loginRequired": "音声入力を使用するにはtucodeにサインインしてください。",
   "speechToText.error.emptyTranscript": "音声が検出されませんでした。",
 
   "prompt.toast.promptSendFailed.title": "プロンプトの送信に失敗しました",
@@ -307,7 +306,7 @@ export const dict = {
     "このコマンドに限り、ファイルシステムとネットワークの制限を外してコマンド全体を実行します。Git は .git に書き込む必要があります。.git はサンドボックス内では読み取り専用で、リンクされた worktree では worktree の外にあります。Bash の許可ルールと自動承認がこのプロンプトを自動で承認することはありません。",
   "ui.permission.manageAutoApprove": "自動承認ルールを管理",
   "ui.permission.reject": "拒否",
-  "ui.permission.feedbackPlaceholder": "TU Code にどう変更してほしいか伝える",
+  "ui.permission.feedbackPlaceholder": "tucode にどう変更してほしいか伝える",
   "ui.permission.feedbackHint": "Enter で拒否、Esc でキャンセル",
   "ui.permission.doomLoop.prompt": "{{tool}} ツールでループの可能性が検出されました。実行を続行しますか？",
   "ui.permission.doomLoop.rule": "{{tool}} の呼び出しを続行",
@@ -354,7 +353,7 @@ export const dict = {
   "session.messages.loadEarlier": "以前のメッセージを読み込む",
   "session.messages.loading": "メッセージを読み込み中...",
 
-  "sidebar.topBar.label": "TU Code ナビゲーション",
+  "sidebar.topBar.label": "tucode ナビゲーション",
   "sidebar.topBar.newTask": "新規タスク",
   "sidebar.topBar.history": "履歴",
   "sidebar.topBar.agentManager": "エージェントマネージャー",
@@ -462,10 +461,10 @@ export const dict = {
   "settings.indexing.model.description": "選択したプロバイダーのデフォルト埋め込みモデルを上書きします。",
   "settings.indexing.model.title": "埋め込みモデル",
   "settings.indexing.provider.description": "セマンティック検索用の埋め込みを生成するプロバイダーを選択します。",
-  "settings.indexing.kiloModel.title": "TU Codeモデルプリセット",
-  "settings.indexing.kiloModel.description": "サポートされているTU Codeホスト型埋め込みモデルを選択します。",
-  "settings.indexing.kiloSignIn.title": "TU Codeへのサインインが必要です",
-  "settings.indexing.kiloSignIn.description": "ホスト型埋め込みを使用するにはTU Codeにサインインしてください。",
+  "settings.indexing.kiloModel.title": "tucodeモデルプリセット",
+  "settings.indexing.kiloModel.description": "サポートされているtucodeホスト型埋め込みモデルを選択します。",
+  "settings.indexing.kiloSignIn.title": "tucodeへのサインインが必要です",
+  "settings.indexing.kiloSignIn.description": "ホスト型埋め込みを使用するにはtucodeにサインインしてください。",
   "settings.indexing.provider.title": "埋め込みプロバイダー",
   "settings.indexing.providerField.description": "プロバイダー固有の接続設定。",
   "settings.indexing.qdrantApiKey.description": "QdrantインスタンスのオプションのAPIキー。",
@@ -573,12 +572,12 @@ export const dict = {
   "settings.config.status.loadedLegacy": "旧構成を読み込み済み",
   "settings.config.status.notLoaded": "読み込まれていません",
   "settings.config.status.create": "見つかりません - このファイルを作成する",
-  "settings.config.title": "{{scope}}のTU Code構成ファイルを開く",
+  "settings.config.title": "{{scope}}のtucode構成ファイルを開く",
   "settings.config.placeholder":
     "構成ファイルは順番にマージされます。読み込み済みとしてマークされているファイルが現在設定に影響しています。",
   "settings.config.noWorkspace":
-    "ローカルのTU Code構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
-  "settings.config.openFailed": "{{scope}}のTU Code構成ファイルを開けませんでした: {{message}}",
+    "ローカルのtucode構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
+  "settings.config.openFailed": "{{scope}}のtucode構成ファイルを開けませんでした: {{message}}",
   "settings.config.source.xdg": "XDGグローバル構成",
   "settings.config.source.homeKilo": "Homeの.kilo構成",
   "settings.config.source.homeKilocode": "Homeの.kilocode構成",
@@ -634,7 +633,7 @@ export const dict = {
   "feedback.button": "フィードバック & サポート",
   "feedback.dialog.message": "フィードバックをお聞かせいただくか、問題がある場合はお気軽にご相談ください。",
   "feedback.dialog.github": "GitHubで問題を報告する",
-  "workStyle.onboarding.welcome": "TU Codeへようこそ",
+  "workStyle.onboarding.welcome": "tucodeへようこそ",
   "workStyle.onboarding.title": "希望する作業スタイルを選択",
   "workStyle.onboarding.settingsNote": "これらのオプションはいつでも変更できます：",
   "workStyle.onboarding.settings": "設定。",
@@ -644,7 +643,7 @@ export const dict = {
   "workStyle.choice.visibility": "表示",
   "workStyle.choice.human-in-the-loop.eyebrow": "人間による確認",
   "workStyle.choice.human-in-the-loop.title": "まず確認",
-  "workStyle.choice.human-in-the-loop.description": "TU Codeは作業中に一時停止し、計画を表示します。",
+  "workStyle.choice.human-in-the-loop.description": "tucodeは作業中に一時停止し、計画を表示します。",
   "workStyle.choice.human-in-the-loop.permissions": "ファイルの編集やコマンドの実行前に許可を求めます。",
   "workStyle.choice.human-in-the-loop.bash": "すべてのターミナルコマンド実行時に許可を求める",
   "workStyle.choice.human-in-the-loop.visibility": "確認できるように、推論、コマンド、編集を展開します。",
@@ -660,7 +659,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "コードをクリップボードにコピーしました",
   "deviceAuth.toast.errorCopied": "エラーがクリップボードにコピーされました",
   "deviceAuth.status.initiating": "ログインを開始しています...",
-  "deviceAuth.title": "TU Codeにサインイン",
+  "deviceAuth.title": "tucodeにサインイン",
   "deviceAuth.step1": "ステップ1：このURLを開く",
   "deviceAuth.action.copyUrl": "URLをコピー",
   "deviceAuth.action.openBrowser": "ブラウザを開く",
@@ -688,7 +687,7 @@ export const dict = {
   "profile.organization.policy": "ポリシーのバージョン {{version}}、{{time}} に更新",
   "profile.organization.gateway": "{{providers}} へのモデル呼び出しは組織のゲートウェイを経由します。",
   "profile.organization.managed":
-    "このデバイスの TU Code は {{org}} が管理しています。組織のアカウントでサインインしてください。",
+    "このデバイスの tucode は {{org}} が管理しています。組織のアカウントでサインインしてください。",
   "profile.organization.connect": "セルフホストの組織にサインイン",
   "profile.organization.url": "サーバー URL",
   "profile.organization.action.signin": "サインイン",
@@ -756,12 +755,12 @@ export const dict = {
 
   "settings.experimental.title": "実験的機能",
   "settings.language.title": "言語",
-  "settings.aboutKiloCode.title": "TU Codeについて",
+  "settings.aboutKiloCode.title": "tucodeについて",
 
   "session.messages.welcome":
-    "TU CodeはAIコーディングアシスタントです。機能の構築、バグの修正、コードベースの説明を依頼できます。",
+    "tucodeはAIコーディングアシスタントです。機能の構築、バグの修正、コードベースの説明を依頼できます。",
   "session.workspaceScope.description":
-    "TU Code チャットは、このワークスペースの最初のフォルダー「{{folder}}」のみを使用します。",
+    "tucode チャットは、このワークスペースの最初のフォルダー「{{folder}}」のみを使用します。",
   "session.workspaceScope.alternatives":
     "別のフォルダーで作業するには、そのフォルダーを別のウィンドウで開くか、Agent Manager にプロジェクトとして追加してください。",
   "session.workspaceScope.dismiss": "ワークスペースの範囲に関するヒントを閉じる",
@@ -807,7 +806,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "次のステップを検討中...",
 
   "dialog.model.noProviders": "プロバイダーなし",
-  "dialog.model.unavailable": "TU Code モデルを利用できません",
+  "dialog.model.unavailable": "tucode モデルを利用できません",
 
   "prompt.placeholder.connecting": "サーバーに接続中...",
   "prompt.placeholder.error": "接続に失敗しました。出力パネルを確認するか、拡張機能を再起動してください。",
@@ -850,10 +849,10 @@ export const dict = {
   "settings.aboutKiloCode.importSettings": "インポート",
   "settings.aboutKiloCode.importSettings.invalidJson":
     "無効な JSON ファイルです。有効な設定ファイルを選択してください。",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "ファイルに有効な TU Code の設定が含まれていません。",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "ファイルに有効な tucode の設定が含まれていません。",
   "settings.aboutKiloCode.importSettings.tooLarge": "ファイルが大きすぎます。設定ファイルは 1 MB 以下にしてください。",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "このファイルはより新しいバージョンの TU Code からエクスポートされたものです。一部の設定が無視される場合があります。",
+    "このファイルはより新しいバージョンの tucode からエクスポートされたものです。一部の設定が無視される場合があります。",
   "settings.aboutKiloCode.importSettings.success":
     "設定をインポートしました。上記の変更内容を確認してから、保存をクリックしてください。",
 
@@ -869,7 +868,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.skills": "スキル",
 
   "settings.browser.description":
-    "Playwrightを利用した組み込みブラウザ自動化を設定します。TU Codeはセッション内でWebページのナビゲーション、操作、スクリーンショット撮影を行えます。",
+    "Playwrightを利用した組み込みブラウザ自動化を設定します。tucodeはセッション内でWebページのナビゲーション、操作、スクリーンショット撮影を行えます。",
   "settings.browser.enable.title": "ブラウザ自動化を有効にする",
   "settings.browser.enable.description":
     "ローカルアプリケーションと公開 HTTPS ページ向けに、セッション単位の Agent Manager ブラウザを有効にします。",
@@ -879,7 +878,7 @@ export const dict = {
   "settings.browser.headless.title": "ヘッドレスモード",
   "settings.browser.headless.description": "ヘッドレスモードで実行します（ブラウザウィンドウは表示されません）。",
 
-  "settings.language.description": "TU Code UIの言語を選択します。「自動」はVS Codeの表示言語を使用します。",
+  "settings.language.description": "tucode UIの言語を選択します。「自動」はVS Codeの表示言語を使用します。",
   "settings.language.auto": "自動（VS Code言語）",
   "settings.language.current": "現在：",
 
@@ -898,10 +897,10 @@ export const dict = {
     "セッションの完了時、エラーの発生時、またはユーザー入力が必要なときにサウンドを再生します",
   "settings.notifications.workbench.title": "VS Code 通知を有効にする",
   "settings.notifications.workbench.description":
-    "TU Code がタスクを完了したとき、またはユーザー入力が必要なときに VS Code の通知を表示します",
+    "tucode がタスクを完了したとき、またはユーザー入力が必要なときに VS Code の通知を表示します",
   "settings.notifications.os.title": "OS 通知を有効にする",
   "settings.notifications.os.description":
-    "VS Code が非アクティブのときに TU Code がタスクを完了した場合、またはユーザー入力が必要な場合にネイティブ OS 通知を表示します。",
+    "VS Code が非アクティブのときに tucode がタスクを完了した場合、またはユーザー入力が必要な場合にネイティブ OS 通知を表示します。",
   "settings.notifications.testSound": "テスト",
   "settings.notifications.testOS": "テスト",
   "settings.notifications.testOS.testing": "テスト通知を送信しています…",
@@ -919,7 +918,7 @@ export const dict = {
   "settings.experimental.batch.description": "複数のツール呼び出しのバッチ処理を有効にする",
   "settings.experimental.imageGeneration.title": "画像生成",
   "settings.experimental.imageGeneration.description": "AI画像生成を有効にする",
-  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "tucode Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "メインセッションと、そのタスクを担当するサブエージェント（ネストされたサブエージェントを含む）の間でボードを共有します。すべてのタスクで使うのではなく、並行して解決策を試す場合や、互いに補完し合う作業に使用してください。",
   "settings.experimental.imageGenerationModel.title": "画像モデル",
@@ -935,12 +934,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "音声認識 API キー",
   "settings.models.speechToTextApiKey.description":
-    "カスタム文字起こしベース URL に送信するベアラートークンです。TU Code の設定ファイルに保存されます。",
+    "カスタム文字起こしベース URL に送信するベアラートークンです。tucode の設定ファイルに保存されます。",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "Speech to Text を使用するには、TU Code プロバイダーを有効にしてサインインするか、下でカスタム文字起こしベース URL を設定してください。",
+    "Speech to Text を使用するには、tucode プロバイダーを有効にしてサインインするか、下でカスタム文字起こしベース URL を設定してください。",
   "settings.models.speechToText.remoteDescription":
-    "音声入力はリモートウィンドウでは利用できません。マイクを使用するには、ローカルウィンドウで TU Code を開いてください。",
+    "音声入力はリモートウィンドウでは利用できません。マイクを使用するには、ローカルウィンドウで tucode を開いてください。",
   "settings.models.speechToTextModel.title": "音声認識モデル",
   "settings.models.speechToTextModel.description": "音声入力に使用するKilo Gateway文字起こしモデルを選択します。",
   "settings.experimental.nativeNotebookTools.title": "ネイティブノートブックツール",
@@ -1058,7 +1057,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "MCPサーバープロセスに渡される変数。",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "サーバーが事前登録済みのクライアントを必要としない限り、自動のままにしてください。クライアントシークレットはTU Code設定ファイルに保存されます。",
+    "サーバーが事前登録済みのクライアントを必要としない限り、自動のままにしてください。クライアントシークレットはtucode設定ファイルに保存されます。",
   "settings.agentBehaviour.editMcp.oauth.mode": "モード",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "自動",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "無効",
@@ -1098,7 +1097,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "Claude Code 互換性",
   "settings.agentBehaviour.claudeCompat.title": "Claude Code ファイルを読み込む",
   "settings.agentBehaviour.claudeCompat.description":
-    "Claude Code の設定ディレクトリから CLAUDE.md のインストラクションとスキルをセッションに読み込みます。TU Code に Claude Code のインストラクションとスキルを使用させる場合は、これを有効にしてください。再起動が必要です。",
+    "Claude Code の設定ディレクトリから CLAUDE.md のインストラクションとスキルをセッションに読み込みます。tucode に Claude Code のインストラクションとスキルを使用させる場合は、これを有効にしてください。再起動が必要です。",
   "settings.agentBehaviour.mcpDetail.command": "コマンド",
   "settings.agentBehaviour.mcpDetail.args": "引数",
   "settings.agentBehaviour.mcpDetail.env": "環境",
@@ -1125,7 +1124,7 @@ export const dict = {
     "各 MCP ツールを直接公開する代わりに、オンデマンドのツール検出を備えた隔離された JavaScript ランタイム経由で MCP ツール呼び出しをルーティングします。多数の MCP ツールが接続されている場合にコンテキストを節約します。",
   "settings.sandboxing.enabled.title": "サンドボックス",
   "settings.sandboxing.enabled.description":
-    "エージェントのシェルコマンドを、プロジェクトおよびTU Codeの状態ディレクトリへの書き込みを制限するOSレベルのサンドボックス内で実行",
+    "エージェントのシェルコマンドを、プロジェクトおよびtucodeの状態ディレクトリへの書き込みを制限するOSレベルのサンドボックス内で実行",
 
   "settings.autoApprove.description":
     "ツールの実行許可を定義します。ほとんどのツールはデフォルトで「許可」されます。doom_loop と external_directory はデフォルトで「確認」になります。",
@@ -1170,7 +1169,7 @@ export const dict = {
   "settings.checkpoints.enable.description": "ファイル編集前にチェックポイントを作成して以前の状態を復元可能にする",
   "settings.autoCleanup.enable.title": "自動セッションクリーンアップを有効化",
   "settings.autoCleanup.enable.description":
-    "決まった日数が経過すると古いセッション履歴を自動削除します。対象はこのマシン上のすべてのプロジェクトとすべての TU Code クライアントで、このウィンドウだけではありません。実行中のセッションや最近フォークを持つセッションは決して削除されません。削除は元に戻せません。",
+    "決まった日数が経過すると古いセッション履歴を自動削除します。対象はこのマシン上のすべてのプロジェクトとすべての tucode クライアントで、このウィンドウだけではありません。実行中のセッションや最近フォークを持つセッションは決して削除されません。削除は元に戻せません。",
   "settings.autoCleanup.defaultRetention.title": "セッションを保持する期間（日数）",
   "settings.autoCleanup.defaultRetention.description": "自動クリーンアップがセッション履歴を削除するまでの保持期間。",
   "settings.autoCleanup.lastRun.title": "前回のクリーンアップ",
@@ -1188,7 +1187,7 @@ export const dict = {
     "セッションを削除中: {{processed}}/{{total}} 件を処理済み（{{deleted}} 件削除、{{failed}} 件失敗）",
   "settings.autoCleanup.runNow": "今すぐクリーンアップを実行",
   "settings.autoCleanup.runNow.confirm":
-    "このマシン上のすべてのプロジェクトとすべての TU Code クライアントにわたる、削除対象の古いセッションを完全に削除しますか？",
+    "このマシン上のすべてのプロジェクトとすべての tucode クライアントにわたる、削除対象の古いセッションを完全に削除しますか？",
   "settings.autoCleanup.stop": "クリーンアップを停止",
   "settings.autoCleanup.progress.cancelling": "セッションのクリーンアップを停止しています...",
   "settings.autoCleanup.lastRun.cancelled": "中断されました",
@@ -1221,7 +1220,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "検査",
   "chat.memory.project.disabled": "プロジェクトメモリが無効です",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use tucode.",
   "chat.memory.command.failed": "メモリコマンドに失敗しました",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1256,7 +1255,7 @@ export const dict = {
   "settings.display.username.title": "ユーザー名",
   "settings.display.username.description": "会話に表示されるカスタムユーザー名",
   "settings.display.fontSize.title": "フォントサイズ",
-  "settings.display.fontSize.description": "VS Code とは独立して TU Code webview UI のフォントサイズを調整します。",
+  "settings.display.fontSize.description": "VS Code とは独立して tucode webview UI のフォントサイズを調整します。",
   "settings.display.reasoningDisplay.title": "推論ブロック",
   "settings.display.reasoningDisplay.description":
     "推論ブロックの開始時の表示方法を選択します。展開では全文を表示し、プレビューでは短いスクロール可能なプレビューに制限し、見出しではブロックを開くまでタイトルとストリーミングインジケーターのみを表示します。",
@@ -1406,7 +1405,7 @@ export const dict = {
     "作業ツリーで変更されたがまだステージングされていないファイルと、追跡されていない（新しい）ファイル。",
   "diffViewer.source.session.label": "セッション",
   "diffViewer.source.session.tooltip":
-    "現在のセッション中に TU Code が変更したファイル。ターンごとのスナップショットに基づきます。新しいセッションを開始するとリセットされます。",
+    "現在のセッション中に tucode が変更したファイル。ターンごとのスナップショットに基づきます。新しいセッションを開始するとリセットされます。",
   "diffViewer.group.session": "セッション",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "GitHubに投稿",
@@ -1416,7 +1415,7 @@ export const dict = {
   "diffViewer.comment.openPR": "プルリクエストを開く",
   "diffViewer.comment.localChanges": "ローカルの変更",
   "diffViewer.comment.prChanges": "PRの変更",
-  "diffViewer.comment.sendToKilo": "TU Codeに送信",
+  "diffViewer.comment.sendToKilo": "tucodeに送信",
   "diffViewer.comment.sendToGithub": "GitHub #{{number}}に送信",
   "diffViewer.comment.chooseDestination": "送信先を選択",
   "diffViewer.notice.snapshotsDisabled":
@@ -1448,10 +1447,10 @@ export const dict = {
     "統合ブラウザーにインストール済みの Google Chrome を使用します。互換性のある Playwright Chromium ブラウザーが既にインストールされている場合にのみ無効にしてください。",
   "settings.experimental.browserLinks.title": "リンクを開く場所",
   "settings.experimental.browserLinks.description":
-    "TU Code のチャットから web リンクを開く場所を選択します。統合ブラウザーが必要です。",
+    "tucode のチャットから web リンクを開く場所を選択します。統合ブラウザーが必要です。",
   "settings.experimental.browserLinks.external": "システムブラウザー",
   "settings.experimental.browserLinks.integrated": "統合ブラウザー",
   "chat.search.searchingHistory": "以前のメッセージを検索しています…",
   "browserTab.noSession": "セッションからブラウザを開いて、ローカルアプリまたは公開 HTTPS ページをプレビューします。",
-  "browserTab.disabled": "統合ブラウザは無効になっています。TU Code 設定 > 実験的機能で有効にしてください。",
+  "browserTab.disabled": "統合ブラウザは無効になっています。tucode 設定 > 実験的機能で有効にしてください。",
 }

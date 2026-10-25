@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { plain, session, supports, tui } from "../../src/kilocode/cli/logo"
 
-describe("TU Code logo", () => {
+describe("tucode logo", () => {
   test("allows remote terminals", () => {
     expect(supports({ SSH_TTY: "/dev/pts/0" }, "linux")).toBe(true)
     expect(supports({ SSH_CLIENT: "127.0.0.1 12345 22" }, "linux")).toBe(true)
@@ -26,7 +26,7 @@ describe("TU Code logo", () => {
     expect(supports({ KILO_UNICODE_LOGO: "0" }, "linux")).toBe(false)
   })
 
-  test("draws the TU Code wordmark in full blocks on every terminal", () => {
+  test("draws the tucode wordmark in full blocks on every terminal", () => {
     expect(tui({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(tui({}, "win32"))
     expect(plain({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(plain({}, "win32"))
     expect(plain().join("\n")).toMatch(/^[█ \n]+$/)

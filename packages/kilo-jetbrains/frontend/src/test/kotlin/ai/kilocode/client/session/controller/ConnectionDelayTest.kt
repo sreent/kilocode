@@ -159,9 +159,9 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         assertEquals("Workspace not supported", event.summary)
         assertEquals(
             "Workspace path: /test\n\n" +
-                "TU Code runs on your host machine, so it can't reach the files inside WSL.\n\n" +
-                "Option 1: Open the project in the container or WSL with JetBrains Gateway so TU Code runs next to your code.\n" +
-                "Option 2: Open the project directly from your local filesystem so TU Code can reach the files.",
+                "tucode runs on your host machine, so it can't reach the files inside WSL.\n\n" +
+                "Option 1: Open the project in the container or WSL with JetBrains Gateway so tucode runs next to your code.\n" +
+                "Option 2: Open the project directly from your local filesystem so tucode can reach the files.",
             event.detail,
         )
         assertEquals("workspace", event.source)
@@ -186,9 +186,9 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         assertEquals("Workspace not supported", event.summary)
         assertEquals(
             "Workspace path: /test\n\n" +
-                "TU Code can't resolve this workspace path on your local filesystem.\n\n" +
-                "Option 1: Open the project in the container or WSL with JetBrains Gateway so TU Code runs next to your code.\n" +
-                "Option 2: Open the project directly from your local filesystem so TU Code can reach the files.",
+                "tucode can't resolve this workspace path on your local filesystem.\n\n" +
+                "Option 1: Open the project in the container or WSL with JetBrains Gateway so tucode runs next to your code.\n" +
+                "Option 2: Open the project directly from your local filesystem so tucode can reach the files.",
             event.detail,
         )
     }
@@ -210,7 +210,7 @@ class ConnectionDelayTest : SessionControllerTestBase() {
         val event = events.filterIsInstance<SessionControllerEvent.ConnectionChanged.ShowError>().single()
         assertEquals("Workspace folder missing", event.summary)
         assertEquals(
-            "TU Code can't load this session because the workspace folder no longer exists: /repo/.kilo/worktrees/deleted",
+            "tucode can't load this session because the workspace folder no longer exists: /repo/.kilo/worktrees/deleted",
             event.detail,
         )
         assertEquals("workspace", event.source)

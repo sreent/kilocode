@@ -12,14 +12,14 @@ export const anacondaDesktopDict = {
   "provider.anaconda.status.unavailable": "Kullanılamıyor",
   "provider.anaconda.state.unsupported": "Anaconda Desktop {{platform}} üzerinde desteklenmiyor.",
   "provider.anaconda.state.notInstalled":
-    "Anaconda Desktop'ı bu makineye kurun, ardından buraya dönün. TU Code kurulumu sizin için çalıştırmaz.",
+    "Anaconda Desktop'ı bu makineye kurun, ardından buraya dönün. tucode kurulumu sizin için çalıştırmaz.",
   "provider.anaconda.state.notRunning":
     "Anaconda Desktop'ı açın, kurulumu tamamlayıp oturum açın, ardından Tekrar kontrol et'i seçin.",
   "provider.anaconda.state.invalidConfig":
     "Anaconda Desktop kurulumu eksik. Desktop'ı açın, kurulumu tamamlayın ve gerekirse yeniden başlatın.",
-  "provider.anaconda.state.signedOut": "TU Code'yu bağlamadan önce Anaconda Desktop'ı açın ve oturum açın.",
+  "provider.anaconda.state.signedOut": "tucode'yu bağlamadan önce Anaconda Desktop'ı açın ve oturum açın.",
   "provider.anaconda.state.unauthorized":
-    "TU Code Anaconda Desktop'a erişemedi. Desktop'ı açın, tekrar oturum açın ve gerekirse yeniden başlatın.",
+    "tucode Anaconda Desktop'a erişemedi. Desktop'ı açın, tekrar oturum açın ve gerekirse yeniden başlatın.",
   "provider.anaconda.state.unavailable":
     "Anaconda Desktop henüz yanıt vermiyor. Açın ve uygulamanın başlamasını bekleyin.",
   "provider.anaconda.state.noModel":
@@ -31,7 +31,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.state.unhealthy":
     "Etkin çıkarım sunucusu henüz sağlıklı değil. Anaconda Desktop'ta kontrol edin ve gerekirse sunucuyu yeniden başlatın.",
   "provider.anaconda.state.ready":
-    "TU Code sağlıklı bir yerel metin üretme sunucusu buldu ve mevcut bağlantı ayarlarını içe aktarabilir.",
+    "tucode sağlıklı bir yerel metin üretme sunucusu buldu ve mevcut bağlantı ayarlarını içe aktarabilir.",
   "provider.anaconda.server": "Etkin çıkarım sunucusu",
   "provider.anaconda.context": "Bağlam penceresi",
   "provider.anaconda.contextValue": "{{count}} token",
@@ -48,7 +48,7 @@ export const anacondaDesktopDict = {
   "provider.anaconda.action.continue": "Yine de devam et",
   "provider.anaconda.action.manage": "Yönet / Yenile",
   "provider.anaconda.toast.refreshed.title": "Anaconda Desktop yenilendi",
-  "provider.anaconda.toast.refreshed.description": "Etkin yerel sunucu ve modeller TU Code'da güncel.",
+  "provider.anaconda.toast.refreshed.description": "Etkin yerel sunucu ve modeller tucode'da güncel.",
   "settings.providers.note.anacondaDesktop": "Anaconda Desktop tarafından yerel olarak sunulan bir model çalıştırın.",
   "settings.providers.tag.local": "Yerel",
 } as const
@@ -97,7 +97,7 @@ export const dict = {
     "Konuşma geri alındı. Bu önceki geri alma için çalışma alanı geri yükleme durumu kullanılamıyor.",
   "revert.banner.workspace.enableSnapshots": "Anlık Görüntüleri Etkinleştir",
   "revert.disabled.agentBusy": "Ajanın bitmesini bekleyin",
-  "revert.error.body": "Depo kullanımda olabilir. Tekrar deneyin veya ayrıntılar için TU Code günlüklerine bakın.",
+  "revert.error.body": "Depo kullanımda olabilir. Tekrar deneyin veya ayrıntılar için tucode günlüklerine bakın.",
   "command.session.compact": "Oturumu sıkıştır",
   "command.session.export": "Oturum dökümünü dışa aktar",
 
@@ -122,7 +122,7 @@ export const dict = {
   "provider.connect.status.waiting": "Yetkilendirme bekleniyor...",
   "provider.connect.status.failed": "Yetkilendirme başarısız: {{error}}",
   "provider.connect.apiKey.description":
-    "{{provider}} hesabınızı bağlamak ve TU Code'da {{provider}} modellerini kullanmak için {{provider}} API anahtarınızı girin.",
+    "{{provider}} hesabınızı bağlamak ve tucode'da {{provider}} modellerini kullanmak için {{provider}} API anahtarınızı girin.",
   "provider.connect.apiKey.description.local":
     "Connect to your local {{provider}} server. Leave the API key empty if the server does not require one (default for localhost).",
   "provider.connect.atomicChat.description":
@@ -143,7 +143,7 @@ export const dict = {
   "provider.connect.azure.baseURL.label": "Azure OpenAI uç nokta URL'si",
   "provider.connect.azure.baseURL.placeholder": "örn. https://my-models.openai.azure.com/openai",
   "provider.connect.oauth.code.visit.prefix":
-    "Hesabınızı bağlamak ve TU Code'da {{provider}} modellerini kullanmak için ",
+    "Hesabınızı bağlamak ve tucode'da {{provider}} modellerini kullanmak için ",
   "provider.connect.oauth.code.visit.link": "bu bağlantıya",
   "provider.connect.oauth.code.visit.suffix": " tıklayarak yetkilendirme kodunuzu alın.",
   "provider.connect.oauth.code.label": "{{method}} yetkilendirme kodu",
@@ -152,7 +152,7 @@ export const dict = {
   "provider.connect.oauth.auto.visit.prefix": "",
   "provider.connect.oauth.auto.visit.link": "Bu bağlantıya",
   "provider.connect.oauth.auto.visit.suffix":
-    " tıklayarak aşağıdaki kodu girin ve hesabınızı bağlayarak TU Code'da {{provider}} modellerini kullanın.",
+    " tıklayarak aşağıdaki kodu girin ve hesabınızı bağlayarak tucode'da {{provider}} modellerini kullanın.",
   "provider.connect.oauth.auto.confirmationCode": "Onay kodu",
   "provider.connect.toast.connected.title": "{{provider}} bağlandı",
   "provider.connect.toast.connected.description": "{{provider}} modelleri artık kullanımda.",
@@ -233,9 +233,9 @@ export const dict = {
     "'Komutu Geliştir' düğmesi, ek bağlam, açıklama veya yeniden ifadelendirme sağlayarak komutunuzu iyileştirmeye yardımcı olur. Buraya bir komut yazıp düğmeye tekrar tıklayarak nasıl çalıştığını görebilirsiniz.",
   "prompt.action.sandbox.enable": "Sandbox'ı etkinleştir",
   "prompt.action.sandbox.disable": "Sandbox'ı devre dışı bırak",
-  "prompt.action.sandbox.enabled": "Sandbox etkin. Agent shell komutları proje ve TU Code dizinleriyle sınırlıdır.",
+  "prompt.action.sandbox.enabled": "Sandbox etkin. Agent shell komutları proje ve tucode dizinleriyle sınırlıdır.",
   "prompt.action.sandbox.disabled":
-    "Sandbox devre dışı. Agent shell komut yazma işlemlerini proje ve TU Code dizinleriyle sınırlamak için tıklayın.",
+    "Sandbox devre dışı. Agent shell komut yazma işlemlerini proje ve tucode dizinleriyle sınırlamak için tıklayın.",
   "prompt.action.sandbox.status.enabled": "Sandbox etkin",
   "prompt.action.sandbox.status.disabled": "Sandbox devre dışı",
   "prompt.action.sandbox.filesystem": "Dosya sistemi",
@@ -244,7 +244,7 @@ export const dict = {
   "prompt.action.sandbox.network.blocked": "Engellendi",
   "prompt.action.sandbox.network.allowed": "İzin verildi",
   "prompt.action.sandbox.unrestricted": "Kısıtlanmamış",
-  "prompt.action.sandbox.description.enabled": "Yazma işlemleri proje ve TU Code dizinleriyle sınırlıdır.",
+  "prompt.action.sandbox.description.enabled": "Yazma işlemleri proje ve tucode dizinleriyle sınırlıdır.",
   "prompt.action.sandbox.description.escalation":
     "İzin kuralları ve otomatik onay korumalı alan içinde geçerlidir. Korumalı alandan çıkması gereken komutlar her zaman sorar.",
   "prompt.action.sandbox.description.disabled":
@@ -260,7 +260,7 @@ export const dict = {
   "speechToText.tooltip.transcribing": "Metne dönüştürülüyor... İptal etmek için tıklayın.",
   "speechToText.tooltip.error": "Sesli giriş başarısız oldu. Temizlemek için tıklayın.",
   "speechToText.error.title": "Sesli giriş başarısız oldu",
-  "speechToText.error.loginRequired": "Sesli girişi kullanmak için TU Code'ya giriş yapın.",
+  "speechToText.error.loginRequired": "Sesli girişi kullanmak için tucode'ya giriş yapın.",
   "speechToText.error.emptyTranscript": "Hiçbir konuşma algılanmadı.",
 
   "prompt.toast.promptSendFailed.title": "Komut gönderilemedi",
@@ -305,7 +305,7 @@ export const dict = {
     "Bu, tüm komutu dosya sistemi ve ağ kısıtlamaları kaldırılmış olarak yalnızca bu komut için çalıştırır. Git, korumalı alanda salt okunur olan ve bağlı bir worktree'de worktree dışında kalan .git dosyasına yazmalıdır. Bash izin kuralları ve otomatik onay bu istemi hiçbir zaman otomatik olarak onaylamaz.",
   "ui.permission.manageAutoApprove": "Otomatik Onay Kurallarını Yönet",
   "ui.permission.reject": "Reddet",
-  "ui.permission.feedbackPlaceholder": "TU Code'ya farklı ne yapması gerektiğini söyleyin",
+  "ui.permission.feedbackPlaceholder": "tucode'ya farklı ne yapması gerektiğini söyleyin",
   "ui.permission.feedbackHint": "Reddetmek için Enter, iptal için Esc",
   "ui.permission.doomLoop.prompt": "{{tool}} aracında olası bir döngü algılandı. Çalıştırmaya devam edilsin mi?",
   "ui.permission.doomLoop.rule": "{{tool}} çağrılarına devam et",
@@ -353,7 +353,7 @@ export const dict = {
   "session.messages.loadEarlier": "Önceki mesajları yükle",
   "session.messages.loading": "Mesajlar yükleniyor...",
 
-  "sidebar.topBar.label": "TU Code Gezinme",
+  "sidebar.topBar.label": "tucode Gezinme",
   "sidebar.topBar.newTask": "Yeni Görev",
   "sidebar.topBar.history": "Geçmiş",
   "sidebar.topBar.agentManager": "Agent Manager",
@@ -525,11 +525,11 @@ export const dict = {
   "settings.config.status.loadedLegacy": "eski yapılandırma yüklendi",
   "settings.config.status.notLoaded": "yüklenmedi",
   "settings.config.status.create": "bulunamadı - bu dosyayı oluştur",
-  "settings.config.title": "{{scope}} TU Code yapılandırma dosyasını aç",
+  "settings.config.title": "{{scope}} tucode yapılandırma dosyasını aç",
   "settings.config.placeholder":
     "Yapılandırma dosyaları sırayla birleştirilir; yüklendi olarak işaretlenen dosyalar şu anda ayarları etkiler.",
-  "settings.config.noWorkspace": "Yerel TU Code yapılandırma dosyasını düzenlemek için bir çalışma alanı klasörü açın.",
-  "settings.config.openFailed": "{{scope}} TU Code yapılandırma dosyası açılamadı: {{message}}",
+  "settings.config.noWorkspace": "Yerel tucode yapılandırma dosyasını düzenlemek için bir çalışma alanı klasörü açın.",
+  "settings.config.openFailed": "{{scope}} tucode yapılandırma dosyası açılamadı: {{message}}",
   "settings.config.source.xdg": "XDG küresel yapılandırma",
   "settings.config.source.homeKilo": "Home .kilo yapılandırması",
   "settings.config.source.homeKilocode": "Home .kilocode yapılandırması",
@@ -586,7 +586,7 @@ export const dict = {
   "feedback.dialog.message":
     "Geri bildiriminizi almaktan veya yaşadığınız sorunlarda yardımcı olmaktan mutluluk duyarız.",
   "feedback.dialog.github": "GitHub'da sorun bildirin",
-  "workStyle.onboarding.welcome": "TU Code'ya hoş geldiniz",
+  "workStyle.onboarding.welcome": "tucode'ya hoş geldiniz",
   "workStyle.onboarding.title": "Nasıl çalışmak istediğinizi seçin",
   "workStyle.onboarding.settingsNote": "Bu seçenekleri istediğiniz zaman şuradan değiştirebilirsiniz:",
   "workStyle.onboarding.settings": "Ayarlar.",
@@ -596,7 +596,7 @@ export const dict = {
   "workStyle.choice.visibility": "Görünürlük",
   "workStyle.choice.human-in-the-loop.eyebrow": "İnsan denetimli",
   "workStyle.choice.human-in-the-loop.title": "Önce inceleyin",
-  "workStyle.choice.human-in-the-loop.description": "TU Code çalışırken duraklar ve planını size gösterir.",
+  "workStyle.choice.human-in-the-loop.description": "tucode çalışırken duraklar ve planını size gösterir.",
   "workStyle.choice.human-in-the-loop.permissions":
     "Dosyaları düzenlemeden veya komutları çalıştırmadan önce izin ister.",
   "workStyle.choice.human-in-the-loop.bash": "Her terminal komutunu çalıştırmadan önce izin ister.",
@@ -616,7 +616,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "Kod panoya kopyalandı",
   "deviceAuth.toast.errorCopied": "Hata panoya kopyalandı",
   "deviceAuth.status.initiating": "Giriş başlatılıyor...",
-  "deviceAuth.title": "TU Code'a giriş yap",
+  "deviceAuth.title": "tucode'a giriş yap",
   "deviceAuth.step1": "Adım 1: Bu URL'yi açın",
   "deviceAuth.action.copyUrl": "URL'yi Kopyala",
   "deviceAuth.action.openBrowser": "Tarayıcıyı Aç",
@@ -643,7 +643,7 @@ export const dict = {
   "profile.organization.signedIn": "{{email}} ({{role}}) olarak giriş yapıldı",
   "profile.organization.policy": "İlke sürümü {{version}}, {{time}} tarihinde güncellendi",
   "profile.organization.gateway": "{{providers}} model çağrıları kuruluşunuzun ağ geçidinden geçer.",
-  "profile.organization.managed": "Bu cihazdaki TU Code'yu {{org}} yönetiyor. Kuruluş hesabınızla giriş yapın.",
+  "profile.organization.managed": "Bu cihazdaki tucode'yu {{org}} yönetiyor. Kuruluş hesabınızla giriş yapın.",
   "profile.organization.connect": "Kendi barındırılan bir kuruluşa giriş yap",
   "profile.organization.url": "Sunucu URL'si",
   "profile.organization.action.signin": "Giriş yap",
@@ -748,12 +748,12 @@ export const dict = {
 
   "settings.experimental.title": "Deneysel",
   "settings.language.title": "Dil",
-  "settings.aboutKiloCode.title": "TU Code Hakkında",
+  "settings.aboutKiloCode.title": "tucode Hakkında",
 
   "session.messages.welcome":
-    "TU Code bir yapay zeka kodlama asistanıdır. Özellik geliştirmesini, hata düzeltmesini veya kod tabanınızı açıklamasını isteyin.",
+    "tucode bir yapay zeka kodlama asistanıdır. Özellik geliştirmesini, hata düzeltmesini veya kod tabanınızı açıklamasını isteyin.",
   "session.workspaceScope.description":
-    "TU Code sohbeti yalnızca bu çalışma alanındaki ilk klasör olan “{{folder}}” klasörünü kullanır.",
+    "tucode sohbeti yalnızca bu çalışma alanındaki ilk klasör olan “{{folder}}” klasörünü kullanır.",
   "session.workspaceScope.alternatives":
     "Başka bir klasörde çalışmak için klasörü ayrı bir pencerede açın veya Agent Manager'a proje olarak ekleyin.",
   "session.workspaceScope.dismiss": "Çalışma alanı kapsamı ipucunu kapat",
@@ -799,7 +799,7 @@ export const dict = {
   "ui.sessionTurn.status.consideringNextSteps": "Sonraki adımları değerlendiriyor...",
 
   "dialog.model.noProviders": "Sağlayıcı yok",
-  "dialog.model.unavailable": "TU Code modelleri kullanılamıyor",
+  "dialog.model.unavailable": "tucode modelleri kullanılamıyor",
 
   "prompt.placeholder.connecting": "Sunucuya bağlanılıyor...",
   "prompt.placeholder.default":
@@ -842,10 +842,10 @@ export const dict = {
   "settings.aboutKiloCode.exportSettings": "Dışa Aktar",
   "settings.aboutKiloCode.importSettings": "İçe Aktar",
   "settings.aboutKiloCode.importSettings.invalidJson": "Geçersiz JSON dosyası. Lütfen geçerli bir ayar dosyası seçin.",
-  "settings.aboutKiloCode.importSettings.invalidConfig": "Dosya geçerli TU Code ayarları içermiyor.",
+  "settings.aboutKiloCode.importSettings.invalidConfig": "Dosya geçerli tucode ayarları içermiyor.",
   "settings.aboutKiloCode.importSettings.tooLarge": "Dosya çok büyük. Ayar dosyaları 1 MB altında olmalıdır.",
   "settings.aboutKiloCode.importSettings.newerVersion":
-    "Bu dosya TU Code'nun daha yeni bir sürümünden dışa aktarılmış. Bazı ayarlar göz ardı edilebilir.",
+    "Bu dosya tucode'nun daha yeni bir sürümünden dışa aktarılmış. Bazı ayarlar göz ardı edilebilir.",
   "settings.aboutKiloCode.importSettings.success":
     "Ayarlar içe aktarıldı. Yukarıdaki değişiklikleri gözden geçirin, ardından Kaydet'e tıklayın.",
 
@@ -861,7 +861,7 @@ export const dict = {
   "settings.agentBehaviour.subtab.skills": "Beceriler",
 
   "settings.browser.description":
-    "Playwright ile çalışan yerleşik tarayıcı otomasyonunu yapılandırın. TU Code, oturumlarınızda web sayfalarında gezinebilir, bunlarla etkileşime girebilir ve ekran görüntüsü alabilir.",
+    "Playwright ile çalışan yerleşik tarayıcı otomasyonunu yapılandırın. tucode, oturumlarınızda web sayfalarında gezinebilir, bunlarla etkileşime girebilir ve ekran görüntüsü alabilir.",
   "settings.browser.enable.title": "Tarayıcı Otomasyonunu Etkinleştir",
   "settings.browser.enable.description":
     "Yerel uygulamalar ve herkese açık HTTPS sayfaları için oturuma özel Agent Manager tarayıcısını etkinleştir.",
@@ -892,10 +892,10 @@ export const dict = {
     "Oturumlar tamamlandığında, bir hatayla karşılaşıldığında veya sizden giriş beklendiğinde ses çal",
   "settings.notifications.workbench.title": "VS Code bildirimlerini etkinleştir",
   "settings.notifications.workbench.description":
-    "TU Code bir görevi tamamladığında veya sizden giriş beklendiğinde VS Code bildirimlerini göster",
+    "tucode bir görevi tamamladığında veya sizden giriş beklendiğinde VS Code bildirimlerini göster",
   "settings.notifications.os.title": "İşletim sistemi bildirimlerini etkinleştir",
   "settings.notifications.os.description":
-    "VS Code etkin değilken TU Code bir görevi tamamladığında veya sizden giriş beklendiğinde yerel işletim sistemi bildirim uyarılarını göster.",
+    "VS Code etkin değilken tucode bir görevi tamamladığında veya sizden giriş beklendiğinde yerel işletim sistemi bildirim uyarılarını göster.",
   "settings.notifications.testSound": "Test et",
   "settings.notifications.testOS": "Test et",
   "settings.notifications.testOS.testing": "Test bildirimi gönderiliyor…",
@@ -914,7 +914,7 @@ export const dict = {
   "settings.experimental.batch.description": "Birden fazla araç çağrısının toplu işlenmesini etkinleştir",
   "settings.experimental.imageGeneration.title": "Görüntü oluşturma",
   "settings.experimental.imageGeneration.description": "AI görüntü oluşturmayı etkinleştir",
-  "settings.agentBehaviour.sharedAgentBoard.title": "TU Code Swarm",
+  "settings.agentBehaviour.sharedAgentBoard.title": "tucode Swarm",
   "settings.agentBehaviour.sharedAgentBoard.description":
     "Bir ana oturum ile görevlerini yürüten alt ajanları arasında, iç içe geçmiş alt ajanlar da dahil olmak üzere bir pano paylaşın. Her görev için değil, paralel çözüm denemeleri veya birbirini tamamlayan çalışmalar için kullanın.",
   "settings.experimental.imageGenerationModel.title": "Görüntü modeli",
@@ -930,12 +930,12 @@ export const dict = {
   "settings.models.speechToTextBaseUrl.placeholder": "https://api.openai.com/v1",
   "settings.models.speechToTextApiKey.title": "Sesten metne API anahtarı",
   "settings.models.speechToTextApiKey.description":
-    "Kendi transkripsiyon temel URL'nize gönderilen bearer belirteci. TU Code yapılandırma dosyanızda saklanır.",
+    "Kendi transkripsiyon temel URL'nize gönderilen bearer belirteci. tucode yapılandırma dosyanızda saklanır.",
   "settings.models.speechToTextApiKey.placeholder": "sk-...",
   "settings.models.speechToText.disabledDescription":
-    "Speech to Text kullanmak için TU Code sağlayıcısını etkinleştirin ve giriş yapın ya da aşağıda kendi transkripsiyon temel URL'nizi ayarlayın.",
+    "Speech to Text kullanmak için tucode sağlayıcısını etkinleştirin ve giriş yapın ya da aşağıda kendi transkripsiyon temel URL'nizi ayarlayın.",
   "settings.models.speechToText.remoteDescription":
-    "Sesli giriş uzak pencerelerde kullanılamaz. Mikrofonu kullanmak için TU Code'yu yerel bir pencerede açın.",
+    "Sesli giriş uzak pencerelerde kullanılamaz. Mikrofonu kullanmak için tucode'yu yerel bir pencerede açın.",
   "settings.models.speechToTextModel.title": "Sesten metne modeli",
   "settings.models.speechToTextModel.description": "Sesli giriş için Kilo Gateway transkripsiyon modelini seçin.",
   "settings.experimental.nativeNotebookTools.title": "Yerel Not Defteri Araçları",
@@ -971,7 +971,7 @@ export const dict = {
     "MCP araç çağrılarını, her MCP aracını doğrudan sunmak yerine isteğe bağlı araç keşfiyle sınırlandırılmış bir JavaScript çalışma zamanı üzerinden yönlendirir. Çok sayıda MCP aracı bağlıyken bağlam tasarrufu sağlar.",
   "settings.sandboxing.enabled.title": "Sandbox",
   "settings.sandboxing.enabled.description":
-    "Agent shell komutlarını, proje ve TU Code durum dizinlerine yazmaları kısıtlanan işletim sistemi düzeyinde bir sandbox içinde çalıştırın",
+    "Agent shell komutlarını, proje ve tucode durum dizinlerine yazmaları kısıtlanan işletim sistemi düzeyinde bir sandbox içinde çalıştırın",
 
   "settings.agentBehaviour.defaultAgent.title": "Varsayılan Ajan",
   "settings.agentBehaviour.defaultAgent.description": "Belirtilmediğinde kullanılacak ajan",
@@ -1031,7 +1031,7 @@ export const dict = {
   "settings.agentBehaviour.claudeCompat.heading": "Claude Code Uyumluluğu",
   "settings.agentBehaviour.claudeCompat.title": "Claude Code Dosyalarını Yükle",
   "settings.agentBehaviour.claudeCompat.description":
-    "Claude Code yapılandırma dizininizdeki CLAUDE.md talimatlarını ve becerilerini oturumlara yükleyin. TU Code'nun Claude Code talimatlarınızı ve becerilerinizi kullanmasını istiyorsanız bunu etkinleştirin. Yeniden başlatma gerektirir.",
+    "Claude Code yapılandırma dizininizdeki CLAUDE.md talimatlarını ve becerilerini oturumlara yükleyin. tucode'nun Claude Code talimatlarınızı ve becerilerinizi kullanmasını istiyorsanız bunu etkinleştirin. Yeniden başlatma gerektirir.",
   "settings.agentBehaviour.removeMcp.title": "MCP sunucusunu kaldır",
   "settings.agentBehaviour.removeMcp.confirm":
     '"{{name}}" MCP sunucusu kaldırılsın mı? Bu, yapılandırmanızdan kaldırılacak.',
@@ -1054,7 +1054,7 @@ export const dict = {
   "settings.agentBehaviour.editMcp.env.help": "MCP sunucu sürecine aktarılan değişkenler.",
   "settings.agentBehaviour.editMcp.oauth": "OAuth",
   "settings.agentBehaviour.editMcp.oauth.help":
-    "Sunucu önceden kayıtlı bir istemci gerektirmedikçe Otomatik olarak bırakın. İstemci sırrı TU Code yapılandırma dosyanızda saklanır.",
+    "Sunucu önceden kayıtlı bir istemci gerektirmedikçe Otomatik olarak bırakın. İstemci sırrı tucode yapılandırma dosyanızda saklanır.",
   "settings.agentBehaviour.editMcp.oauth.mode": "Mod",
   "settings.agentBehaviour.editMcp.oauth.mode.automatic": "Otomatik",
   "settings.agentBehaviour.editMcp.oauth.mode.disabled": "Devre dışı",
@@ -1134,7 +1134,7 @@ export const dict = {
     "Dosya düzenlemelerinden önce kontrol noktaları oluştur, böylece önceki durumları geri yükleyebilirsiniz",
   "settings.autoCleanup.enable.title": "Otomatik oturum temizliğini etkinleştir",
   "settings.autoCleanup.enable.description":
-    "Belirli bir gün sayısından sonra eski oturum geçmişini otomatik olarak siler, bu bilgisayardaki tüm projelerde ve tüm TU Code istemcilerinde, yalnızca bu pencerede değil. Şu anda çalışan oturumlar ve yeni çatallaması olan oturumlar asla silinmez. Silme kalıcıdır.",
+    "Belirli bir gün sayısından sonra eski oturum geçmişini otomatik olarak siler, bu bilgisayardaki tüm projelerde ve tüm tucode istemcilerinde, yalnızca bu pencerede değil. Şu anda çalışan oturumlar ve yeni çatallaması olan oturumlar asla silinmez. Silme kalıcıdır.",
   "settings.autoCleanup.defaultRetention.title": "Oturumları saklama süresi (gün)",
   "settings.autoCleanup.defaultRetention.description":
     "Otomatik temizlik, oturum geçmişini silmeden önce ne kadar süreyle saklanır.",
@@ -1152,7 +1152,7 @@ export const dict = {
     "Oturumlar siliniyor: {{processed}}/{{total}} işlendi ({{deleted}} silindi, {{failed}} başarısız)",
   "settings.autoCleanup.runNow": "Temizliği şimdi çalıştır",
   "settings.autoCleanup.runNow.confirm":
-    "Süresi dolmuş oturumlar bu bilgisayardaki tüm projelerde ve tüm TU Code istemcilerinde kalıcı olarak silinsin mi?",
+    "Süresi dolmuş oturumlar bu bilgisayardaki tüm projelerde ve tüm tucode istemcilerinde kalıcı olarak silinsin mi?",
   "settings.autoCleanup.stop": "Temizliği durdur",
   "settings.autoCleanup.progress.cancelling": "Oturum temizliği durduruluyor...",
   "settings.autoCleanup.lastRun.cancelled": "kesintiye uğradı",
@@ -1186,7 +1186,7 @@ export const dict = {
   "settings.context.memory.storage.enable": "Enable memory to create project memory files.",
   "settings.context.memory.inspect": "İncele",
   "chat.memory.project.disabled": "Proje belleği devre dışı",
-  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use TU Code.",
+  "chat.memory.project.empty": "This project doesn't have any memory yet. It will start showing after you use tucode.",
   "chat.memory.command.failed": "Bellek komutu başarısız oldu",
   "chat.memory.updated": "Memory updated",
   "chat.memory.rebuild": "Memory index rebuilt",
@@ -1224,7 +1224,7 @@ export const dict = {
   "settings.display.username.description": "Sohbetlerde görüntülenen özel kullanıcı adı",
   "settings.display.fontSize.title": "Yazı Tipi Boyutu",
   "settings.display.fontSize.description":
-    "TU Code webview UI yazı tipi boyutunu VS Code'dan bağımsız olarak ayarlayın.",
+    "tucode webview UI yazı tipi boyutunu VS Code'dan bağımsız olarak ayarlayın.",
   "settings.display.reasoningDisplay.title": "Akıl Yürütme Blokları",
   "settings.display.reasoningDisplay.description":
     "Akıl yürütme bloklarının nasıl başlayacağını seçin. Genişletilmiş tam metni gösterir, Önizleme kısa ve kaydırılabilir bir önizlemeyle sınırlar, Başlık ise siz açana kadar yalnızca başlığı ve akış göstergesini gösterir.",
@@ -1377,10 +1377,10 @@ export const dict = {
   "notifications.action.close": "Kapat",
   "notifications.action.tryModel": "Dene {{model}}",
   "notifications.action.tryModelGeneric": "Modeli Dene",
-  "settings.indexing.kiloModel.title": "TU Code model önayarı",
+  "settings.indexing.kiloModel.title": "tucode model önayarı",
   "settings.indexing.kiloModel.description": "Desteklenen bir Kilo-hosted embeddings modeli seçin.",
-  "settings.indexing.kiloSignIn.title": "TU Code oturumu açmak gerekiyor",
-  "settings.indexing.kiloSignIn.description": "Hosted embeddings kullanmak için TU Code'da oturum açın.",
+  "settings.indexing.kiloSignIn.title": "tucode oturumu açmak gerekiyor",
+  "settings.indexing.kiloSignIn.description": "Hosted embeddings kullanmak için tucode'da oturum açın.",
   // Missing translations - English fallbacks until translated
   "profile.switchingAccount": "Hesap değiştiriliyor…",
   "settings.agentBehaviour.createMode": "Yeni Mod Oluştur",
@@ -1430,7 +1430,7 @@ export const dict = {
     "Çalışma ağacında değiştirilmiş ancak henüz staged edilmemiş dosyalar, artı takip edilmeyen (yeni) dosyalar.",
   "diffViewer.source.session.label": "Oturum",
   "diffViewer.source.session.tooltip":
-    "Geçerli oturum sırasında TU Code tarafından değiştirilen dosyalar, tur başı anlık görüntülere dayanır. Yeni bir oturum başlatıldığında sıfırlanır.",
+    "Geçerli oturum sırasında tucode tarafından değiştirilen dosyalar, tur başı anlık görüntülere dayanır. Yeni bir oturum başlatıldığında sıfırlanır.",
   "diffViewer.group.session": "Oturum",
   "diffViewer.group.git": "Git",
   "diffViewer.comment.postToGithub": "GitHub'da paylaş",
@@ -1440,7 +1440,7 @@ export const dict = {
   "diffViewer.comment.openPR": "Pull request'i aç",
   "diffViewer.comment.localChanges": "Yerel değişiklikler",
   "diffViewer.comment.prChanges": "PR değişiklikleri",
-  "diffViewer.comment.sendToKilo": "TU Code'ya gönder",
+  "diffViewer.comment.sendToKilo": "tucode'ya gönder",
   "diffViewer.comment.sendToGithub": "GitHub #{{number}} hedefine gönder",
   "diffViewer.comment.chooseDestination": "Hedef seç",
   "diffViewer.notice.snapshotsDisabled":
@@ -1472,11 +1472,11 @@ export const dict = {
     "Entegre Tarayıcı için yüklü Google Chrome'u kullanın. Yalnızca uyumlu bir Playwright Chromium tarayıcısı zaten yüklüyse devre dışı bırakın.",
   "settings.experimental.browserLinks.title": "Bağlantıların açılacağı yer",
   "settings.experimental.browserLinks.description":
-    "TU Code sohbetlerindeki web bağlantılarının nerede açılacağını seçin. Entegre Tarayıcı gerektirir.",
+    "tucode sohbetlerindeki web bağlantılarının nerede açılacağını seçin. Entegre Tarayıcı gerektirir.",
   "settings.experimental.browserLinks.external": "Sistem tarayıcısı",
   "settings.experimental.browserLinks.integrated": "Entegre Tarayıcı",
   "chat.search.searchingHistory": "Önceki mesajlarda aranıyor…",
   "browserTab.noSession":
     "Yerel bir uygulamayı veya genel bir HTTPS sayfasını önizlemek için tarayıcıyı bir oturumdan açın.",
-  "browserTab.disabled": "Tümleşik Tarayıcı devre dışı. TU Code Ayarları > Deneysel'den etkinleştirin.",
+  "browserTab.disabled": "Tümleşik Tarayıcı devre dışı. tucode Ayarları > Deneysel'den etkinleştirin.",
 }

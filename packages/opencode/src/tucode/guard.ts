@@ -1,5 +1,5 @@
 // kilocode_change - new file (tucode)
-// TU Code never talks to Kilo's cloud services. The features that would (Kilo sign-in, the Kilo
+// tucode never talks to Kilo's cloud services. The features that would (Kilo sign-in, the Kilo
 // Gateway, cloud sessions, the marketplace, notifications, telemetry) are removed or switched off,
 // and this guard is the backstop for any that a merge from Kilo brings back: it refuses fetch and
 // WebSocket connections to Kilo's domains before they open, so such a feature fails instead of
@@ -17,7 +17,7 @@ export function blocked(url: string | URL | Request) {
 }
 
 function refusal(host: string) {
-  return new TypeError(`TU Code does not connect to Kilo's services (${host}).`)
+  return new TypeError(`tucode does not connect to Kilo's services (${host}).`)
 }
 
 export function install() {

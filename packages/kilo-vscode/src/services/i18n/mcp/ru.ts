@@ -5,7 +5,7 @@ export const dict = {
   "mcp.signIn.unsupported": "{{name}} не поддерживает вход через OAuth.",
   "mcp.signIn.notFound": "Сервер MCP {{name}} не найден.",
   "mcp.auth.browserFailed":
-    "TU Code не удалось открыть браузер для {{name}}. Откройте URL авторизации на устройстве, где запущен TU Code, чтобы завершить вход.",
+    "tucode не удалось открыть браузер для {{name}}. Откройте URL авторизации на устройстве, где запущен tucode, чтобы завершить вход.",
   "mcp.auth.browserFailed.open": "Открыть в браузере",
   "mcp.auth.browserFailed.copy": "Скопировать URL",
   "mcp.auth.resetFailed": "Не удалось очистить сохранённый вход для {{name}}.",

@@ -34,7 +34,7 @@ export interface AutocompleteServiceSettings {
 function readSettings(): AutocompleteServiceSettings {
   const config = vscode.workspace.getConfiguration(CONFIG_SECTION)
   const info = getAutocompleteModel(config.get<string>("provider"), config.get<string>("model"))
-  // TU Code has no Kilo Gateway, so autocomplete only runs through Mistral or Inception, which people
+  // tucode has no Kilo Gateway, so autocomplete only runs through Mistral or Inception, which people
   // choose in the autocomplete settings and connect themselves.
   const gateway = info.providerID === "kilo"
   return {

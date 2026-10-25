@@ -247,7 +247,7 @@ export const layer = Layer.effect(
         actor: null,
         email: null,
         target: row.id,
-        details: { message: "Test event from TU Code Organization. It is not part of the audit log." },
+        details: { message: "Test event from tucode Organization. It is not part of the audit log." },
         ip: null,
       }
       const exit = yield* deliver(org, row, [event]).pipe(Effect.exit)

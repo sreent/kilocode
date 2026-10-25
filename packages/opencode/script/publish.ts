@@ -172,7 +172,7 @@ if (!Script.preview) {
   evidence.push(...(await describeImages(metadata)))
   // kilocode_change end
   // kilocode_change start - tucode: the AUR package and the Homebrew tap below are Kilo's, so only a build
-  // that carries Kilo's identity updates them. TU Code ships through npm, its image and its GitHub releases.
+  // that carries Kilo's identity updates them. tucode ships through npm, its image and its GitHub releases.
 }
 if (!Script.preview && Brand.repository === "https://github.com/Kilo-Org/kilocode") {
   // kilocode_change end

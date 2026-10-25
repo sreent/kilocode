@@ -1,10 +1,10 @@
 <idea-plugin>
-    <name>TU Code</name>
-    <vendor url="https://github.com/sreent/kilocode">TU Code</vendor>
+    <name>tucode</name>
+    <vendor url="https://github.com/sreent/kilocode">tucode</vendor>
 
     <description><![CDATA[
         <p>
-            <b>TU Code</b> turns your JetBrains IDE into a multi-agent control room: isolated git
+            <b>tucode</b> turns your JetBrains IDE into a multi-agent control room: isolated git
             worktrees for parallel tasks, native remote-development support, GitHub-aware diffs, and
             hundreds of models, all in one IDE frame.
         </p>
@@ -14,7 +14,7 @@
             <li><b>Run and debug per worktree.</b> Your existing Run Configurations work on any worktree; escalate one to a full IDE frame in a click when you need breakpoints.</li>
             <li><b>GitHub built in.</b> Per-worktree PR status, diff versus base branch, uncommitted changes, and one-click import from a PR URL.</li>
             <li><b>Model freedom.</b> Hundreds of models across all major providers with your own API keys or your organization's gateway, per-agent model pinning, and organization access controls.</li>
-            <li><b>One runtime everywhere.</b> Built on the TU Code CLI, the same engine as the TU Code VS Code extension, sharing one config, agents, skills, and MCP servers.</li>
+            <li><b>One runtime everywhere.</b> Built on the tucode CLI, the same engine as the tucode VS Code extension, sharing one config, agents, skills, and MCP servers.</li>
         </ul>
         <p><a href="https://github.com/sreent/kilocode">github.com/sreent/kilocode</a></p>
     ]]></description>

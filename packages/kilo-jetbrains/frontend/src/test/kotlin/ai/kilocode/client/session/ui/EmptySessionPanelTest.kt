@@ -188,7 +188,7 @@ class EmptySessionPanelTest : BasePlatformTestCase() {
         val panel = panel()
 
         assertEquals(
-            "TU Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
+            "tucode is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
             panel.explanationText(),
         )
     }

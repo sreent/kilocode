@@ -64,7 +64,7 @@ const panelTitleHandler = (panel: vscode.WebviewPanel) => (title: string) => {
 // without requiring the user to open a Kilo sidebar or panel first. The CLI backend is NOT spawned here;
 // it starts lazily when a webview connects or when ensureBackendForAutocomplete() triggers it.
 export async function activate(context: vscode.ExtensionContext) {
-  console.log("TU Code extension is now active")
+  console.log("tucode extension is now active")
   shuttingDown = false
 
   // Drives the "!kilo-code.new.isCursor" guards on the native view/title and
@@ -562,7 +562,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const marketplacePanelProvider = new MarketplacePanelProvider(context.extensionUri, connectionService, context)
   context.subscriptions.push(settingsEditorProvider, marketplacePanelProvider)
 
-  // Surface a discardable notification when a marketplace item matches the workspace. TU Code has no
+  // Surface a discardable notification when a marketplace item matches the workspace. tucode has no
   // Kilo Marketplace to suggest from, so the notifier is never started.
   const marketplaceNotifier = new MarketplaceNotifier(
     connectionService,
@@ -872,7 +872,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ),
   )
 
-  // Register URI handler for extension deep links (vscode://tucode.tu-code/kilocode/...)
+  // Register URI handler for extension deep links (vscode://tucode.tucode/kilocode/...)
   context.subscriptions.push(
     vscode.window.registerUriHandler({
       async handleUri(uri: vscode.Uri) {

@@ -64,7 +64,7 @@ class HistoryPanel(
     private val nav: () -> Unit = {},
     private val manager: SessionManager? = null,
     private val timers: UiTimerSource = UiTimers,
-    /** Whether to show the Kilo account's cloud sessions; TU Code has no Kilo account. */
+    /** Whether to show the Kilo account's cloud sessions; tucode has no Kilo account. */
     private val cloudSessions: Boolean = true,
 ) : BorderLayoutPanel(), Disposable, DataProvider {
     private val localSearch = search(controller.local)

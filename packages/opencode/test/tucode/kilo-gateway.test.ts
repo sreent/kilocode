@@ -29,7 +29,7 @@ function request(path: string, dir: string) {
   })
 }
 
-// TU Code has no Kilo Gateway: even with Kilo credentials, a Kilo organization and the provider enabled
+// tucode has no Kilo Gateway: even with Kilo credentials, a Kilo organization and the provider enabled
 // in config, no "kilo" provider is listed and nothing asks Kilo for its models. (Features that need a Kilo
 // sign-in may still try Kilo's other endpoints when such credentials are injected; the network guard
 // refuses those in the product.)

@@ -148,7 +148,7 @@ test.describe("webview accessibility ratchet", () => {
     await expect(page.locator('.sr-only[role="status"]')).toHaveAttribute("aria-live", "polite")
   })
 
-  // TU Code has no account to log in to, so the profile's keyboard check is on its usage refresh.
+  // tucode has no account to log in to, so the profile's keyboard check is on its usage refresh.
   test("Profile usage refresh exposes a keyboard-operable named control", async ({ page }) => {
     await open(page, "profile--not-logged-in")
 

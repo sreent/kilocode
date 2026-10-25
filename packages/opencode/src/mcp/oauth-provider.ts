@@ -54,7 +54,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
   ) {}
 
   // kilocode_change start - tucode: no client document hosted by Kilo, so servers fall back to dynamic
-  // registration under TU Code's own name (clientMetadata below)
+  // registration under tucode's own name (clientMetadata below)
   get clientMetadataUrl(): string | undefined {
     return undefined
   }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 APP=tucode # kilocode_change - tucode: the command, its name and the repository whose releases it installs
-NAME="TU Code"
+NAME="tucode"
 REPO=sreent/kilocode
 
 MUTED='\033[0;2m'

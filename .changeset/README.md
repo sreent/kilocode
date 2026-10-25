@@ -14,7 +14,7 @@ Or manually create a file `.changeset/<slug>.md`:
 
 ```md
 ---
-"tu-code": minor
+"tucode": minor
 ---
 
 Short description of the change for the changelog.

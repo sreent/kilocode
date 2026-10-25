@@ -1,8 +1,8 @@
 # Organization server
 
-A self-hosted server for running TU Code across an organization: single sign-on, SCIM provisioning, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. The TU Code CLI, VS Code extension and JetBrains plugin sign in to it and enforce what it decides.
+A self-hosted server for running tucode across an organization: single sign-on, SCIM provisioning, organization policy (model, MCP and tool-permission controls), org-managed agents, an LLM gateway, audit logs and streaming, usage analytics and budgets. The tucode CLI, VS Code extension and JetBrains plugin sign in to it and enforce what it decides.
 
-These are standard features of TU Code, not a separate paid tier. Kilo Code, which TU Code is built on, offers similar features in its hosted Enterprise plan, on a backend that is not open source; this package implements the same concepts so they run on your own infrastructure. The roles, model access rules and audit event names follow Kilo's published Enterprise documentation, so they behave the way Kilo users expect.
+These are standard features of tucode, not a separate paid tier. Kilo Code, which tucode is built on, offers similar features in its hosted Enterprise plan, on a backend that is not open source; this package implements the same concepts so they run on your own infrastructure. The roles, model access rules and audit event names follow Kilo's published Enterprise documentation, so they behave the way Kilo users expect.
 
 ## What it provides
 
@@ -22,7 +22,7 @@ These are standard features of TU Code, not a separate paid tier. Kilo Code, whi
 | Prices | The org's own rates or discounts per provider or model, for negotiated prices and models the catalog doesn't price |
 | Data policy | Refuses providers that may train on the org's data, keep it, or process it outside chosen regions, judged by the terms admins record for each provider. OpenRouter-compatible providers get the filters as routing preferences on every request |
 | Usage | Per-LLM-call usage, metered by the gateway or reported by clients (idempotent); breakdowns by user, model, provider, day, project and source; CSV export |
-| Analytics | Adoption by day, week or month (active and new people, sessions, requests, spend), members who don't use TU Code, and groups, sub-organizations and models compared with the period before; weekly or monthly reports posted to a webhook, such as a Slack channel |
+| Analytics | Adoption by day, week or month (active and new people, sessions, requests, spend), members who don't use tucode, and groups, sub-organizations and models compared with the period before; weekly or monthly reports posted to a webhook, such as a Slack channel |
 | Budgets | Daily or monthly limits for the whole organization (its sub-organizations included), each person, one person, a group's combined spend, and a sub-organization's allowance; clients refuse new requests once one is reached, and so does the gateway |
 | Admin console | Built-in web UI at `/admin` ([`packages/organization-console`](../organization-console)), built like Kilo's own web console |
 | Deployment | One binary or container with Postgres embedded, or any number of replicas behind a load balancer on a shared PostgreSQL server ([storage and high availability](#storage-and-high-availability)) |
@@ -355,7 +355,7 @@ Insight → Analytics shows adoption and comparisons; the same figures come from
 
 `from` and `to` take dates or epoch milliseconds, and default to the last 30 days.
 
-**Scheduled reports** (Insight → Scheduled reports, or `/api/v1/orgs/{org}/reports`) post a summary an hour after each week (Monday to Sunday) or month ends, in UTC: spend and how it moved on the period before, requests, how many members used TU Code and how many for the first time, and the top five models and spenders. `"format": "text"` posts `{ "text": ... }`, which Slack, Mattermost and Google Chat incoming webhooks show as a message; `"format": "json"` posts the whole summary. Deliveries are signed like audit stream webhooks with a secret shown once at creation, never follow redirects, and are retried every 15 minutes until they succeed or the next period's report replaces them. `POST /api/v1/orgs/{org}/reports/{id}/send` sends the last whole period's report now.
+**Scheduled reports** (Insight → Scheduled reports, or `/api/v1/orgs/{org}/reports`) post a summary an hour after each week (Monday to Sunday) or month ends, in UTC: spend and how it moved on the period before, requests, how many members used tucode and how many for the first time, and the top five models and spenders. `"format": "text"` posts `{ "text": ... }`, which Slack, Mattermost and Google Chat incoming webhooks show as a message; `"format": "json"` posts the whole summary. Deliveries are signed like audit stream webhooks with a secret shown once at creation, never follow redirects, and are retried every 15 minutes until they succeed or the next period's report replaces them. `POST /api/v1/orgs/{org}/reports/{id}/send` sends the last whole period's report now.
 
 ## Audit events
 
@@ -427,7 +427,7 @@ bun run migration           # after changing src/db/schema.sql.ts; --check fails
 bun run build               # dist/organization-server with the console embedded
 ```
 
-The server is built on the same stack as the TU Code CLI's own server:
+The server is built on the same stack as the tucode CLI's own server:
 
 | Concern | Where |
 |---|---|

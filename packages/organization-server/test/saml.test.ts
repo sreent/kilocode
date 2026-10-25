@@ -310,7 +310,7 @@ describe("saml sign-in", () => {
     const unsolicited = () => respond({ email: "owner@acme.com", id: "_tile-assertion" })
     const refused = await post(env, { SAMLResponse: unsolicited() })
     expect(refused.status).toBe(403)
-    expect(await refused.text()).toContain("started from TU Code")
+    expect(await refused.text()).toContain("started from tucode")
 
     expect((await configure(env, { idp_initiated: true })).status).toBe(200)
     const accepted = await post(env, { SAMLResponse: unsolicited() })

@@ -36,19 +36,19 @@ export const dict = {
   "marketplace.install.destination": "Destinazione dell'installazione",
   "marketplace.install.includedSkills": "Skill incluse",
   "marketplace.install.about.mcp":
-    "Un server MCP fornisce a TU Code strumenti aggiuntivi per interagire con servizi esterni o programmi locali.",
+    "Un server MCP fornisce a tucode strumenti aggiuntivi per interagire con servizi esterni o programmi locali.",
   "marketplace.install.about.agent":
     "Un agente aggiunge un ruolo riutilizzabile con istruzioni e autorizzazioni proprie.",
   "marketplace.install.about.skill":
-    "Una skill aggiunge istruzioni e risorse specifiche per un'attività che TU Code può caricare quando necessario.",
+    "Una skill aggiunge istruzioni e risorse specifiche per un'attività che tucode può caricare quando necessario.",
   "marketplace.install.mcp.warning":
-    "I server MCP possono eseguire comandi locali o connettersi a servizi esterni. TU Code chiederà l'autorizzazione prima di usare i loro strumenti, a meno che le tue autorizzazioni non lo consentano automaticamente.",
+    "I server MCP possono eseguire comandi locali o connettersi a servizi esterni. tucode chiederà l'autorizzazione prima di usare i loro strumenti, a meno che le tue autorizzazioni non lo consentano automaticamente.",
   "marketplace.install.project.warning":
     "I file del progetto possono essere aggiunti al controllo versione. Non salvare segreti qui, a meno che la configurazione non faccia riferimento a una variabile di ambiente.",
   "marketplace.install.learnMore": "Scopri come funzionano le installazioni dal Marketplace",
   "marketplace.install.learnMcp": "Scopri di più su MCP",
   "marketplace.install.about.plugin":
-    "Un plugin aggiunge strumenti e integrazioni personalizzati a TU Code. I plugin vengono eseguiti con tutte le autorizzazioni.",
+    "Un plugin aggiunge strumenti e integrazioni personalizzati a tucode. I plugin vengono eseguiti con tutte le autorizzazioni.",
   "marketplace.install.plugin.warning":
     "I plugin eseguono codice con tutte le autorizzazioni. Possono leggere e modificare i tuoi file, eseguire comandi e accedere alle tue credenziali e alla tua rete. Installa solo plugin di cui ti fidi.",
   "marketplace.intro": "Installa agenti, skill, strumenti MCP e plugin riutilizzabili per uno o tutti i progetti.",
@@ -122,7 +122,7 @@ export const dict = {
     "Continua ad attendere il completamento dello snapshot. Le iterazioni successive saranno rapide dopo la creazione dello snapshot iniziale.",
   "snapshot.slowRepo.answer.disable": "Disabilita per questo progetto",
   "snapshot.slowRepo.answer.disable.description":
-    "Disattiva gli snapshot di TU Code per questo progetto. Perderai annulla/ripeti sulle modifiche ai file fatte da TU Code, ma git continuerà a tracciare tutto.",
+    "Disattiva gli snapshot di tucode per questo progetto. Perderai annulla/ripeti sulle modifiche ai file fatte da tucode, ma git continuerà a tracciare tutto.",
 
   "ui.messagePart.openInDiffViewer": "Apri nel visualizzatore diff",
   "ui.messagePart.openInEditor": "Apri nell'editor",

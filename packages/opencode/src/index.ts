@@ -117,7 +117,7 @@ let cli = yargs(args) // kilocode_change
   .command(StatsCommand)
   .command(ExportCommand)
   .command(ImportCommand)
-  // kilocode_change - tucode: `github` relies on Kilo's GitHub app and token exchange, so TU Code omits it
+  // kilocode_change - tucode: `github` relies on Kilo's GitHub app and token exchange, so tucode omits it
   .command(PrCommand)
   .command(SessionCommand)
   .command(PluginCommand)

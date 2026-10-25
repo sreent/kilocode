@@ -6,9 +6,9 @@ const session = (title: string | null) => ({ title }) as Session
 
 describe("nativeTitle", () => {
   it("uses the default title without a useful session title", () => {
-    expect(nativeTitle(null)).toBe("TU Code")
-    expect(nativeTitle(session(""))).toBe("TU Code")
-    expect(nativeTitle(session("New session - 2026-05-06T10:39:00.000Z"))).toBe("TU Code")
+    expect(nativeTitle(null)).toBe("tucode")
+    expect(nativeTitle(session(""))).toBe("tucode")
+    expect(nativeTitle(session("New session - 2026-05-06T10:39:00.000Z"))).toBe("tucode")
   })
 
   it("keeps short session titles", () => {
@@ -43,7 +43,7 @@ describe("nativeTitle", () => {
     for (const state of ["busy", "waiting", "done", "scheduled", "error", "idle", "idle", "invalid", null]) {
       await listener.current?.({ type: "sessionActivity", state })
     }
-    expect(titles).toEqual(["◔ TU Code", "⚠ TU Code", "✓ TU Code", "◷ TU Code", "⚠ TU Code", "TU Code"])
+    expect(titles).toEqual(["◔ tucode", "⚠ tucode", "✓ tucode", "◷ tucode", "⚠ tucode", "tucode"])
     provider.dispose()
   })
 

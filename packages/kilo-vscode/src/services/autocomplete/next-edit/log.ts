@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-const CHANNEL_NAME = "TU Code · Next Edit"
+const CHANNEL_NAME = "tucode · Next Edit"
 
 let channel: vscode.OutputChannel | null = null
 

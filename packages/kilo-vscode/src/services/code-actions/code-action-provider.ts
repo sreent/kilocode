@@ -14,26 +14,26 @@ export class KiloCodeActionProvider implements vscode.CodeActionProvider {
 
     const actions: vscode.CodeAction[] = []
 
-    const add = new vscode.CodeAction("Add to TU Code", vscode.CodeActionKind.RefactorRewrite)
-    add.command = { command: "kilo-code.new.addToContext", title: "Add to TU Code" }
+    const add = new vscode.CodeAction("Add to tucode", vscode.CodeActionKind.RefactorRewrite)
+    add.command = { command: "kilo-code.new.addToContext", title: "Add to tucode" }
     actions.push(add)
 
     const hasDiagnostics = context.diagnostics.length > 0
 
     if (hasDiagnostics) {
-      const fix = new vscode.CodeAction("Fix with TU Code", vscode.CodeActionKind.QuickFix)
-      fix.command = { command: "kilo-code.new.fixCode", title: "Fix with TU Code" }
+      const fix = new vscode.CodeAction("Fix with tucode", vscode.CodeActionKind.QuickFix)
+      fix.command = { command: "kilo-code.new.fixCode", title: "Fix with tucode" }
       fix.isPreferred = true
       actions.push(fix)
     }
 
     if (!hasDiagnostics) {
-      const explain = new vscode.CodeAction("Explain with TU Code", vscode.CodeActionKind.RefactorRewrite)
-      explain.command = { command: "kilo-code.new.explainCode", title: "Explain with TU Code" }
+      const explain = new vscode.CodeAction("Explain with tucode", vscode.CodeActionKind.RefactorRewrite)
+      explain.command = { command: "kilo-code.new.explainCode", title: "Explain with tucode" }
       actions.push(explain)
 
-      const improve = new vscode.CodeAction("Improve with TU Code", vscode.CodeActionKind.RefactorRewrite)
-      improve.command = { command: "kilo-code.new.improveCode", title: "Improve with TU Code" }
+      const improve = new vscode.CodeAction("Improve with tucode", vscode.CodeActionKind.RefactorRewrite)
+      improve.command = { command: "kilo-code.new.improveCode", title: "Improve with tucode" }
       actions.push(improve)
     }
 

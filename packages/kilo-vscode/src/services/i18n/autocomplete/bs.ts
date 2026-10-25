@@ -2,7 +2,7 @@ export const dict = {
   "kilocode:autocomplete.statusBar.enabled": "$(kilo-logo) Automatsko dovršavanje",
   "kilocode:autocomplete.statusBar.snoozed": "odgođeno",
   "kilocode:autocomplete.statusBar.warning": "$(warning) Automatsko dovršavanje",
-  "kilocode:autocomplete.statusBar.tooltip.basic": "TU Code automatsko dovršavanje",
+  "kilocode:autocomplete.statusBar.tooltip.basic": "tucode automatsko dovršavanje",
   "kilocode:autocomplete.statusBar.tooltip.noUsableProvider":
     "**Nije konfigurisan model za automatsko dovršavanje**\n\nDa omogućite automatsko dovršavanje, dodajte profil s jednim od ovih podržanih pružalaca: {{providers}}.\n\n[Otvori postavke]({{command}})",
   "kilocode:autocomplete.statusBar.tooltip.completionSummary":
@@ -10,14 +10,14 @@ export const dict = {
   "kilocode:autocomplete.statusBar.tooltip.providerInfo": "Automatska dovršavanja pruža {{model}} putem {{provider}}.",
   "kilocode:autocomplete.statusBar.cost.zero": "$0.00",
   "kilocode:autocomplete.statusBar.cost.lessThanCent": "<$0.01",
-  "kilocode:autocomplete.codeAction.title": "TU Code: Predložene izmjene",
+  "kilocode:autocomplete.codeAction.title": "tucode: Predložene izmjene",
   "kilocode:autocomplete.incompatibilityExtensionPopup.message":
-    "TU Code automatsko dovršavanje blokira sukob s GitHub Copilotom. Da to popravite, morate onemogućiti Copilotove inline prijedloge.",
+    "tucode automatsko dovršavanje blokira sukob s GitHub Copilotom. Da to popravite, morate onemogućiti Copilotove inline prijedloge.",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableCopilot": "Onemogući Copilot",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableInlineAssist": "Onemogući automatsko dovršavanje",
   "kilocode:autocomplete.creditsExhausted.message":
-    "TU Code automatsko dovršavanje je pauzirano. Mogući uzroci: vaš TU Code račun nema preostalih kredita ili je vaš konfigurisani API ključ (BYOK) dostigao ograničenje kvote. Dodajte TU Code kredite ili provjerite konfiguraciju API ključa da nastavite automatsko dovršavanje.",
+    "tucode automatsko dovršavanje je pauzirano. Mogući uzroci: vaš tucode račun nema preostalih kredita ili je vaš konfigurisani API ključ (BYOK) dostigao ograničenje kvote. Dodajte tucode kredite ili provjerite konfiguraciju API ključa da nastavite automatsko dovršavanje.",
   "kilocode:autocomplete.creditsExhausted.addCredits": "Dodaj kredite",
   "kilocode:autocomplete.authError.message":
-    "TU Code automatsko dovršavanje je pauzirano zbog problema s autentifikacijom. Mogući uzroci: niste prijavljeni u TU Code ili je vaš API ključ (BYOK) nevažeći ili nedostaje. Prijavite se ponovo ili provjerite postavke API ključa pružaoca.",
+    "tucode automatsko dovršavanje je pauzirano zbog problema s autentifikacijom. Mogući uzroci: niste prijavljeni u tucode ili je vaš API ključ (BYOK) nevažeći ili nedostaje. Prijavite se ponovo ili provjerite postavke API ključa pružaoca.",
 }

@@ -5,7 +5,7 @@ export const dict = {
   "mcp.signIn.unsupported": "{{name}} no admite el inicio de sesión con OAuth.",
   "mcp.signIn.notFound": "No se encontró el servidor MCP {{name}}.",
   "mcp.auth.browserFailed":
-    "TU Code no pudo abrir un navegador para {{name}}. Abre la URL de autorización en la máquina que ejecuta TU Code para completar el inicio de sesión.",
+    "tucode no pudo abrir un navegador para {{name}}. Abre la URL de autorización en la máquina que ejecuta tucode para completar el inicio de sesión.",
   "mcp.auth.browserFailed.open": "Abrir en el navegador",
   "mcp.auth.browserFailed.copy": "Copiar URL",
   "mcp.auth.resetFailed": "No se pudo borrar el inicio de sesión guardado de {{name}}.",

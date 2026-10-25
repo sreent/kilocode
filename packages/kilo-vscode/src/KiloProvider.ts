@@ -433,8 +433,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private loginAttempt = 0
   private readonly org = createOrgRouter(() => this.authCtx)
   private isWebviewReady = false
-  private readonly extensionVersion =
-    vscode.extensions.getExtension("tucode.tu-code")?.packageJSON?.version ?? "unknown"
+  private readonly extensionVersion = vscode.extensions.getExtension("tucode.tucode")?.packageJSON?.version ?? "unknown"
   private cachedProvidersMessage: unknown = null
   /** Directory the cached provider payload was loaded for, so recovery is keyed to the active project. */
   private cachedProvidersDirectory: string | null = null
@@ -3367,7 +3366,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   private async fetchAndSendKiloEmbeddingModels(): Promise<void> {
-    // TU Code has no Kilo Gateway, so there are no Kilo embedding models to load.
+    // tucode has no Kilo Gateway, so there are no Kilo embedding models to load.
     const message = { type: "kiloEmbeddingModelsLoaded", catalog: EMPTY_KILO_EMBEDDING_MODEL_CATALOG }
     this.cachedKiloEmbeddingModelsMessage = message
     this.postMessage(message)
@@ -5209,14 +5208,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    */
   private async handleResetAllSettings(): Promise<void> {
     const confirmed = await vscode.window.showWarningMessage(
-      "Reset all TU Code extension settings to defaults?",
+      "Reset all tucode extension settings to defaults?",
       { modal: true },
       "Reset",
     )
     if (confirmed !== "Reset") return
 
     const prefix = "kilo-code.new."
-    const ext = vscode.extensions.getExtension("tucode.tu-code")
+    const ext = vscode.extensions.getExtension("tucode.tucode")
     const properties = ext?.packageJSON?.contributes?.configuration?.properties as Record<string, unknown> | undefined
     if (!properties) return
 
@@ -5258,7 +5257,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // Re-fetch notifications to reflect cleared dismissed IDs
     await this.fetchAndSendNotifications()
 
-    vscode.window.showInformationMessage("TU Code settings have been reset to defaults.")
+    vscode.window.showInformationMessage("tucode settings have been reset to defaults.")
   }
 
   /**
@@ -6257,7 +6256,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       styleUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", `${bundle}.css`)),
       iconsBaseUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "assets", "icons")),
       workerUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "shiki-worker.js")),
-      title: "TU Code",
+      title: "tucode",
       port: this.connectionService.getServerInfo()?.port,
       extraStyles: `.container { height: 100vh; }`,
       // Dedicated single-purpose panels (Settings, Profile, Sub-Agent Viewer)

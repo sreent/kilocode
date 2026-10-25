@@ -3,7 +3,7 @@ import { mkdtemp, readdir, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
-// TU Code sends no product analytics: whatever the telemetry settings say, the package makes no
+// tucode sends no product analytics: whatever the telemetry settings say, the package makes no
 // request, neither to PostHog nor to Kilo's profile API, and keeps no alias or profile cache.
 
 let dir: string

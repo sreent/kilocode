@@ -30,7 +30,7 @@ it.live("nvidia provider includes the brand's billing origin header", () =>
 
           expect(headers["HTTP-Referer"]).toBe(Brand.repository)
           expect(headers["X-Title"]).toBe(Brand.name)
-          expect(headers["X-BILLING-INVOKE-ORIGIN"]).toBe("TUCode")
+          expect(headers["X-BILLING-INVOKE-ORIGIN"]).toBe("tucode")
         }),
       ),
     ),

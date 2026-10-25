@@ -2,7 +2,7 @@ export const dict = {
   "kilocode:autocomplete.statusBar.enabled": "$(kilo-logo) Autofullføring",
   "kilocode:autocomplete.statusBar.snoozed": "utsatt",
   "kilocode:autocomplete.statusBar.warning": "$(warning) Autofullføring",
-  "kilocode:autocomplete.statusBar.tooltip.basic": "TU Code autofullføring",
+  "kilocode:autocomplete.statusBar.tooltip.basic": "tucode autofullføring",
   "kilocode:autocomplete.statusBar.tooltip.noUsableProvider":
     "**Ingen autofullføringsmodell konfigurert**\n\nFor å aktivere autofullføring, legg til en profil med en av disse støttede leverandørene: {{providers}}.\n\n[Åpne innstillinger]({{command}})",
   "kilocode:autocomplete.statusBar.tooltip.completionSummary":
@@ -10,14 +10,14 @@ export const dict = {
   "kilocode:autocomplete.statusBar.tooltip.providerInfo": "Autofullføringer leveres av {{model}} via {{provider}}.",
   "kilocode:autocomplete.statusBar.cost.zero": "$0.00",
   "kilocode:autocomplete.statusBar.cost.lessThanCent": "<$0.01",
-  "kilocode:autocomplete.codeAction.title": "TU Code: Foreslåtte redigeringer",
+  "kilocode:autocomplete.codeAction.title": "tucode: Foreslåtte redigeringer",
   "kilocode:autocomplete.incompatibilityExtensionPopup.message":
-    "TU Code autofullføring blokkeres av en konflikt med GitHub Copilot. For å fikse dette må du deaktivere Copilots inline-forslag.",
+    "tucode autofullføring blokkeres av en konflikt med GitHub Copilot. For å fikse dette må du deaktivere Copilots inline-forslag.",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableCopilot": "Deaktiver Copilot",
   "kilocode:autocomplete.incompatibilityExtensionPopup.disableInlineAssist": "Deaktiver autofullføring",
   "kilocode:autocomplete.creditsExhausted.message":
-    "TU Code autofullføring er satt på pause. Mulige årsaker: TU Code-kontoen din har ingen gjenværende kreditter, eller den konfigurerte API-nøkkelen (BYOK) har nådd kvotegrensen. Legg til TU Code-kreditter eller kontroller API-nøkkelkonfigurasjonen for å gjenoppta autofullføring.",
+    "tucode autofullføring er satt på pause. Mulige årsaker: tucode-kontoen din har ingen gjenværende kreditter, eller den konfigurerte API-nøkkelen (BYOK) har nådd kvotegrensen. Legg til tucode-kreditter eller kontroller API-nøkkelkonfigurasjonen for å gjenoppta autofullføring.",
   "kilocode:autocomplete.creditsExhausted.addCredits": "Legg til kreditter",
   "kilocode:autocomplete.authError.message":
-    "TU Code autofullføring er satt på pause på grunn av et autentiseringsproblem. Mulige årsaker: du er ikke logget på TU Code, eller API-nøkkelen din (BYOK) er ugyldig eller mangler. Logg inn igjen eller kontroller innstillingene for leverandørens API-nøkkel.",
+    "tucode autofullføring er satt på pause på grunn av et autentiseringsproblem. Mulige årsaker: du er ikke logget på tucode, eller API-nøkkelen din (BYOK) er ugyldig eller mangler. Logg inn igjen eller kontroller innstillingene for leverandørens API-nøkkel.",
 }
