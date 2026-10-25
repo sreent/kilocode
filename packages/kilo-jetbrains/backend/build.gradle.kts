@@ -65,14 +65,13 @@ val generateOpenApiSpec = tasks.register<GenerateOpenApiSpecTask>("generateOpenA
     description = "Generate CLI OpenAPI spec into the build directory"
     cliVersion.set(pinnedCliVersion)
     repo.set(repoCli)
-    repoRoot.set(repoRootDir)
+    repoSpec.set(rootProject.layout.projectDirectory.file("../sdk/openapi.json"))
     token.set(
         providers.environmentVariable("GH_TOKEN")
             .orElse(providers.environmentVariable("GITHUB_TOKEN"))
     )
     cacheDir.set(layout.buildDirectory.dir("cli-cache"))
     spec.set(rawSpec)
-    bunPath.set(bunPathProvider)
 }
 
 val buildRepoCli = tasks.register<Exec>("buildRepoCli") {
@@ -99,7 +98,7 @@ fun platform(): String {
 
 val stageRepoCli = tasks.register<StageRepoCliTask>("stageRepoCli") {
     description = "Stage the local repo CLI into backend resources"
-    val bin = repoRootDir.dir("dist/@kilocode/cli-${platform()}/bin")
+    val bin = repoRootDir.dir("dist/${Brand.CLI}-${platform()}/bin")
     this.bin.set(bin)
     archive.set(generatedCli.map { it.file("kilo-cli.zip") })
     outputs.upToDateWhen { false }

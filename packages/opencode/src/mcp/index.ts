@@ -52,6 +52,7 @@ import { McpBrowser } from "./browser"
 import { authFailure } from "@/kilocode/mcp/auth-failure" // kilocode_change
 import * as KiloAuthTelemetry from "@/kilocode/mcp/auth-telemetry" // kilocode_change
 import { Organization } from "@/organization" // kilocode_change - organization
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 const DEFAULT_TIMEOUT = 30_000
 const CLIENT_OPTIONS = {
@@ -422,7 +423,7 @@ const layer = Layer.effect(
                 return events
                   .publish(TuiEvent.ToastShow, {
                     title: "MCP Authentication Required",
-                    message: `Server "${key}" requires authentication. Run: kilo mcp auth ${key}`, // kilocode_change
+                    message: `Server "${key}" requires authentication. Run: ${Brand.command} mcp auth ${key}`, // kilocode_change - tucode
                     variant: "warning",
                     duration: 8000,
                   })

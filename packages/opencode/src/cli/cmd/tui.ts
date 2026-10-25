@@ -10,6 +10,7 @@ import { withNetworkOptions, resolveNetworkOptionsNoConfig, hasArg } from "@/cli
 import { Filesystem } from "@/util/filesystem"
 import type { GlobalEvent } from "@kilocode/sdk/v2"
 import type { EventSource } from "@opencode-ai/tui/context/sdk"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 import { writeHeapSnapshot } from "v8"
 import type { StartInput } from "@/kilocode/cli/cmd/tui/thread" // kilocode_change - runtime imports deferred into handlers
 import { win32InstallCtrlCGuard } from "@opencode-ai/tui/terminal-win32"
@@ -138,12 +139,12 @@ export function resolveThreadDirectory(project?: string, envPWD = process.env.PW
 
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
-  describe: "start kilo tui", // kilocode_change
+  describe: `start the ${Brand.name} TUI`, // kilocode_change - tucode
   builder: (yargs) =>
     withNetworkOptions(yargs)
       .positional("project", {
         type: "string",
-        describe: "path to start kilo in", // kilocode_change
+        describe: `path to start ${Brand.command} in`, // kilocode_change - tucode
       })
       .option("model", {
         type: "string",

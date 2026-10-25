@@ -2,11 +2,12 @@ import { Effect } from "effect"
 import { effectCmd } from "../effect-cmd"
 import { withNetworkOptions, resolveNetworkOptions } from "../network"
 import { Flag } from "@opencode-ai/core/flag/flag"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export const ServeCommand = effectCmd({
   command: "serve",
   builder: (yargs) => withNetworkOptions(yargs),
-  describe: "starts a headless kilo server",
+  describe: `starts a headless ${Brand.command} server`, // kilocode_change - tucode
   // Server loads instances per-request via x-kilo-directory header — no
   // need for an ambient project InstanceContext at startup.
   instance: false, // kilocode_change

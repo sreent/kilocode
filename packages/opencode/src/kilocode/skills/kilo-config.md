@@ -1,8 +1,8 @@
-# Kilo CLI Configuration Reference
+# tucode CLI Configuration Reference
 
-All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remote well-known, global (`~/.config/kilo/kilo.json`), env `KILO_CONFIG`, project `./kilo.json`, `.kilo/kilo.json`, `KILO_CONFIG_CONTENT`, managed (see Config File Locations). Deep-merged; later wins.
+All config lives in `kilo.json` (or `kilo.jsonc`). Precedence low-to-high: remote well-known, global (`~/.config/tucode/kilo.json`), env `KILO_CONFIG`, project `./kilo.json`, `.kilo/kilo.json`, `KILO_CONFIG_CONTENT`, managed (see Config File Locations). Deep-merged; later wins.
 
-This also covers where Kilo looks for config files, commands, agents, and skills across project, global, and legacy paths such as `.kilo/`, `.kilocode/`, and `~/.config/kilo/`, plus Agent Manager setup/run scripts in the VS Code extension.
+This also covers where tucode looks for config files, commands, agents, and skills across project, global, and legacy paths such as `.kilo/`, `.kilocode/`, and `~/.config/tucode/`, plus Agent Manager setup/run scripts in the VS Code extension.
 
 ## Commands (`.kilo/command/*.md`)
 
@@ -26,7 +26,7 @@ Template variables: `$1`-`$N` (positional args), `$ARGUMENTS` (full string), `@f
 
 When asked where `/name` lives, do not search only the repo root. Search these roots explicitly, and use an explicit search `path` for each one:
 
-1. `~/.config/kilo/`
+1. `~/.config/tucode/`
 2. `~/.kilo/`
 3. `~/.kilocode/`
 4. The `KILO_CONFIG_DIR` directory (if the env var is set)
@@ -68,7 +68,7 @@ Markdown files in `.kilo/workflows/` or `.kilocode/workflows/` (project-level) a
 
 ## Agent Manager Setup And Run Scripts
 
-For the full product guidance, use the canonical [Agent Manager reference](https://kilo.ai/docs/automate/agent-manager) and [Agent Manager Workflows guide](https://kilo.ai/docs/automate/agent-manager-workflows). Prefer these links instead of guessing documentation paths.
+For the full product guidance, use the canonical [Agent Manager reference](https://github.com/sreent/kilocode/blob/main/packages/kilo-docs/pages/automate/agent-manager.md) and [Agent Manager Workflows guide](https://github.com/sreent/kilocode/blob/main/packages/kilo-docs/pages/automate/agent-manager-workflows.md). Prefer these links instead of guessing documentation paths.
 
 Agent Manager setup/run scripts are project files in the main repository's `.kilo/` directory. They are not `kilo.json` settings and should not be configured inside generated `.kilo/worktrees/<name>/` checkouts.
 
@@ -287,7 +287,7 @@ Leader key default: `ctrl+x`. Keybinds below use `<leader>` prefix (e.g. `<leade
 | Switch theme | `<leader>t` | `/themes` | Pick from 35+ built-in themes (kilo, catppuccin, dracula, github, gruvbox, nord, tokyonight, etc.) |
 | Toggle appearance (dark/light) | — | — | Ctrl+P → "Toggle appearance" |
 
-Custom themes: place JSON files in `~/.config/kilo/themes/` or `.kilo/themes/`.
+Custom themes: place JSON files in `~/.config/tucode/themes/` or `.kilo/themes/`.
 
 ### Session
 
@@ -336,8 +336,8 @@ Notification settings are managed through `attention` in `tui.json` / `tui.jsonc
 | Scope | Path |
 |---|---|
 | Project | `./kilo.json`, `./kilo.jsonc`, `./opencode.json` (legacy), `./opencode.jsonc` (legacy) |
-| Global | `~/.config/kilo/kilo.json`, `~/.config/kilo/kilo.jsonc`, `~/.config/kilo/opencode.json` (legacy), `~/.config/kilo/opencode.jsonc` (legacy), `~/.config/kilo/config.json` (legacy) |
-| Managed | Linux: `/etc/kilo/`, macOS: `/Library/Application Support/kilo/`, Windows: `%ProgramData%\kilo\` — loads `kilo.json`, `kilo.jsonc`, `opencode.json`, `opencode.jsonc` (enterprise, highest priority) |
+| Global | `~/.config/tucode/kilo.json`, `~/.config/tucode/kilo.jsonc`, `~/.config/tucode/opencode.json` (legacy), `~/.config/tucode/opencode.jsonc` (legacy), `~/.config/tucode/config.json` (legacy) |
+| Managed | Linux: `/etc/tucode/`, macOS: `/Library/Application Support/tucode/`, Windows: `%ProgramData%\tucode\` — loads `kilo.json`, `kilo.jsonc`, `opencode.json`, `opencode.jsonc` (enterprise, highest priority) |
 
 Each config directory (`.kilo/` and legacy `.kilocode/`) can also contain `kilo.json`, `kilo.jsonc`, `opencode.json`, or `opencode.jsonc`.
 
@@ -347,7 +347,7 @@ Two directory names are scanned: `.kilo` (canonical) and `.kilocode` (legacy fal
 
 - **Project**: walks up from CWD to the git worktree root, checking both directories at each level
 - **Home**: `~/.kilo/` and `~/.kilocode/`
-- **XDG global**: `~/.config/kilo/` (always loaded, lowest file-based precedence)
+- **XDG global**: `~/.config/tucode/` (always loaded, lowest file-based precedence)
 
 ### Commands, agents, modes, plugins
 
@@ -360,7 +360,7 @@ Glob patterns run inside every discovered config directory (including legacy):
 | Mode | `{mode,modes}/*.md` |
 | Plugin | `{plugin,plugins}/*.{ts,js}` |
 
-Example: `~/.config/kilo/command/*.md` (global), `~/.kilocode/command/*.md` (legacy home), and `.kilo/commands/*.md` (project) all load commands.
+Example: `~/.config/tucode/command/*.md` (global), `~/.kilocode/command/*.md` (legacy home), and `.kilo/commands/*.md` (project) all load commands.
 
 ### Skills and instructions
 

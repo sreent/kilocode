@@ -1,10 +1,14 @@
 #!/usr/bin/env bun
-import { Cause, Context, Effect, Exit, Layer, ManagedRuntime } from "effect"
+import { Cause, Clock, Config, Context, Effect, Exit, Layer, ManagedRuntime } from "effect"
+import path from "node:path"
 import { parseArgs } from "node:util"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { App } from "./app"
-import { bootstrap } from "./bootstrap"
+import { Backups } from "./backups"
+import { bootstrap, first, settings as seed } from "./bootstrap"
 import { ServerConfig } from "./config"
+import { Backup } from "./db/backup"
+import { Embedded } from "./db/embedded"
 import { Observability } from "./observability"
 import { RequestContext } from "./request"
 
@@ -15,6 +19,7 @@ const args = parseArgs({
     slug: { type: "string" },
     email: { type: "string" },
     name: { type: "string" },
+    out: { type: "string" },
   },
 })
 const command = args.positionals.at(0) ?? "serve"
@@ -60,8 +65,54 @@ if (command === "bootstrap") {
   process.exit(0)
 }
 
+// Backups and restores of the embedded database, while no server has it open.
+if (command === "backup" || command === "restore") {
+  if (process.env.ORGANIZATION_DATABASE_URL) {
+    console.error(
+      "This server keeps its data on a Postgres server (ORGANIZATION_DATABASE_URL). Back it up and restore it with that server's own tools, such as pg_dump and pg_restore.",
+    )
+    process.exit(1)
+  }
+  const settings = await Effect.runPromise(
+    Config.all({
+      data: Config.string("ORGANIZATION_DATA").pipe(Config.withDefault("./data")),
+      backup: Backup.settings,
+    }),
+  )
+  const dir = path.join(settings.data, "postgres")
+  const file = args.positionals.at(1)
+  if (command === "restore" && !file) {
+    console.error("usage: organization-server restore <backup file>")
+    process.exit(1)
+  }
+  const exit = await Effect.runPromiseExit(
+    command === "backup"
+      ? Effect.flatMap(Embedded.backup(dir), (tar) =>
+          args.values.out ? Backup.save(args.values.out, tar) : Backup.write(settings.backup.dir, tar),
+        )
+      : Effect.gen(function* () {
+          const archive = new Uint8Array(yield* Effect.promise(() => Bun.file(file!).arrayBuffer()))
+          return yield* Embedded.restore(dir, archive, Backup.aside(dir, yield* Clock.currentTimeMillis))
+        }),
+  )
+  if (Exit.isFailure(exit)) {
+    const message = reason(exit.cause)
+    console.error(`${command} failed: ${message}`)
+    if (command === "backup" && message.includes("in use by another process"))
+      console.error("A running server backs itself up (see ORGANIZATION_BACKUP_HOURS); send it SIGUSR2 for one now.")
+    process.exit(1)
+  }
+  if (command === "backup") console.log(`backup: ${exit.value}`)
+  else
+    console.log(
+      `restored ${file} into ${dir}.` +
+        (exit.value ? ` The database it replaced is in ${exit.value}; delete it once you no longer need it.` : ""),
+    )
+  process.exit(0)
+}
+
 if (command !== "serve") {
-  console.error(`unknown command: ${command} (expected "serve" or "bootstrap")`)
+  console.error(`unknown command: ${command} (expected "serve", "bootstrap", "backup" or "restore")`)
   process.exit(1)
 }
 
@@ -84,6 +135,26 @@ if (Exit.isFailure(ready)) {
   await Effect.runPromise(
     Effect.logError("organization server could not start").pipe(
       Effect.annotateLogs({ error: reason(ready.cause) }),
+      Effect.provide(Observability.layer),
+    ),
+  )
+  process.exit(1)
+}
+// The organization ORGANIZATION_BOOTSTRAP_* describe, on a database that has none yet.
+const seeded = await runtime.runPromiseExit(
+  Effect.gen(function* () {
+    const input = yield* seed
+    if (!input) return
+    if (yield* first(input))
+      yield* Effect.logInfo(
+        "created the first organization and its owner, who signs in with ORGANIZATION_BOOTSTRAP_TOKEN",
+      ).pipe(Effect.annotateLogs({ org: input.slug, owner: input.email }))
+  }),
+)
+if (Exit.isFailure(seeded)) {
+  await Effect.runPromise(
+    Effect.logError("organization server could not start").pipe(
+      Effect.annotateLogs({ error: reason(seeded.cause) }),
       Effect.provide(Observability.layer),
     ),
   )
@@ -122,6 +193,10 @@ await Effect.runPromise(
     Effect.provide(Observability.layer),
   ),
 )
+
+// `kill -USR2 <pid>` (or `docker kill --signal=USR2 <container>`) backs up the embedded database now.
+if (process.platform !== "win32")
+  process.on("SIGUSR2", () => void runtime.runPromise(Backups.Service.use((backups) => backups.run())))
 
 for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.on(signal, async () => {

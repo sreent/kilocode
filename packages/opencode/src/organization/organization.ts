@@ -16,12 +16,13 @@ import {
   Predicate,
   Schema,
   Scope,
+  ScopedCache,
 } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientError } from "effect/unstable/http"
 import { OrganizationClient } from "@organization/protocol/client"
 import { DeviceError } from "@organization/protocol/errors"
-import { overBudget, refusal as mcpRefusal } from "@organization/protocol/match"
-import { Effective, UsageRecord } from "@organization/protocol/schema"
+import { allows, overBudget, refusal as mcpRefusal, withheld } from "@organization/protocol/match"
+import { Effective, ToolRun, UsageRecord, type GatewayModel, type GatewayApi } from "@organization/protocol/schema"
 import { FSUtil } from "@opencode-ai/core/fs-util"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Global } from "@opencode-ai/core/global"
@@ -30,8 +31,11 @@ import { httpClient } from "@opencode-ai/core/effect/app-node-platform"
 import { ConfigAgentV1 } from "@opencode-ai/core/v1/config/agent"
 import { ConfigMCPV1 } from "@opencode-ai/core/v1/config/mcp"
 import { ConfigPermissionV1 } from "@opencode-ai/core/v1/config/permission"
+import { GlobalBus } from "@/bus/global"
 import type { Config } from "@/config/config"
 import { ConfigManaged } from "@/config/managed"
+import type { InstanceState } from "@/effect/instance-state"
+import { Event } from "@/server/event"
 
 // Client side of the self-hosted organization server (packages/organization-server).
 //
@@ -39,10 +43,10 @@ import { ConfigManaged } from "@/config/managed"
 // any of them; it imports only leaf modules (types aside).
 //
 // Activation, in precedence order:
-//   1. <managed config dir>/organization.json, deployed by IT/MDM (e.g. /etc/kilo/organization.json).
+//   1. <managed config dir>/organization.json, deployed by IT/MDM (e.g. /etc/tucode/organization.json).
 //      Users cannot override it and, by default, cannot use the agent without signing in.
 //   2. KILO_ORG_URL + KILO_ORG (+ KILO_ORG_TOKEN for CI).
-//   3. A stored `kilo org login`.
+//   3. A stored `tucode org login`.
 // With none of these present every operation is a no-op.
 
 const week = 7 * 24 * 60 * 60 * 1000
@@ -77,7 +81,6 @@ const decode = {
   managed: Schema.decodeUnknownOption(Schema.fromJsonString(Managed)),
   login: Schema.decodeUnknownOption(Schema.fromJsonString(Login)),
   cache: Schema.decodeUnknownOption(Schema.fromJsonString(Cache)),
-  usage: Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Array(UsageRecord))),
   // Server data is validated against the CLI's own config schemas; a bad entry is skipped and
   // logged rather than allowed to break config loading or permission checks.
   permission: Schema.decodeUnknownResult(ConfigPermissionV1.Info),
@@ -98,6 +101,28 @@ const environment = EffectConfig.all({
     EffectConfig.orElse(() => EffectConfig.succeed(false)),
   ),
 })
+
+// The SDK a gateway provider's clients use, by the API the gateway speaks for it.
+const sdk: Record<GatewayApi, string> = {
+  anthropic: "@ai-sdk/anthropic",
+  openai: "@ai-sdk/openai",
+  "openai-compatible": "@ai-sdk/openai-compatible",
+}
+
+// A gateway model as client config. Unknown limits stay 0, which clients read as unknown.
+function configured(model: GatewayModel) {
+  return {
+    name: model.name ?? model.id,
+    ...(model.context !== undefined || model.output !== undefined
+      ? { limit: { context: model.context ?? 0, output: model.output ?? 0 } }
+      : {}),
+    ...(model.reasoning !== undefined ? { reasoning: model.reasoning } : {}),
+    ...(model.attachments
+      ? { attachment: true, modalities: { input: ["text" as const, "image" as const, "pdf" as const] } }
+      : {}),
+    ...(model.cost ? { cost: { ...model.cost } } : {}),
+  }
+}
 
 export type Settings = {
   readonly url: string
@@ -123,6 +148,7 @@ export type Target =
   | { readonly type: "remote"; readonly url: string }
 
 export type UsageEntry = typeof UsageRecord.Type
+export type ToolRunEntry = typeof ToolRun.Type
 
 // Why a sign-in could not finish; the message is shown to the user as is.
 export class SigninError extends Schema.TaggedErrorClass<SigninError>()("OrganizationSigninError", {
@@ -154,6 +180,7 @@ export const file = {
   login: () => path.join(Global.Path.data, "organization-auth.json"),
   cache: () => path.join(Global.Path.cache, "organization-policy.json"),
   usage: () => path.join(Global.Path.data, "organization-usage"),
+  tools: () => path.join(Global.Path.data, "organization-tools"),
 }
 
 export interface Interface {
@@ -165,11 +192,22 @@ export interface Interface {
   readonly refresh: () => Effect.Effect<void>
   /** The policy to enforce, if one is loaded and recent enough to trust. */
   readonly current: () => Effect.Effect<Effective | undefined>
+  /**
+   * Rebuilds a service's per-project state when the policy changes, so running clients pick up
+   * the new model list, org agents and config without a restart. Lower stages rebuild first;
+   * clients are told once every stage has.
+   */
+  readonly follow: <A, E, R>(
+    state: InstanceState.InstanceState<A, E, R>,
+    stage: number,
+  ) => Effect.Effect<void, never, Scope.Scope>
   readonly status: () => Effect.Effect<Status>
   /** Why the agent must not run right now, if it must not. */
   readonly blocked: () => Effect.Effect<string | undefined>
   /** Why an MCP server may not start, if it may not. */
   readonly refusal: (target: Target) => Effect.Effect<string | undefined>
+  /** Why the policy refuses a model, if it does: model access, an exclusive gateway or the data policy. */
+  readonly explain: (provider: string, model: string) => Effect.Effect<string | undefined>
   /** The org permission config; its deny rules are hard rules no approval can override. */
   readonly permission: () => Effect.Effect<ConfigPermissionV1.Info | undefined>
   readonly instructions: () => Effect.Effect<string | undefined>
@@ -217,8 +255,16 @@ export interface Interface {
     readonly push: (entry: UsageEntry) => Effect.Effect<void>
     readonly pending: () => Effect.Effect<number>
     readonly flush: () => Effect.Effect<boolean>
+    /** Starts reporting usage and tool runs, and sends what earlier processes left behind. */
     readonly start: () => Effect.Effect<void>
+    /** Sends what waits, or leaves it on disk for the next process. */
     readonly stop: () => Effect.Effect<void>
+  }
+  /** Tool runs for the org audit log, when the policy asks for them. */
+  readonly tools: {
+    readonly push: (run: ToolRunEntry) => Effect.Effect<void>
+    readonly pending: () => Effect.Effect<number>
+    readonly flush: () => Effect.Effect<boolean>
   }
 }
 
@@ -351,7 +397,46 @@ export const layer = Layer.effect(
       )
     })
 
+    // ---- live reload -------------------------------------------------------------------------
+
+    const followers = new Set<{ readonly stage: number; readonly rebuild: Effect.Effect<void> }>()
+
+    const follow: Interface["follow"] = (target, stage) =>
+      Effect.acquireRelease(
+        Effect.sync(() => {
+          const entry = { stage, rebuild: ScopedCache.invalidateAll(target.cache) }
+          followers.add(entry)
+          return entry
+        }),
+        (entry) => Effect.sync(() => followers.delete(entry)),
+      ).pipe(Effect.asVoid)
+
+    // What the policy shapes in a running client. Spend, the poll interval, the version number and
+    // what is audited change without changing any of it; hooks read those as they run.
+    const shape = (policy: Effective | undefined) => {
+      if (!policy) return undefined
+      const { budget: _, ttl: __, version: ___, audit: ____, ...rest } = policy
+      return JSON.stringify(rest)
+    }
+
+    const rebuild = Effect.fn("Organization.rebuild")(function* () {
+      for (const entry of [...followers].toSorted((a, b) => a.stage - b.stage))
+        yield* entry.rebuild.pipe(
+          Effect.catchCause((cause) => Effect.logWarning("could not rebuild after a policy change", { cause })),
+        )
+      // The policy is the last config layer, so for clients this is a config change: they refetch
+      // config, providers and agents.
+      GlobalBus.emit("event", { directory: "global", payload: { type: Event.ConfigUpdated.type, properties: {} } })
+      yield* Effect.logInfo("organization policy changed; rebuilt the model list, agents and config")
+    })
+
     const refresh = Effect.fn("Organization.refresh")(function* () {
+      const before = shape(state.policy)
+      yield* pull()
+      if (shape(state.policy) !== before) yield* rebuild()
+    })
+
+    const pull = Effect.fn("Organization.pull")(function* () {
       const cfg = yield* settings()
       if (!cfg?.token || cfg.error) return
       const governance = (yield* client({ url: cfg.url, token: cfg.token }))["organization.governance"]
@@ -437,7 +522,7 @@ export const layer = Layer.effect(
         if (!cfg.token || state.denied)
           return `Your organization (${cfg.org}) requires you to sign in. ${
             // The IDEs sign in from their profile page; the terminal has a command for it.
-            Flag.KILO_CLIENT === "cli" ? "Run `kilo org login`." : "Sign in from your Kilo profile."
+            Flag.KILO_CLIENT === "cli" ? "Run `tucode org login`." : "Sign in from your tucode profile."
           }`
         return `Cannot load your organization's policy from ${cfg.url}${state.error ? ` (${state.error})` : ""}.`
       }
@@ -445,6 +530,17 @@ export const layer = Layer.effect(
     })
 
     // Matching uses the server's target (URL or command line), never its name, which users choose freely.
+    const explain = Effect.fn("Organization.explain")(function* (provider: string, model: string) {
+      const policy = yield* current()
+      if (!policy) return undefined
+      return (
+        withheld(policy, provider) ??
+        (allows(policy, provider, model)
+          ? undefined
+          : `The model ${provider}/${model} is not allowed by your organization's policy.`)
+      )
+    })
+
     const refusal = Effect.fn("Organization.refusal")(function* (target: Target) {
       if (!(yield* settings())) return undefined
       const policy = yield* current()
@@ -519,10 +615,23 @@ export const layer = Layer.effect(
       if (!enrolled?.token) return
       for (const route of policy.gateway.providers) {
         const current = cfg.provider?.[route.id]
+        // Providers clients don't know, such as LiteLLM or Claude on Bedrock, arrive with their
+        // name and models, and use the SDK for the API the gateway speaks for them.
+        const defined = route.models
+          ? {
+              name: route.name ?? route.id,
+              npm: sdk[route.kind],
+              models: {
+                ...current?.models,
+                ...Object.fromEntries(route.models.map((model) => [model.id, configured(model)])),
+              },
+            }
+          : {}
         cfg.provider = {
           ...cfg.provider,
           [route.id]: {
             ...current,
+            ...defined,
             options: { ...current?.options, baseURL: `${enrolled.url}/gateway/${route.id}`, apiKey: enrolled.token },
           },
         }
@@ -652,12 +761,16 @@ export const layer = Layer.effect(
           return yield* keep(pending.url, pending.org, exit.value.access_token)
         }
         const error = exit.cause.reasons.find((reason) => reason._tag === "Fail")?.error
-        // Transient network errors are retried until the code expires.
-        if (!(error instanceof DeviceError) || error.error === "authorization_pending") continue
-        if (error.error === "slow_down") {
+        // Polling too fast, this client or every client at its address: wait longer between polls.
+        if (
+          Predicate.isTagged(error, "RateLimitError") ||
+          (error instanceof DeviceError && error.error === "slow_down")
+        ) {
           interval += 5
           continue
         }
+        // Transient network errors are retried until the code expires.
+        if (!(error instanceof DeviceError) || error.error === "authorization_pending") continue
         if (current()) device.pending = undefined
         if (error.error === "access_denied") return yield* new SigninError({ message: "Sign-in was denied." })
         return yield* new SigninError({ message: `Sign-in failed: ${error.error}` })
@@ -710,84 +823,121 @@ export const layer = Layer.effect(
       yield* forget()
     })
 
-    // ---- usage -------------------------------------------------------------------------------
+    // ---- reporting ---------------------------------------------------------------------------
 
-    // Records are keyed by the step-finish part id, which the server de-duplicates, so resending
-    // after a crash or a lost response is safe.
+    // Records the control plane keeps: usage, and tool runs for the audit log. Each outbox sends in
+    // batches every 15 seconds, sooner once 50 wait, and spools what it could not send to disk
+    // when the process stops, for the next one to send. Records carry ids the server
+    // de-duplicates, so resending after a crash or a lost response is safe.
     const max = 5_000
     const batch = 500
-    const queue: UsageEntry[] = []
-    const reporting: { flushing?: Fiber.Fiber<boolean>; loop?: Fiber.Fiber<void> } = {}
 
-    const send = Effect.fn("Organization.usage.send")(function* () {
-      const cfg = yield* settings()
-      if (!cfg?.token || cfg.error) return queue.length === 0
-      const insight = (yield* client({ url: cfg.url, token: cfg.token }))["organization.insight"]
-      while (queue.length) {
-        const chunk = queue.slice(0, batch)
-        const exit = yield* insight["usage.ingest"]({ params: { org: cfg.org }, payload: { records: chunk } }).pipe(
-          Effect.timeout("10 seconds"),
-          Effect.exit,
-        )
-        if (Exit.isFailure(exit)) {
-          yield* Effect.logWarning("usage upload failed", { error: describe(cfg.url, exit.cause) })
-          return false
+    function outbox<A, I>(input: {
+      readonly name: string
+      readonly dir: () => string
+      readonly schema: Schema.Codec<A, I>
+      readonly upload: (
+        client: OrganizationClient.Client,
+        org: string,
+        records: ReadonlyArray<A>,
+      ) => Effect.Effect<unknown, unknown>
+      // Runs once every waiting record was accepted.
+      readonly sent?: () => Effect.Effect<void>
+    }) {
+      const queue: A[] = []
+      const reporting: { flushing?: Fiber.Fiber<boolean>; loop?: Fiber.Fiber<void> } = {}
+      const records = Schema.Array(input.schema)
+      const decode = Schema.decodeUnknownOption(Schema.fromJsonString(records))
+
+      const send = Effect.fn(`Organization.${input.name}.send`)(function* () {
+        const cfg = yield* settings()
+        if (!cfg?.token || cfg.error) return queue.length === 0
+        const remote = yield* client({ url: cfg.url, token: cfg.token })
+        while (queue.length) {
+          const chunk = queue.slice(0, batch)
+          const exit = yield* input.upload(remote, cfg.org, chunk).pipe(Effect.timeout("10 seconds"), Effect.exit)
+          if (Exit.isFailure(exit)) {
+            yield* Effect.logWarning(`${input.name} upload failed`, { error: describe(cfg.url, exit.cause) })
+            return false
+          }
+          queue.splice(0, chunk.length)
         }
-        queue.splice(0, chunk.length)
-      }
+        if (input.sent) yield* input.sent()
+        return true
+      })
+
+      const flush = Effect.fn(`Organization.${input.name}.flush`)(function* () {
+        const running = reporting.flushing ?? (yield* send().pipe(Effect.forkIn(scope)))
+        reporting.flushing = running
+        return yield* Fiber.join(running).pipe(
+          Effect.ensuring(
+            Effect.sync(() => {
+              if (reporting.flushing === running) reporting.flushing = undefined
+            }),
+          ),
+        )
+      })
+
+      const push = Effect.fn(`Organization.${input.name}.push`)(function* (entry: A) {
+        queue.push(entry)
+        if (queue.length > max) {
+          const dropped = queue.splice(0, queue.length - max)
+          yield* Effect.logWarning(`${input.name} queue full, dropping oldest records`, { dropped: dropped.length })
+        }
+        if (queue.length >= 50) yield* flush().pipe(Effect.forkIn(scope))
+      })
+
+      // Picks up records spooled by earlier processes that could not reach the control plane.
+      const recover = Effect.fn(`Organization.${input.name}.recover`)(function* () {
+        const entries = yield* fs.readDirectoryEntries(input.dir()).pipe(Effect.orElseSucceed(() => []))
+        for (const entry of entries) {
+          const target = path.join(input.dir(), entry.name)
+          const found = decode((yield* read(target)) ?? "")
+          yield* remove(target)
+          if (Option.isSome(found)) queue.push(...found.value)
+        }
+      })
+
+      const start = Effect.fn(`Organization.${input.name}.start`)(function* () {
+        if (reporting.loop) return
+        yield* recover()
+        reporting.loop = yield* flush().pipe(Effect.delay("15 seconds"), Effect.forever, Effect.forkIn(scope))
+      })
+
+      const stop = Effect.fn(`Organization.${input.name}.stop`)(function* () {
+        if (reporting.loop) yield* Fiber.interrupt(reporting.loop)
+        reporting.loop = undefined
+        const sent = Option.getOrElse(yield* flush().pipe(Effect.timeoutOption("3 seconds")), () => false)
+        if (sent || queue.length === 0) return
+        yield* write(
+          path.join(input.dir(), `${process.pid}-${yield* Clock.currentTimeMillis}.json`),
+          JSON.stringify(Schema.encodeSync(records)(queue.splice(0))),
+        )
+      })
+
+      return { push, pending: () => Effect.sync(() => queue.length), flush, start, stop }
+    }
+
+    // Keyed by the step-finish part id.
+    const usage = outbox({
+      name: "usage",
+      dir: file.usage,
+      schema: UsageRecord,
+      upload: (remote, org, records) =>
+        remote["organization.insight"]["usage.ingest"]({ params: { org }, payload: { records } }),
       // Budgets are enforced from the effective policy, so pull fresh spend after reporting.
-      if ((yield* current())?.budget.limits.length) yield* refresh()
-      return true
+      sent: Effect.fnUntraced(function* () {
+        if ((yield* current())?.budget.limits.length) yield* refresh()
+      }),
     })
 
-    const flush = Effect.fn("Organization.usage.flush")(function* () {
-      const running = reporting.flushing ?? (yield* send().pipe(Effect.forkIn(scope)))
-      reporting.flushing = running
-      return yield* Fiber.join(running).pipe(
-        Effect.ensuring(
-          Effect.sync(() => {
-            if (reporting.flushing === running) reporting.flushing = undefined
-          }),
-        ),
-      )
-    })
-
-    const push = Effect.fn("Organization.usage.push")(function* (entry: UsageEntry) {
-      queue.push(entry)
-      if (queue.length > max) {
-        const dropped = queue.splice(0, queue.length - max)
-        yield* Effect.logWarning("usage queue full, dropping oldest records", { dropped: dropped.length })
-      }
-      if (queue.length >= 50) yield* flush().pipe(Effect.forkIn(scope))
-    })
-
-    // Picks up records spooled by earlier processes that could not reach the control plane.
-    const recover = Effect.fn("Organization.usage.recover")(function* () {
-      const entries = yield* fs.readDirectoryEntries(file.usage()).pipe(Effect.orElseSucceed(() => []))
-      for (const entry of entries) {
-        const target = path.join(file.usage(), entry.name)
-        const records = decode.usage((yield* read(target)) ?? "")
-        yield* remove(target)
-        if (Option.isSome(records)) queue.push(...records.value)
-      }
-    })
-
-    const begin = Effect.fn("Organization.usage.start")(function* () {
-      if (reporting.loop) return
-      yield* recover()
-      reporting.loop = yield* flush().pipe(Effect.delay("15 seconds"), Effect.forever, Effect.forkIn(scope))
-    })
-
-    const stop = Effect.fn("Organization.usage.stop")(function* () {
-      if (reporting.loop) yield* Fiber.interrupt(reporting.loop)
-      reporting.loop = undefined
-      const sent = Option.getOrElse(yield* flush().pipe(Effect.timeoutOption("3 seconds")), () => false)
-      if (sent || queue.length === 0) return
-      const records = queue.splice(0)
-      yield* write(
-        path.join(file.usage(), `${process.pid}-${yield* Clock.currentTimeMillis}.json`),
-        JSON.stringify(Schema.encodeSync(Schema.Array(UsageRecord))(records)),
-      )
+    // Keyed by the tool part id. The server keeps them only while the policy asks for them.
+    const tools = outbox({
+      name: "tool run",
+      dir: file.tools,
+      schema: ToolRun,
+      upload: (remote, org, runs) =>
+        remote["organization.insight"]["audit.tools"]({ params: { org }, payload: { runs } }),
     })
 
     return Service.of({
@@ -795,9 +945,11 @@ export const layer = Layer.effect(
       ready,
       refresh,
       current,
+      follow,
       status,
       blocked,
       refusal,
+      explain,
       permission,
       instructions,
       overlay,
@@ -810,7 +962,13 @@ export const layer = Layer.effect(
       client,
       signin: { start, finish, pending, token, invite },
       signout,
-      usage: { push, pending: () => Effect.sync(() => queue.length), flush, start: begin, stop },
+      usage: {
+        ...usage,
+        // Tool runs are reported alongside usage, and stop with it.
+        start: () => Effect.all([usage.start(), tools.start()], { discard: true }),
+        stop: () => Effect.all([usage.stop(), tools.stop()], { concurrency: "unbounded", discard: true }),
+      },
+      tools: { push: tools.push, pending: tools.pending, flush: tools.flush },
     })
   }),
 )

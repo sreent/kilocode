@@ -1,6 +1,7 @@
 // All CommandModules in one place so help.ts and generate-cli-docs.ts can
 // introspect them without importing index.ts (which has startup side effects).
-// When upstream adds a new command to index.ts, add it here too.
+// When upstream adds a new command to index.ts, add it here too. tucode leaves out the commands
+// that need Kilo's cloud: github, remote, profile, auto and cloud.
 import { AcpCommand } from "../cli/cmd/acp"
 import { McpCommand } from "../cli/cmd/mcp"
 import { TuiThreadCommand } from "../cli/cmd/tui"
@@ -17,20 +18,15 @@ import { ModelsCommand } from "../cli/cmd/models"
 import { StatsCommand } from "../cli/cmd/stats"
 import { ExportCommand } from "../cli/cmd/export"
 import { ImportCommand } from "../cli/cmd/import"
-import { GithubCommand } from "../cli/cmd/github"
 import { PrCommand } from "../cli/cmd/pr"
 import { SessionCommand } from "../cli/cmd/session"
-import { RemoteCommand } from "../cli/cmd/remote"
 import { DbCommand } from "../cli/cmd/db"
 import { ConfigCommand as ConfigCLICommand } from "../cli/cmd/config"
 import { PluginCommand } from "../cli/cmd/plug"
 import { DevSetupCommand, DevAliasCommand } from "./cli/dev-setup"
 import { RollCallCommand } from "./cli/cmd/roll-call"
-import { ProfileCommand } from "./cli/cmd/profile"
-import { AutoCommand } from "./cli/cmd/auto"
 import { DaemonCommand } from "./cli/cmd/daemon"
 import { KiloConsoleCommand } from "./cli/cmd/console"
-import { CloudCommand } from "./cli/cmd/cloud"
 import { HelpCommand } from "./help-command"
 import { InstallationBuildKind } from "@opencode-ai/core/installation/version"
 
@@ -63,18 +59,13 @@ export const commands = [
   ServeCommand,
   ModelsCommand,
   RollCallCommand,
-  ProfileCommand,
-  AutoCommand,
   StatsCommand,
   ExportCommand,
   ImportCommand,
-  GithubCommand,
   PrCommand,
   SessionCommand,
-  RemoteCommand,
   DaemonCommand,
   KiloConsoleCommand,
-  CloudCommand,
   DbCommand,
   ConfigCLICommand,
   ...dev,

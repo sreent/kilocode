@@ -3,6 +3,7 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { TestCli } from "../../script/kilocode/test-cli"
 import { tmpdir } from "../fixture/fixture"
+import { Brand } from "../../src/tucode/brand"
 
 test("warm npm launcher and real CLI startup stay within budget", async () => {
   const root = path.resolve(import.meta.dir, "../..")
@@ -11,14 +12,16 @@ test("warm npm launcher and real CLI startup stay within budget", async () => {
   if (!node) throw new Error("Startup test requires Node.js")
   await using dir = await tmpdir()
   const platform = process.platform === "win32" ? "windows" : process.platform
-  const modules = path.join(dir.path, "node_modules", "@kilocode")
-  const wrapper = path.join(modules, "cli", "bin", "kilo")
-  const helper = path.join(modules, "cli", "bin", "kilocode", "windows-avx2.cjs")
+  // The published launcher package: its name and command name the platform packages and the binary.
+  const modules = path.join(dir.path, "node_modules")
+  const pkg = path.join(modules, Brand.npm.cli)
+  const wrapper = path.join(pkg, "bin", "kilo")
+  const helper = path.join(pkg, "bin", "kilocode", "windows-avx2.cjs")
   const binary = path.join(
     modules,
-    `cli-${platform}-${process.arch}`,
+    `${Brand.npm.cli}-${platform}-${process.arch}`,
     "bin",
-    process.platform === "win32" ? "kilo.exe" : "kilo",
+    process.platform === "win32" ? `${Brand.command}.exe` : Brand.command,
   )
   await fs.mkdir(path.dirname(wrapper), { recursive: true })
   await fs.mkdir(path.dirname(helper), { recursive: true })
@@ -26,6 +29,10 @@ test("warm npm launcher and real CLI startup stay within budget", async () => {
   await fs.copyFile(path.join(root, "bin", "kilo"), wrapper)
   await fs.copyFile(path.join(root, "bin", "kilocode", "windows-avx2.cjs"), helper)
   await fs.copyFile(process.execPath, binary)
+  await fs.writeFile(
+    path.join(pkg, "package.json"),
+    JSON.stringify({ name: Brand.npm.cli, bin: { [Brand.command]: "./bin/kilo" } }),
+  )
   const env: Record<string, string> = {}
   for (const key of ["PATH", "SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "SystemDrive"]) {
     if (process.env[key]) env[key] = process.env[key]

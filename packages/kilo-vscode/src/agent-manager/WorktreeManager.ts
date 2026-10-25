@@ -1045,20 +1045,20 @@ export class WorktreeManager {
   async ensureGitExclude(): Promise<void> {
     const target = await this.excludeTarget()
     const items = [
-      [".kilo/worktrees/", "Kilo Code agent worktrees"],
+      [".kilo/worktrees/", "tucode agent worktrees"],
       [".kilo/agent-manager.json", "Kilo Agent Manager state"],
-      [".kilo/setup-script", "Kilo Code worktree setup script"],
-      [".kilo/setup-script.sh", "Kilo Code worktree setup script"],
-      [".kilo/setup-script.ps1", "Kilo Code worktree setup script"],
-      [".kilo/setup-script.cmd", "Kilo Code worktree setup script"],
-      [".kilo/setup-script.bat", "Kilo Code worktree setup script"],
-      [".kilocode/worktrees/", "Kilo Code legacy agent worktrees"],
+      [".kilo/setup-script", "tucode worktree setup script"],
+      [".kilo/setup-script.sh", "tucode worktree setup script"],
+      [".kilo/setup-script.ps1", "tucode worktree setup script"],
+      [".kilo/setup-script.cmd", "tucode worktree setup script"],
+      [".kilo/setup-script.bat", "tucode worktree setup script"],
+      [".kilocode/worktrees/", "tucode legacy agent worktrees"],
       [".kilocode/agent-manager.json", "Kilo Agent Manager legacy state"],
-      [".kilocode/setup-script", "Kilo Code legacy worktree setup script"],
-      [".kilocode/setup-script.sh", "Kilo Code legacy worktree setup script"],
-      [".kilocode/setup-script.ps1", "Kilo Code legacy worktree setup script"],
-      [".kilocode/setup-script.cmd", "Kilo Code legacy worktree setup script"],
-      [".kilocode/setup-script.bat", "Kilo Code legacy worktree setup script"],
+      [".kilocode/setup-script", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.sh", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.ps1", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.cmd", "tucode legacy worktree setup script"],
+      [".kilocode/setup-script.bat", "tucode legacy worktree setup script"],
     ] as const
 
     for (const [entry, comment] of items) {

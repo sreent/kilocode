@@ -1,4 +1,5 @@
 import { HttpServerResponse } from "effect/unstable/http"
+import * as svg from "../../../brand/icons/svg"
 
 // Server-rendered pages for the browser legs of sign-in (device approval, SSO results). They use
 // the tokens of kilo-web-ui's console theme, so they look like the admin console they lead to.
@@ -12,7 +13,7 @@ export function escape(text: string) {
     .replaceAll("'", "&#39;")
 }
 
-const logo = `<svg width="40" height="40" viewBox="0 0 512 512" aria-hidden="true"><path d="M512 0H0V512H512V0Z" fill="black"/><path d="M322 377H377V421H307.857L278 391.143V322H322V377ZM421 307.857L391.143 278H322V322L377 322V377H421V307.857ZM234 278H190V322H234V278ZM91 391.143L120.857 421H234V377H135V278H91V391.143ZM371.172 189.999V120.856L341.315 90.9995H278V135H327.172V189.999H278V233.999H421V189.999H371.172ZM135 91H91V233.999H135V184.5H190V233.999H234V184.5L190 140.5H135V91ZM234 91H190V140.5H234V91Z" fill="#FAF74F"/></svg>`
+const logo = `<svg width="40" height="40" viewBox="${svg.logo.viewBox}" aria-hidden="true">${svg.logo.body}</svg>`
 
 const style = `
   :root {

@@ -3,7 +3,7 @@ import { AccountGroup } from "./groups/account"
 import { GatewayGroup, GovernanceGroup, IdentityGroup, InsightGroup, OrgGroup, PeopleGroup } from "./groups/org"
 import { HealthGroup, SigninGroup } from "./groups/public"
 import { ScimGroup } from "./groups/scim"
-import { SchemaErrorMiddleware } from "./middleware"
+import { RateLimit, SchemaErrorMiddleware } from "./middleware"
 
 // The single source of truth for the control plane's HTTP surface. The server implements it,
 // and the CLI and admin console derive typed clients from it with HttpApiClient.
@@ -23,7 +23,8 @@ export const Api = HttpApi.make("organization")
       title: "Organization server",
       version: "0.2.0",
       description:
-        "Organizations, single sign-on, SCIM provisioning, policy, audit, usage and the LLM gateway for Kilo clients.",
+        "Organizations, single sign-on, SCIM provisioning, policy, audit, usage and the LLM gateway for tucode clients.",
     }),
   )
   .middleware(SchemaErrorMiddleware)
+  .middleware(RateLimit)

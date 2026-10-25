@@ -1,0 +1,121 @@
+# Settings for the tucode organization server. The server's README explains each of them:
+# packages/organization-server/README.md
+
+image:
+  # Where you pushed the server's image (see the README's Docker section). Required.
+  repository: ""
+  # The chart's appVersion when empty.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# The server's public URL, as people and clients reach it (ORGANIZATION_BASE_URL). Required.
+baseUrl: ""
+
+# ORGANIZATION_SECRET seals SSO client secrets, gateway keys and audit stream headers at rest. Keep it
+# stable: what it sealed can't be read without it. Generate one with `openssl rand -hex 32`, and give
+# it here or in an existing Secret. Required.
+secret:
+  value: ""
+  existingSecret: ""
+  existingSecretKey: ORGANIZATION_SECRET
+
+database:
+  # A PostgreSQL server, as postgres://user:password@host:5432/database, here or in an existing
+  # Secret. Without one, the server keeps everything in its embedded database on a persistent volume,
+  # which only one replica can open.
+  url: ""
+  existingSecret: ""
+  existingSecretKey: ORGANIZATION_DATABASE_URL
+  # Connections each replica opens.
+  pool: 10
+
+# Replicas, with a PostgreSQL server. With the embedded database there is always one.
+replicaCount: 2
+
+# The first organization, which the server creates when its database has none. Its owner signs in to
+# the console with the token: korg_ and at least 32 more letters, digits, - or _, such as
+# korg_$(openssl rand -hex 32). Revoke it once single sign-on works.
+bootstrap:
+  org: ""
+  slug: ""
+  email: ""
+  token: ""
+  existingSecret: ""
+  existingSecretKey: ORGANIZATION_BOOTSTRAP_TOKEN
+
+# How many reverse proxies stand in front of the server, each appending the address it saw to
+# X-Forwarded-For: the ingress controller, plus a cloud load balancer in front of it if that appends too.
+trustProxy: 1
+
+rateLimit:
+  # Requests a minute each token may make, and each client address without one; 0 for no limit.
+  perToken: 600
+  perAddress: 300
+
+auditRetentionDays: 365
+
+# Backups of the embedded database, into backups/ on its volume. Copy them elsewhere too, or snapshot
+# the volume: a backup on the same volume doesn't survive losing it.
+backups:
+  hours: 24
+  keep: 7
+
+# debug, info, warn or error.
+logLevel: info
+
+# More environment variables, such as ORGANIZATION_MODELS_URL or OTEL_EXPORTER_OTLP_ENDPOINT.
+env: []
+envFrom: []
+
+# The embedded database's volume.
+persistence:
+  size: 10Gi
+  storageClass: ""
+  existingClaim: ""
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  # Gateway calls stream for minutes and carry whole conversations, so the controller must not buffer
+  # them, must wait long enough and must take large bodies. These are ingress-nginx's annotations;
+  # other controllers have their own.
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-body-size: "32m"
+  # The host is baseUrl's.
+  tls:
+    enabled: true
+    # <release name>-tls when empty.
+    secretName: ""
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
+
+# Seconds a stopping server gets to finish requests in flight, gateway streams included.
+terminationGracePeriodSeconds: 120
+
+podDisruptionBudget:
+  # With a PostgreSQL server and more than one replica.
+  enabled: true
+  minAvailable: 1
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []

@@ -1,0 +1,24 @@
+{
+  "name": "tucode",
+  "command": "tucode",
+  "npm": {
+    "scope": "@tucode",
+    "cli": "@tucode/cli"
+  },
+  "image": "ghcr.io/sreent/tucode",
+  "vscode": {
+    "publisher": "tucode",
+    "name": "tucode",
+    "displayName": "tucode"
+  },
+  "jetbrains": {
+    "id": "com.tucode.jetbrains",
+    "name": "tucode",
+    "vendor": "tucode"
+  },
+  "managed": {
+    "dir": "tucode",
+    "macDomain": "com.tucode.managed"
+  },
+  "repository": "https://github.com/sreent/kilocode"
+}

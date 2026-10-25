@@ -1,6 +1,14 @@
 import { Effect } from "effect"
-import { normalize, target } from "@organization/protocol/match"
-import type { BudgetStatus, Effective, Mode, ModelAccess, Policy, Role } from "@organization/protocol/schema"
+import { filtering, normalize, shortfall, target } from "@organization/protocol/match"
+import {
+  gatewayApi,
+  type BudgetStatus,
+  type Effective,
+  type Mode,
+  type ModelAccess,
+  type Policy,
+  type Role,
+} from "@organization/protocol/schema"
 import type { Org, Store } from "./store"
 
 // How long a client may use an effective policy before polling again (seconds).
@@ -29,6 +37,19 @@ export function resolve(input: {
     ? null
     : unique(grants.flatMap((grant) => (grant.mode === "selected" ? grant.items.map(normalize) : [])))
 
+  // With a filter on, only providers whose recorded terms meet every filter are admitted.
+  const data = input.policy.data
+  const filtered = filtering(data)
+  const reasons = Object.fromEntries(
+    Object.entries(data.providers).flatMap(([id, terms]) => {
+      const reason = filtered ? shortfall(data, terms) : undefined
+      return reason ? [[id, reason]] : []
+    }),
+  )
+  const admitted = Object.keys(data.providers)
+    .filter((id) => !(id in reasons))
+    .toSorted()
+
   const servers = input.policy.mcp.servers
   const mcp =
     input.policy.mcp.mode === "open" ? null : unique([...input.policy.mcp.allow, ...Object.values(servers).map(target)])
@@ -56,6 +77,15 @@ export function resolve(input: {
     telemetry: input.policy.telemetry,
     budget: { exceeded: input.budgets.some((budget) => budget.spent >= budget.amount), limits: input.budgets },
     gateway: { exclusive: input.policy.gateway.exclusive, providers: input.gateway ?? [] },
+    data: {
+      training: data.training,
+      retention: data.retention,
+      regions: data.regions,
+      providers: filtered ? admitted : null,
+      reasons,
+      routing: filtered ? admitted.filter((id) => data.providers[id]?.routing) : [],
+    },
+    audit: { tools: input.policy.audit.tools },
   }
 }
 
@@ -76,7 +106,13 @@ export const effective = Effect.fn("Policy.effective")(function* (
       groups: groups.map((row) => ({ name: row.name, models: store.group.access(row) })),
       modes: yield* store.mode.list(input.org.id),
       budgets: yield* store.budget.status(input.org.id, input.user.id),
-      gateway: (yield* store.gateway.list(input.org.id)).map((row) => ({ id: row.id, kind: row.kind })),
+      // Clients speak each provider's API to the gateway; Bedrock and Vertex serve Claude through
+      // Anthropic's. A provider clients don't know comes with its name and models.
+      gateway: (yield* store.gateway.list(input.org.id)).map((row) => ({
+        id: row.id,
+        kind: gatewayApi(row.kind),
+        ...(row.models.length > 0 ? { name: row.name ?? row.id, models: row.models } : {}),
+      })),
     }),
   } satisfies Effective
 })

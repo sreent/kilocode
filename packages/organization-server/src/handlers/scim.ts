@@ -1,7 +1,7 @@
 import { Effect, Schema } from "effect"
 import { HttpApiBuilder, HttpApiSchema } from "effect/unstable/httpapi"
 import { Api } from "@organization/protocol/api"
-import { ScimBadRequest, ScimConflict, ScimNotFound, scimBody } from "@organization/protocol/errors"
+import { ScimBadRequest, ScimConflict, ScimForbidden, ScimNotFound, scimBody } from "@organization/protocol/errors"
 import type { UserInput } from "@organization/protocol/groups/scim"
 import { Provisioner } from "@organization/protocol/middleware"
 import { ServerConfig } from "../config"
@@ -175,6 +175,9 @@ export const ScimHandler = HttpApiBuilder.group(Api, "organization.scim", (handl
       const scope = yield* Provisioner
       const current = yield* store.member.get(scope.org.id, row.id)
       if (!current || (current.suspended == null) === active) return
+      // Coming back from a suspension takes a seat again.
+      const full = active ? yield* store.seats.full(scope.org.id, row.id) : undefined
+      if (full) return yield* new ScimForbidden(scimBody(403, full))
       yield* store.member.suspend(scope.org.id, row.id, !active)
       yield* record(active ? "scim.user_activate" : "scim.user_deactivate", row.id, { email: row.email })
     })
@@ -269,12 +272,16 @@ export const ScimHandler = HttpApiBuilder.group(Api, "organization.scim", (handl
           if (existing && (yield* store.member.get(scope.org.id, existing.id)))
             return yield* new ScimConflict(scimBody(409, `userName ${email} is already provisioned`, "uniqueness"))
           const name = fullname(input.name, input.displayName)
+          const inactive = input.active !== undefined && !bool(input.active)
+          // A user provisioned inactive takes no seat until activated; someone new holds none yet.
+          const full = inactive ? undefined : yield* store.seats.full(scope.org.id, existing?.id ?? "")
+          if (full) return yield* new ScimForbidden(scimBody(403, full))
           const row = existing
             ? yield* identity(existing, { name, external: input.externalId })
             : yield* store.user.ensure({ email, name, external: input.externalId })
           if (!row.active) yield* store.user.update(row.id, { active: true })
           yield* store.member.add(scope.org.id, row.id, "member")
-          if (input.active !== undefined && !bool(input.active)) yield* store.member.suspend(scope.org.id, row.id, true)
+          if (inactive) yield* store.member.suspend(scope.org.id, row.id, true)
           yield* record("scim.user_create", row.id, { email })
           return yield* reload(row.id)
         }),

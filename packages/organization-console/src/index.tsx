@@ -10,14 +10,18 @@ import { SessionProvider, useOrg, useSession } from "./context"
 import { label } from "./format"
 import { Page, Splash } from "./components/page"
 import { Shell } from "./components/shell"
+import { Analytics } from "./routes/analytics"
 import { Audit } from "./routes/audit"
 import { Budgets } from "./routes/budgets"
+import { Calls } from "./routes/calls"
+import { Data } from "./routes/data"
 import { Gateway } from "./routes/gateway"
 import { Groups } from "./routes/groups"
 import { Members } from "./routes/members"
 import { Modes } from "./routes/modes"
 import { Overview } from "./routes/overview"
 import { Policy } from "./routes/policy"
+import { Reports } from "./routes/reports"
 import { Security } from "./routes/security"
 import { Streams } from "./routes/streams"
 import { SignIn } from "./routes/signin"
@@ -94,10 +98,14 @@ render(
         <Route path="/members" component={requires("member.read", Members)} />
         <Route path="/groups" component={Groups} />
         <Route path="/policy" component={requires("policy.read", Policy)} />
+        <Route path="/data" component={requires("policy.read", Data)} />
         <Route path="/modes" component={Modes} />
         <Route path="/budgets" component={requires("usage.read", Budgets)} />
         <Route path="/gateway" component={requires("gateway.read", Gateway)} />
+        <Route path="/gateway/calls" component={requires("gateway.read", Calls)} />
         <Route path="/usage" component={Usage} />
+        <Route path="/analytics" component={requires("usage.read", Analytics)} />
+        <Route path="/reports" component={requires("usage.read", Reports)} />
         <Route path="/audit" component={requires("audit.read", Audit)} />
         <Route path="/streams" component={requires("audit.read", Streams)} />
         <Route path="/security" component={requires("sso.write", Security)} />

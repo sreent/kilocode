@@ -20,6 +20,7 @@ import permissionSoundPath from "@opencode-ai/ui/audio/staplebops-06.mp3" with {
 import errorSoundPath from "@opencode-ai/ui/audio/nope-03.mp3" with { type: "file" }
 import doneSoundPath from "@opencode-ai/ui/audio/bip-bop-01.mp3" with { type: "file" }
 import subagentDoneSoundPath from "@opencode-ai/ui/audio/yup-01.mp3" with { type: "file" }
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 type FocusState = "unknown" | "focused" | "blurred"
 
@@ -38,14 +39,14 @@ type TuiAttentionHost = TuiAttention & {
   dispose(): void
 }
 
-const DEFAULT_TITLE = "Kilo" // kilocode_change
+const DEFAULT_TITLE = Brand.name // kilocode_change - tucode
 const DEFAULT_PACK_ID = "kilo.default" // kilocode_change
 const KV_SOUND_PACK = "attention_sound_pack"
 const TITLE_LIMIT = 80
 const MESSAGE_LIMIT = 240
 const BUILTIN_PACK: RegisteredSoundPack = {
   id: DEFAULT_PACK_ID,
-  name: "Kilo Default", // kilocode_change
+  name: `${Brand.name} Default`, // kilocode_change - tucode
   builtin: true,
   sounds: {
     default: defaultSoundPath,

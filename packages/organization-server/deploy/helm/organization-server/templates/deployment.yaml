@@ -1,0 +1,177 @@
+{{- $external := include "organization-server.external" . }}
+{{- $fullname := include "organization-server.fullname" . }}
+{{- if not (or .Values.secret.value .Values.secret.existingSecret) }}
+{{- fail "Set secret.value or secret.existingSecret. ORGANIZATION_SECRET seals SSO client secrets and gateway keys, and must stay the same from one release to the next; generate one with `openssl rand -hex 32`." }}
+{{- end }}
+{{- if .Values.bootstrap.org }}
+{{- $_ := required "bootstrap.slug is required with bootstrap.org" .Values.bootstrap.slug }}
+{{- $_ = required "bootstrap.email is required with bootstrap.org" .Values.bootstrap.email }}
+{{- if not (or .Values.bootstrap.token .Values.bootstrap.existingSecret) }}
+{{- fail "Set bootstrap.token or bootstrap.existingSecret: the first owner signs in with that token." }}
+{{- end }}
+{{- if and .Values.bootstrap.token (not (regexMatch "^korg_[A-Za-z0-9_-]{32,}$" .Values.bootstrap.token)) }}
+{{- fail "bootstrap.token must be korg_ and at least 32 letters, digits, - or _, such as korg_$(openssl rand -hex 32)." }}
+{{- end }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "organization-server.labels" . | nindent 4 }}
+spec:
+  replicas: {{ ternary .Values.replicaCount 1 (eq $external "true") }}
+  {{- if $external }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  {{- else }}
+  # The embedded database opens in one pod at a time, so the old pod stops before the new one starts.
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "organization-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "organization-server.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        # Pods restart when a value in the chart's Secret changes.
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: "{{ required "image.repository is required: push the server's image to your registry (see the README's Docker section)" .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["serve"]
+          ports:
+            - name: http
+              containerPort: 8787
+              protocol: TCP
+          env:
+            - name: ORGANIZATION_BASE_URL
+              value: {{ required "baseUrl is required: the server's public URL" .Values.baseUrl | trimSuffix "/" | quote }}
+            - name: ORGANIZATION_PORT
+              value: "8787"
+            - name: ORGANIZATION_DATA
+              value: /data
+            - name: ORGANIZATION_TRUST_PROXY
+              value: {{ .Values.trustProxy | quote }}
+            - name: ORGANIZATION_RATE_LIMIT
+              value: {{ .Values.rateLimit.perToken | quote }}
+            - name: ORGANIZATION_RATE_LIMIT_ANONYMOUS
+              value: {{ .Values.rateLimit.perAddress | quote }}
+            - name: ORGANIZATION_AUDIT_RETENTION_DAYS
+              value: {{ .Values.auditRetentionDays | quote }}
+            - name: ORGANIZATION_LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            {{- include "organization-server.secretEnv" (dict "name" "ORGANIZATION_SECRET" "existing" .Values.secret.existingSecret "key" .Values.secret.existingSecretKey "fullname" $fullname) | nindent 12 }}
+            {{- if $external }}
+            {{- include "organization-server.secretEnv" (dict "name" "ORGANIZATION_DATABASE_URL" "existing" .Values.database.existingSecret "key" .Values.database.existingSecretKey "fullname" $fullname) | nindent 12 }}
+            - name: ORGANIZATION_DATABASE_POOL
+              value: {{ .Values.database.pool | quote }}
+            {{- else }}
+            - name: ORGANIZATION_BACKUP_HOURS
+              value: {{ .Values.backups.hours | quote }}
+            - name: ORGANIZATION_BACKUP_KEEP
+              value: {{ .Values.backups.keep | quote }}
+            {{- end }}
+            {{- if .Values.bootstrap.org }}
+            - name: ORGANIZATION_BOOTSTRAP_ORG
+              value: {{ .Values.bootstrap.org | quote }}
+            - name: ORGANIZATION_BOOTSTRAP_SLUG
+              value: {{ .Values.bootstrap.slug | quote }}
+            - name: ORGANIZATION_BOOTSTRAP_EMAIL
+              value: {{ .Values.bootstrap.email | quote }}
+            {{- include "organization-server.secretEnv" (dict "name" "ORGANIZATION_BOOTSTRAP_TOKEN" "existing" .Values.bootstrap.existingSecret "key" .Values.bootstrap.existingSecretKey "fullname" $fullname) | nindent 12 }}
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          # Until the database is open and migrated, which an upgrade can make take a while.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          {{- if $external }}
+          emptyDir: {}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default $fullname }}
+          {{- end }}
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

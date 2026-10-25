@@ -1,5 +1,6 @@
 package ai.kilocode.backend.app
 
+import ai.kilocode.Brand
 import ai.kilocode.backend.cli.KiloCliDataParser
 import ai.kilocode.log.KiloLog
 import ai.kilocode.rpc.dto.ModelFavoriteUpdateDto
@@ -22,7 +23,7 @@ class KiloBackendModelStateManager(
     private val log: KiloLog,
 ) {
     companion object {
-        private val DEFAULT_DIR = Path.of(System.getProperty("user.home"), ".local", "state", "kilo")
+        private val DEFAULT_DIR = Path.of(System.getProperty("user.home"), ".local", "state", Brand.COMMAND)
     }
 
     private val mutex = Mutex()

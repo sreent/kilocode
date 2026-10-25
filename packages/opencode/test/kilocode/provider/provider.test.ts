@@ -59,10 +59,10 @@ it.instance(
 )
 
 it.instance(
-  "getSmallModel falls back to Kilo auto when the kilo provider is configured",
+  "getSmallModel never falls back to Kilo Gateway, which tucode doesn't have, even when kilo is configured",
   Effect.gen(function* () {
     const model = yield* Provider.use.getSmallModel(ProviderV2.ID.make("test-provider"))
-    expect(model).toMatchObject({ providerID: "kilo", id: "kilo-auto/small" })
+    expect(model?.providerID).not.toBe("kilo")
   }),
   {
     config: {

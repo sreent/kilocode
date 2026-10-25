@@ -1,3 +1,4 @@
+import "@/tucode/guard" // kilocode_change - tucode: refuse connections to Kilo's services in this worker too
 import { Server } from "@/server/server"
 import { InstanceRuntime } from "@/project/instance-runtime"
 import { Rpc } from "@/util/rpc"

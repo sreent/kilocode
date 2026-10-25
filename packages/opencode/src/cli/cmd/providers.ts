@@ -17,6 +17,7 @@ import { Process } from "@/util/process"
 import { errorMessage } from "@/util/error"
 import { text } from "node:stream/consumers"
 import { Effect, Option } from "effect"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 // kilocode_change - @/kilocode/auth/remove is dynamically imported in the logout handler to keep startup fast
 
 type PluginAuth = NonNullable<Hooks["auth"]>
@@ -307,7 +308,7 @@ export const ProvidersLoginCommand = effectCmd({
   builder: (yargs: Argv) =>
     yargs
       .positional("url", {
-        describe: "kilo auth provider",
+        describe: `${Brand.command} auth provider`, // kilocode_change - tucode
         type: "string",
       })
       .option("provider", {

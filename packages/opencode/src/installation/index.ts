@@ -22,6 +22,7 @@ import {
   Scoop as KiloScoop,
 } from "@/kilocode/installation"
 import { latest as kiloLatest } from "@/kilocode/installation/latest"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 // kilocode_change end
 import { InstallationEvent } from "@opencode-ai/schema/installation-event"
 
@@ -185,7 +186,7 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         }
       }),
       method: Effect.fn("Installation.method")(function* () {
-        if (process.execPath.includes(path.join(".kilo", "bin"))) return "curl" as Method // kilocode_change
+        if (process.execPath.includes(path.join(`.${Brand.command}`, "bin"))) return "curl" as Method // kilocode_change - tucode
         if (process.execPath.includes(path.join(".opencode", "bin"))) return "curl" as Method
         if (process.execPath.includes(path.join(".local", "bin"))) return "curl" as Method
         const exec = process.execPath.toLowerCase()

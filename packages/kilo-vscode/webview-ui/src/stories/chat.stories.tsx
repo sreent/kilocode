@@ -556,7 +556,7 @@ function InjectedStory(props: { text: string; title?: string }) {
 }
 
 const REVIEW_TEMPLATE_BODY = [
-  "You are Kilo Code, an expert code reviewer focused on high-confidence security, performance, business logic, deploy safety, duplication, and dead-code findings.",
+  "You are tucode, an expert code reviewer focused on high-confidence security, performance, business logic, deploy safety, duplication, and dead-code findings.",
   "",
   "During the initial review phase, your role is advisory: provide clear, actionable feedback but DO NOT modify any files.",
   "",

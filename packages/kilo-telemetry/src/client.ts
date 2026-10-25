@@ -1,12 +1,9 @@
-import { PostHog } from "posthog-node"
+import type { PostHog } from "posthog-node"
 import { Identity } from "./identity.js"
 import { TelemetryEvent } from "./events.js"
 import { createHash } from "node:crypto"
-import { readFileSync, writeFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import path from "node:path"
-
-const POSTHOG_API_KEY = "phc_GK2Pxl0HPj5ZPfwhLRjXrtdz8eD7e9MKnXiFrOqnB6z"
-const POSTHOG_HOST = "https://us.i.posthog.com"
 
 export namespace Client {
   let client: PostHog | null = null
@@ -14,27 +11,11 @@ export namespace Client {
   let directory = ""
   const pending = new Set<string>()
 
+  // tucode sends no product analytics. init never creates a PostHog client, so capture, alias and
+  // flush do nothing and nothing reaches PostHog, whatever the telemetry settings say.
   export function init(dir = "") {
     directory = dir
     pending.clear()
-    client = new PostHog(POSTHOG_API_KEY, {
-      host: POSTHOG_HOST,
-      disableGeoip: false,
-    })
-    client.on("flush", (messages) => {
-      if (!directory) return
-      for (const message of messages) {
-        if (message.event !== "$create_alias") continue
-        const file = marker(message.distinct_id, message.properties.alias)
-        try {
-          // Remember the link only after a successful upload.
-          writeFileSync(file, "1", { mode: 0o600 })
-        } catch (err) {
-          if (process.env.KILO_PRINT_LOGS) console.warn("telemetry cache write failed", err)
-        }
-      }
-    })
-    client.on("error", () => pending.clear())
   }
 
   function marker(id: string, alias: string) {

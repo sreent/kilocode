@@ -6,6 +6,7 @@ import { useClipboard } from "../context/clipboard"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import { useExit } from "../context/exit"
 import { describeOS, describeTerminal } from "../util/system"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 // kilocode_change start — guard against missing renderer context in ErrorBoundary fallback
 function tryUseTerminalDimensions() {
@@ -124,8 +125,8 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
         {/* Headline */}
         <box flexDirection="column" alignItems="center" flexShrink={0}>
           <text attributes={TextAttributes.BOLD} fg={colors.text}>
-            {/* kilocode_change */}
-            Kilo crashed
+            {/* kilocode_change - tucode */}
+            {Brand.name} crashed
           </text>
           <Show when={showSubtext()}>
             <text fg={colors.muted}>An unexpected error stopped the session.</text>
@@ -210,8 +211,8 @@ export function ErrorComponent(props: { error: Error; reset: () => void; mode?: 
                 : "Copy the report and open a GitHub issue to help us fix this."}
             </text>
             <text fg={colors.muted}>
-              {/* kilocode_change */}
-              Kilo {InstallationVersion}
+              {/* kilocode_change - tucode */}
+              {Brand.name} {InstallationVersion}
             </text>
           </box>
         </Show>
@@ -225,15 +226,15 @@ function buildIssueURL(message: string, stack: string) {
   // form opens pre-filled. Populating os/terminal/reproduce keeps the report past
   // the contributing-guidelines compliance check, which pushes for system info.
   // kilocode_change start
-  const url = new URL("https://github.com/Kilo-Org/kilocode/issues/new?template=bug-report.yml")
-  url.searchParams.set("title", `Kilo TUI crash: ${message}`)
+  const url = new URL(`${Brand.repository}/issues/new?template=bug-report.yml`) // tucode
+  url.searchParams.set("title", `${Brand.name} TUI crash: ${message}`) // tucode
   url.searchParams.set("kilo-version", InstallationVersion)
   // kilocode_change end
   url.searchParams.set("os", describeOS())
   url.searchParams.set("terminal", describeTerminal())
   url.searchParams.set(
     "reproduce",
-    "Reported automatically from the Kilo crash screen. If you can, describe what you were doing when it crashed.",
+    `Reported automatically from the ${Brand.name} crash screen. If you can, describe what you were doing when it crashed.`, // kilocode_change - tucode
   )
 
   // Budget the stack against the fully URL-encoded length (not the raw length) so
@@ -242,7 +243,7 @@ function buildIssueURL(message: string, stack: string) {
   // so measuring url.toString() is both correct and safe on any input.
   const MAX_URL_LENGTH = 6000
   const marker = "\n... (truncated)"
-  const head = `The Kilo TUI crashed with an unexpected error.\n\n**Error:** ${message}\n\n**Stack trace:**\n`
+  const head = `The ${Brand.name} TUI crashed with an unexpected error.\n\n**Error:** ${message}\n\n**Stack trace:**\n` // kilocode_change - tucode
   const setBody = (body: string) => url.searchParams.set("description", head + "```\n" + body + "\n```")
 
   setBody(stack)

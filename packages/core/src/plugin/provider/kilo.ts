@@ -10,6 +10,7 @@ export const KiloPlugin = define({
   effect: Effect.fn(function* (ctx) {
     yield* ctx.catalog.transform(
       Effect.fn(function* (evt) {
+        evt.provider.remove(id) // kilocode_change - tucode: Kilo Gateway is Kilo's cloud service, which tucode never uses
         for (const item of evt.provider.list()) {
           if (item.provider.id !== id) continue // kilocode_change
           evt.provider.update(item.provider.id, (provider) => {

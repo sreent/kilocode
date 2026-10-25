@@ -1,3 +1,4 @@
+import * as vscode from "vscode"
 import { ResponseMetaData } from "./types"
 import type { KiloConnectionService } from "../cli-backend"
 import { getAutocompleteModel, getAutocompleteModelById } from "../../shared/autocomplete-models"
@@ -79,8 +80,11 @@ export async function generateFim(
 
 /**
  * Check if the CLI backend is connected. The CLI manages credentials internally,
- * so a connected state means we can issue FIM requests.
+ * so a connected state means we can issue FIM requests. tucode has no Kilo Gateway,
+ * so requests through it never go out.
  */
 export function hasValidCredentials(connectionService: KiloConnectionService): boolean {
+  const cfg = vscode.workspace.getConfiguration("kilo-code.new.autocomplete")
+  if (getAutocompleteModel(cfg.get<string>("provider"), cfg.get<string>("model")).providerID === "kilo") return false
   return connectionService.getConnectionState() === "connected"
 }

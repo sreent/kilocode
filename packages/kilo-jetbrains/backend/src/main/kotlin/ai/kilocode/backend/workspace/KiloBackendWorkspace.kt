@@ -19,6 +19,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -216,8 +217,9 @@ class KiloBackendWorkspace(
      *
      * - `global.disposed` — CLI server context torn down, all data stale.
      * - `server.instance.disposed` — server instance disposed, reload.
-     * - `global.config.updated` — project config changed on disk or via CLI; refresh only
-     *   config warnings in-place, without reloading providers/agents/commands/skills.
+     * - `global.config.updated` — config changed on disk, via CLI or with the organization
+     *   policy; refresh config warnings, providers and agents in-place, without reloading
+     *   commands/skills.
      *
      * Idempotent — only one watcher runs at a time.
      */
@@ -237,10 +239,10 @@ class KiloBackendWorkspace(
                             load()
                         }
                         "global.config.updated" -> {
-                            log.info("SSE global.config.updated — refreshing config warnings for $directory")
+                            log.info("SSE global.config.updated — refreshing config warnings, providers and agents for $directory")
                             // Launched so a slow fetch cannot block this collector and stall the
                             // shared global SSE flow for chat and other workspaces.
-                            launch { refreshWarnings() }
+                            launch { refreshConfig() }
                         }
                     }
                 }
@@ -248,13 +250,26 @@ class KiloBackendWorkspace(
         }
     }
 
-    /** Refetches config warnings and updates [Ready][KiloWorkspaceState.Ready] in-place, if still current. */
-    private suspend fun refreshWarnings() {
+    /**
+     * Refetches what a config change can alter and updates [Ready][KiloWorkspaceState.Ready]
+     * in-place, if still current: config warnings, and the providers and agents a change to the
+     * organization policy adds or removes. A failed fetch keeps what was there.
+     */
+    private suspend fun refreshConfig() {
         val current = _state.value
         if (current !is KiloWorkspaceState.Ready) return
-        val next = warnings()
+        val next = coroutineScope {
+            val warns = async { warnings() }
+            val prov = async { fetchProviders() }
+            val ag = async { fetchAgents() }
+            current.copy(
+                warnings = warns.await(),
+                providers = prov.await().value ?: current.providers,
+                agents = ag.await().value ?: current.agents,
+            )
+        }
         val latest = _state.value
-        if (latest === current) _state.value = current.copy(warnings = next)
+        if (latest === current) _state.value = next
     }
 
     // ------ fetch methods ------

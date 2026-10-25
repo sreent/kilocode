@@ -3,6 +3,7 @@ import { UI } from "@/cli/ui"
 import { errorMessage } from "@opencode-ai/tui/util/error"
 import { validateSession } from "../tui/validate-session"
 import { ServerAuth } from "@/server/auth"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 // kilocode_change start - Kilo implementations (sdk client, cloud-session) are
 // dynamically imported inside the handler so other CLI commands don't pay their
 // module cost at startup.
@@ -10,7 +11,7 @@ import { ServerAuth } from "@/server/auth"
 
 export const AttachCommand = cmd({
   command: "attach <url>",
-  describe: "attach to a running kilo server", // kilocode_change
+  describe: `attach to a running ${Brand.command} server`, // kilocode_change - tucode
   builder: (yargs) =>
 
     yargs

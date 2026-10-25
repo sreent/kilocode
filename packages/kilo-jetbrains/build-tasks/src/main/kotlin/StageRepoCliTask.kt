@@ -20,14 +20,19 @@ abstract class StageRepoCliTask : DefaultTask() {
     fun run() {
         val dir = bin.asFile.get()
         val exe = File(dir, exe())
+        val out = archive.get().asFile
         if (!exe.isFile) {
-            throw GradleException(
-                "Repo CLI binary not found at ${exe.absolutePath}. Run ./gradlew :backend:buildRepoCli " +
-                    "(or bun run script/build.ts --single --skip-install in packages/opencode) first."
+            // Typecheck and tests don't need the CLI, so they build without one. A plugin built this way
+            // downloads its pinned CLI release when it starts.
+            out.delete()
+            logger.warn(
+                "Repo CLI binary not found at ${exe.absolutePath}, so the plugin bundles no CLI. Run " +
+                    "./gradlew :backend:buildRepoCli (or bun run script/build.ts --single --skip-install in " +
+                    "packages/opencode) to bundle it."
             )
+            return
         }
 
-        val out = archive.get().asFile
         val platform = platform()
         out.parentFile.mkdirs()
         ZipOutputStream(out.outputStream().buffered()).use { zip ->
@@ -42,7 +47,8 @@ abstract class StageRepoCliTask : DefaultTask() {
         }
     }
 
-    private fun exe() = if (System.getProperty("os.name").lowercase().contains("windows")) "kilo.exe" else "kilo"
+    private fun exe() =
+        if (System.getProperty("os.name").lowercase().contains("windows")) "${Brand.COMMAND}.exe" else Brand.COMMAND
 
     private fun platform(): String {
         val os = System.getProperty("os.name").lowercase()

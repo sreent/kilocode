@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.CpuArch
 
@@ -20,7 +21,7 @@ internal object KiloCliPlatform {
         return "$os-$arch"
     }
 
-    fun exe(): String = if (SystemInfo.isWindows) "kilo.exe" else "kilo"
+    fun exe(): String = if (SystemInfo.isWindows) "${Brand.COMMAND}.exe" else Brand.COMMAND
 
     fun archive(platform: String = current()): String =
         if (platform.startsWith("linux-")) "tar.gz" else "zip"

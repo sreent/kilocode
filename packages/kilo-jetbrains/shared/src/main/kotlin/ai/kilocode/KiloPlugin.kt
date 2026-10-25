@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 
 object KiloPlugin {
-    const val ID = "ai.kilocode.jetbrains"
+    const val ID = Brand.PLUGIN_ID
 
     val id: PluginId = PluginId.getId(ID)
 

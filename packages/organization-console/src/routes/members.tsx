@@ -4,7 +4,7 @@ import { Tag } from "@kilocode/kilo-web-ui/tag"
 import { Role } from "@organization/protocol/schema"
 import { call } from "../api"
 import { useOrg } from "../context"
-import { date, label } from "../format"
+import { count, date, label } from "../format"
 import { attempt, confirm } from "../components/feedback"
 import { Choice, Select, TextInput } from "../components/form"
 import { Failure, Loading, Page, Panel } from "../components/page"
@@ -39,7 +39,7 @@ export function Members() {
         value: created.token,
         hint: created.sso
           ? `They can also simply sign in with single sign-on at ${created.sso}.`
-          : `They can run: kilo org login --url ${location.origin} --org ${scope.slug()} --invite ${created.token}`,
+          : `They can run: tucode org login --url ${location.origin} --org ${scope.slug()} --invite ${created.token}`,
       })
       setEmail("")
       void invitations.refetch()
@@ -61,6 +61,7 @@ export function Members() {
 
   return (
     <Page title="Members" description="People with access to this organization and the role each one holds.">
+      <Seats />
       <Show when={scope.can("invite.write")}>
         <Panel
           title="Invite someone"
@@ -183,7 +184,7 @@ export function Members() {
                                   setSecret({
                                     title: `Access token for ${row.email}`,
                                     value: issued.token,
-                                    hint: `They can run: kilo org login --url ${location.origin} --org ${scope.slug()} --token <token>`,
+                                    hint: `They can run: tucode org login --url ${location.origin} --org ${scope.slug()} --token <token>`,
                                   })
                                 })
                               }
@@ -225,5 +226,71 @@ export function Members() {
         </Show>
       </Panel>
     </Page>
+  )
+}
+
+// Seats are people with an active membership here or in a sub-organization; the top-level
+// organization's owners set how many there may be.
+function Seats() {
+  const scope = useOrg()
+  const [info, { refetch }] = createResource(scope.slug, (org) =>
+    call((api) => api["organization.org"]["org.get"]({ params: { org } })),
+  )
+  const [limit, setLimit] = createSignal<string>()
+  const editable = () => scope.can("org.write") && !scope.org().parent
+  const save = (event: SubmitEvent) => {
+    event.preventDefault()
+    const text = (limit() ?? "").trim()
+    const seats = text ? Number(text) : null
+    void attempt(
+      async () => {
+        await call((api) =>
+          api["organization.org"]["org.update"]({ params: { org: scope.slug() }, payload: { seats } }),
+        )
+        setLimit(undefined)
+        void refetch()
+      },
+      seats === null ? "Seats are unlimited" : `The organization now has ${count(seats)} seats`,
+    )
+  }
+  return (
+    <Show when={info()}>
+      {(data) => (
+        <Panel
+          title="Seats"
+          description={
+            scope.org().parent
+              ? "People with an active membership here count toward the seats of the parent organization."
+              : "People with an active membership here or in a sub-organization; suspended people don't count. Invites, single sign-on and SCIM can't add anyone once the seats are taken."
+          }
+        >
+          <div class="inline-form">
+            <p class="seats">
+              <Show when={data().seats.limit !== null} fallback={<>{count(data().seats.used)} seats taken, no limit</>}>
+                {count(data().seats.used)} of {count(data().seats.limit!)} seats taken{" "}
+                <Show when={data().seats.used >= data().seats.limit!}>
+                  <Tag tone="warning">Full</Tag>
+                </Show>
+              </Show>
+            </p>
+            <Show when={editable()}>
+              <form class="inline-form" onSubmit={save}>
+                <TextInput
+                  label="Seat limit"
+                  type="number"
+                  min="1"
+                  placeholder="Unlimited"
+                  value={limit() ?? (data().seats.limit === null ? "" : String(data().seats.limit))}
+                  onValue={setLimit}
+                />
+                <Button type="submit" variant="secondary" disabled={limit() === undefined}>
+                  Save
+                </Button>
+              </form>
+            </Show>
+          </div>
+        </Panel>
+      )}
+    </Show>
   )
 }

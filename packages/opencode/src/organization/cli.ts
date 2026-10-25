@@ -7,7 +7,7 @@ import { UI } from "@/cli/ui"
 import { dollars } from "@organization/protocol/match"
 import { Organization } from "./organization"
 
-// Loaded lazily (see lazy-kilo-commands): only `kilo org ...` pays for this module.
+// Loaded lazily (see lazy-kilo-commands): only `tucode org ...` pays for this module.
 
 const LoginCommand = effectCmd({
   command: "login",
@@ -81,8 +81,18 @@ const StatusCommand = effectCmd({
       ...(policy
         ? [`Policy:        version ${policy.version}, fetched ${new Date(info.fetched ?? 0).toLocaleString()}`]
         : []),
+      ...(policy?.data.providers
+        ? [
+            `Data policy:   ${[
+              ...(policy.data.training === "denied" ? ["no training"] : []),
+              ...(policy.data.retention === "zero" ? ["zero retention"] : []),
+              ...(policy.data.regions.length ? [`processed in ${policy.data.regions.join(", ")}`] : []),
+            ].join(", ")}; allows ${policy.data.providers.join(", ") || "no provider yet"}`,
+          ]
+        : []),
       ...(policy?.budget.limits ?? []).map(
-        (item) => `Budget:        ${item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
+        (item) =>
+          `Budget:        ${item.name ?? item.scope} ${item.period}: ${dollars(item.spent)} of ${dollars(item.amount)}`,
       ),
       ...(info.error ? [`Last error:    ${info.error}`] : []),
       ...(blocked ? [`Blocked:       ${blocked}`] : []),

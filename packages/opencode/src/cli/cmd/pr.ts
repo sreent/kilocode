@@ -15,6 +15,7 @@ import {
   recordSessionLink,
 } from "@/kilo-sessions/pr-link" // kilocode_change
 import { refreshPrLink } from "@/kilo-sessions/pr-link-poller" // kilocode_change
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 const subcommand = "pr" // kilocode_change
 
@@ -51,7 +52,7 @@ export const PrCommand = cmd({
 
 export const PrCheckoutCommand = effectCmd({
   command: "checkout <number>",
-  describe: "fetch and checkout a GitHub PR branch, then run kilo", // kilocode_change
+  describe: `fetch and checkout a GitHub PR branch, then run ${Brand.command}`, // kilocode_change - tucode
   builder: (yargs) =>
     yargs.positional("number", {
       type: "number",
@@ -142,7 +143,7 @@ export const PrCheckoutCommand = effectCmd({
 
     UI.println(`Successfully checked out PR #${prNumber} as branch '${localBranchName}'`)
     UI.println()
-    UI.println("Starting kilo...") // kilocode_change
+    UI.println(`Starting ${Brand.command}...`) // kilocode_change - tucode
     UI.println()
 
     const run = sessionId ? [...cli, "-s", sessionId] : cli // kilocode_change
@@ -157,7 +158,7 @@ export const PrCheckoutCommand = effectCmd({
     )
     // Match legacy throw semantics — propagate as a defect so the top-level
     // index.ts catch handles it identically (exit 1, "Unexpected error" banner).
-    if (code !== 0) return yield* Effect.die(new Error(`kilo exited with code ${code}`)) // kilocode_change
+    if (code !== 0) return yield* Effect.die(new Error(`${Brand.command} exited with code ${code}`)) // kilocode_change - tucode
   }),
 })
 

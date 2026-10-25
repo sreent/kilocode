@@ -4,6 +4,7 @@ import { escapeHtml } from "@/util/html"
 import * as Log from "@opencode-ai/core/util/log" // kilocode_change
 import { OAUTH_CALLBACK_PORT, OAUTH_CALLBACK_PATH, parseRedirectUri } from "./oauth-provider"
 import * as KiloOAuthCallback from "../kilocode/mcp-oauth-callback" // kilocode_change
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 const log = Log.create({ service: "mcp.oauth-callback" }) // kilocode_change
 
@@ -15,7 +16,7 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
   <!-- kilocode_change start -->
-  <title>Kilo - Authorization Successful</title>
+  <title>${Brand.name /* kilocode_change - tucode */} - Authorization Successful</title>
   <!-- kilocode_change end -->
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
@@ -28,7 +29,7 @@ const HTML_SUCCESS = `<!DOCTYPE html>
   <div class="container">
     <h1>Authorization Successful</h1>
     <!-- kilocode_change start -->
-    <p>You can close this window and return to Kilo.</p>
+    <p>You can close this window and return to ${Brand.name /* kilocode_change - tucode */}.</p>
     <!-- kilocode_change end -->
   </div>
   <script>setTimeout(() => window.close(), 2000);</script>
@@ -39,7 +40,7 @@ const HTML_ERROR = (error: string) => `<!DOCTYPE html>
 <html>
 <head>
   <!-- kilocode_change start -->
-  <title>Kilo - Authorization Failed</title>
+  <title>${Brand.name /* kilocode_change - tucode */} - Authorization Failed</title>
   <!-- kilocode_change end -->
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }

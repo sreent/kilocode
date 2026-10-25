@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import ai.kilocode.log.KiloLog
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
@@ -32,9 +33,10 @@ import kotlin.math.roundToInt
 class KiloCliDownloader(
     private val http: OkHttpClient = KiloBackendHttpClients.cliDownload(),
     private val log: KiloLog = KiloLog.create(KiloCliDownloader::class.java),
-    private val root: File = File(PathManager.getSystemPath(), "kilo/cli"),
-    private val baseUrl: String = "https://github.com/Kilo-Org/kilocode/releases/download",
-    private val api: String = "https://api.github.com/repos/Kilo-Org/kilocode/releases/tags",
+    private val root: File = File(PathManager.getSystemPath(), "${Brand.COMMAND}/cli"),
+    // The CLI's releases in the brand's repository, whose archives are named after its command.
+    private val baseUrl: String = "${Brand.REPOSITORY}/releases/download",
+    private val api: String = "${Brand.REPOSITORY.replace("https://github.com/", "https://api.github.com/repos/")}/releases/tags",
     private val digests: Map<String, String> = KiloCliChecksums.load(),
     private val lockTimeoutMs: Long = LOCK_TIMEOUT_MS,
 ) {
@@ -68,7 +70,7 @@ class KiloCliDownloader(
                 val digest = digest(version, platform, ext)
                 val stage = stage(version, platform)
                 try {
-                    val archive = File(stage, "kilo-$platform.$ext")
+                    val archive = File(stage, "${Brand.COMMAND}-$platform.$ext")
                     val staged = File(stage, "bin/${KiloCliPlatform.exe()}")
                     val complete = File(stage, ".complete")
 
@@ -211,7 +213,7 @@ class KiloCliDownloader(
     }
 
     private fun asset(version: String, platform: String, ext: String): String {
-        val name = "kilo-$platform.$ext"
+        val name = "${Brand.COMMAND}-$platform.$ext"
         val url = "${api.trimEnd('/')}/v$version"
         log.info("Fetching Kilo CLI release metadata for $version from $url")
         val request = Request.Builder()
@@ -354,7 +356,7 @@ class KiloCliDownloader(
         }
         target.parentFile.mkdirs()
         target.outputStream().use(copy)
-        if (!SystemInfo.isWindows && (target.name == "kilo" || target.name == "bwrap")) {
+        if (!SystemInfo.isWindows && (target.name == Brand.COMMAND || target.name == "bwrap")) {
             target.setExecutable(true)
         }
     }
@@ -377,7 +379,7 @@ class KiloCliDownloader(
     }
 
     private fun url(version: String, platform: String, ext: String) =
-        "${baseUrl.trimEnd('/')}/v$version/kilo-$platform.$ext"
+        "${baseUrl.trimEnd('/')}/v$version/${Brand.COMMAND}-$platform.$ext"
 
     private fun logPaths(version: String, force: Boolean) {
         val text = buildList {

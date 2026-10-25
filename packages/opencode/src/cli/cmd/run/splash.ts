@@ -20,6 +20,7 @@ import {
 import * as Locale from "@/util/locale"
 import { go } from "@/cli/logo"
 import type { RunSplashTheme } from "./theme"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export const SPLASH_TITLE_LIMIT = 50
 export const SPLASH_TITLE_FALLBACK = "Untitled session"
@@ -234,7 +235,7 @@ function build(input: SplashWriterInput, kind: "entry" | "exit", ctx: Scrollback
       lines,
       body_left + label.length,
       top + 1,
-      `kilo run -i -s ${meta.session_id}`, // kilocode_change
+      `${Brand.command} run -i -s ${meta.session_id}`, // kilocode_change - tucode
       right,
       undefined,
       TextAttributes.BOLD,

@@ -213,7 +213,6 @@ class KiloRecoveryActionsTest : BasePlatformTestCase() {
                 "Kilo.OpenSettings",
                 "---",
                 "Kilo.OpenUserProfileSettings",
-                "Kilo.OpenMarketplaceSettings",
                 "---",
                 "Kilo.OpenConfigGroup",
                 "---",

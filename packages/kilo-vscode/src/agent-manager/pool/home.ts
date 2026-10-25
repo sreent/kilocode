@@ -18,11 +18,12 @@ import { createHash } from "crypto"
 import { sanitizeBranchName } from "../branch-name"
 import { pathKey } from "../project/paths"
 import { markNoIndex } from "../../util/spotlight"
+import { Brand } from "../../brand"
 
-/** Per-user pool home next to the Kilo CLI data. Honors `XDG_DATA_HOME` and is never roaming on Windows. */
+/** Per-user pool home next to the CLI's data. Honors `XDG_DATA_HOME` and is never roaming on Windows. */
 export function poolHome(): string {
   const data = process.env.XDG_DATA_HOME?.trim() || path.join(os.homedir(), ".local", "share")
-  return path.join(data, "kilo", "worktree-pool")
+  return path.join(data, Brand.command, "worktree-pool")
 }
 
 /** Stable slot directory for one repository root. The readable prefix helps users who inspect disk usage. */

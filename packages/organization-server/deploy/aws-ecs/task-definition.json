@@ -1,0 +1,49 @@
+{
+  "family": "tucode-organization-server",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "runtimePlatform": { "operatingSystemFamily": "LINUX", "cpuArchitecture": "X86_64" },
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/tucode-organization-execution",
+  "containerDefinitions": [
+    {
+      "name": "organization-server",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/organization-server:0.2.0",
+      "essential": true,
+      "command": ["serve"],
+      "portMappings": [{ "name": "http", "containerPort": 8787, "protocol": "tcp", "appProtocol": "http" }],
+      "environment": [
+        { "name": "ORGANIZATION_BASE_URL", "value": "https://ai.example.com" },
+        { "name": "ORGANIZATION_TRUST_PROXY", "value": "1" },
+        { "name": "ORGANIZATION_DATABASE_POOL", "value": "10" },
+        { "name": "ORGANIZATION_BOOTSTRAP_ORG", "value": "Example" },
+        { "name": "ORGANIZATION_BOOTSTRAP_SLUG", "value": "example" },
+        { "name": "ORGANIZATION_BOOTSTRAP_EMAIL", "value": "admin@example.com" }
+      ],
+      "secrets": [
+        {
+          "name": "ORGANIZATION_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_SECRET::"
+        },
+        {
+          "name": "ORGANIZATION_DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_DATABASE_URL::"
+        },
+        {
+          "name": "ORGANIZATION_BOOTSTRAP_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:tucode-organization-AbCdEf:ORGANIZATION_BOOTSTRAP_TOKEN::"
+        }
+      ],
+      "stopTimeout": 120,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/tucode-organization-server",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "server"
+        }
+      }
+    }
+  ]
+}

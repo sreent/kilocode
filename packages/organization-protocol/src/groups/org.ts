@@ -4,21 +4,29 @@ import { ConflictError, ForbiddenError, InvalidRequestError, NotFoundError } fro
 import { Authorization, OrgScope } from "../middleware"
 import { Requires } from "../roles"
 import {
+  Adoption,
   AuditPage,
   AuditStream,
   AuditStreamCreated,
   AuditStreamInput,
   AuditStreamPatch,
   Budget,
+  BudgetSpend,
+  CompareBy,
+  Comparison,
   Domain,
   Effective,
   Gateway,
+  GatewayCallDetail,
+  GatewayCallPage,
+  GatewayDiscovery,
   GatewayProvider,
   GatewayProviderInput,
   Group,
   GroupName,
   Hostname,
   Instant,
+  Interval,
   Invite,
   InviteCreated,
   Issued,
@@ -28,9 +36,15 @@ import {
   Org,
   Policy,
   PolicyState,
+  Prices,
   ProviderID,
+  Report,
+  ReportCreated,
+  ReportInput,
+  ReportPatch,
   Role,
   ScimToken,
+  Seats,
   Slug,
   Sso,
   SsoInput,
@@ -39,6 +53,7 @@ import {
   StreamTest,
   Suborg,
   Token,
+  ToolRun,
   UsageBy,
   UsageRecord,
   UsageSummary,
@@ -61,7 +76,7 @@ export const OrgGroup = HttpApiGroup.make("organization.org")
   .add(
     HttpApiEndpoint.get("org.get", "/api/v1/orgs/:org", {
       params: org,
-      success: Schema.Struct({ org: Org, role: Role, inherited: Schema.Boolean }),
+      success: Schema.Struct({ org: Org, role: Role, inherited: Schema.Boolean, seats: Seats }),
     }),
   )
   .add(
@@ -70,6 +85,8 @@ export const OrgGroup = HttpApiGroup.make("organization.org")
       payload: Schema.Struct({
         name: Schema.optional(Name),
         settings: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+        // Top-level organizations only; null removes the limit.
+        seats: Schema.optional(Schema.NullOr(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 1_000_000 })))),
       }),
       success: Schema.Struct({ org: Org }),
       error: failures,
@@ -275,7 +292,9 @@ export const GovernanceGroup = HttpApiGroup.make("organization.governance")
   .add(
     HttpApiEndpoint.get("budgets.get", "/api/v1/orgs/:org/budgets", {
       params: org,
-      success: Schema.Struct({ budgets: Schema.Array(Budget) }),
+      // `spend` adds this period's spend to each budget, and lists the parent organization's budgets
+      // that bind this one too.
+      success: Schema.Struct({ budgets: Schema.Array(Budget), spend: Schema.Array(BudgetSpend) }),
       error: failures,
     }).annotate(Requires, "usage.read"),
   )
@@ -284,6 +303,21 @@ export const GovernanceGroup = HttpApiGroup.make("organization.governance")
       params: org,
       payload: Schema.Struct({ budgets: Schema.Array(Budget).check(Schema.isMaxLength(10_000)) }),
       success: Schema.Struct({ budgets: Schema.Array(Budget) }),
+      error: failures,
+    }).annotate(Requires, "budget.write"),
+  )
+  .add(
+    HttpApiEndpoint.get("prices.get", "/api/v1/orgs/:org/prices", {
+      params: org,
+      success: Prices,
+      error: failures,
+    }).annotate(Requires, "usage.read"),
+  )
+  .add(
+    HttpApiEndpoint.put("prices.update", "/api/v1/orgs/:org/prices", {
+      params: org,
+      payload: Prices,
+      success: Prices,
       error: failures,
     }).annotate(Requires, "budget.write"),
   )
@@ -356,6 +390,15 @@ export const InsightGroup = HttpApiGroup.make("organization.insight")
       error: failures,
     }).annotate(Requires, "audit.stream"),
   )
+  // Tool runs a client reports, kept as audit events when the organization's policy asks for them.
+  .add(
+    HttpApiEndpoint.post("audit.tools", "/api/v1/orgs/:org/audit/tools", {
+      params: org,
+      payload: Schema.Struct({ runs: Schema.Array(ToolRun).check(Schema.isMaxLength(500)) }),
+      success: Schema.Struct({ accepted: Schema.Finite }),
+      error: failures,
+    }),
+  )
   .add(
     HttpApiEndpoint.post("usage.ingest", "/api/v1/orgs/:org/usage", {
       params: org,
@@ -379,6 +422,62 @@ export const InsightGroup = HttpApiGroup.make("organization.insight")
       success: csv,
       error: failures,
     }).annotate(Requires, "usage.read"),
+  )
+  // Who uses Kilo and how much, interval by interval, and who has access but doesn't use it.
+  .add(
+    HttpApiEndpoint.get("analytics.adoption", "/api/v1/orgs/:org/analytics/adoption", {
+      params: org,
+      query: { interval: Schema.optional(Interval), ...Window },
+      success: Adoption,
+      error: failures,
+    }).annotate(Requires, "usage.read"),
+  )
+  // Groups, sub-organizations or models side by side, against the range of the same length before.
+  .add(
+    HttpApiEndpoint.get("analytics.compare", "/api/v1/orgs/:org/analytics/compare", {
+      params: org,
+      query: { by: CompareBy, ...Window },
+      success: Comparison,
+      error: failures,
+    }).annotate(Requires, "usage.read"),
+  )
+  .add(
+    HttpApiEndpoint.get("reports.list", "/api/v1/orgs/:org/reports", {
+      params: org,
+      success: Schema.Struct({ reports: Schema.Array(Report) }),
+      error: failures,
+    }).annotate(Requires, "usage.read"),
+  )
+  .add(
+    HttpApiEndpoint.post("reports.create", "/api/v1/orgs/:org/reports", {
+      params: org,
+      payload: ReportInput,
+      success: ReportCreated.pipe(HttpApiSchema.status(201)),
+      error: failures,
+    }).annotate(Requires, "report.write"),
+  )
+  .add(
+    HttpApiEndpoint.patch("reports.update", "/api/v1/orgs/:org/reports/:id", {
+      params: { ...org, id: Schema.String },
+      payload: ReportPatch,
+      success: Report,
+      error: failures,
+    }).annotate(Requires, "report.write"),
+  )
+  .add(
+    HttpApiEndpoint.delete("reports.remove", "/api/v1/orgs/:org/reports/:id", {
+      params: { ...org, id: Schema.String },
+      success: HttpApiSchema.NoContent,
+      error: failures,
+    }).annotate(Requires, "report.write"),
+  )
+  // Sends the report for the last complete period now, without moving its schedule.
+  .add(
+    HttpApiEndpoint.post("reports.send", "/api/v1/orgs/:org/reports/:id/send", {
+      params: { ...org, id: Schema.String },
+      success: StreamTest,
+      error: failures,
+    }).annotate(Requires, "report.write"),
   )
   .middleware(OrgScope)
   .middleware(Authorization)
@@ -492,6 +591,37 @@ export const GatewayGroup = HttpApiGroup.make("organization.gateway")
       success: HttpApiSchema.NoContent,
       error: failures,
     }).annotate(Requires, "gateway.write"),
+  )
+  .add(
+    // Lists what the upstream offers, using the stored credentials, so an admin can pick models.
+    HttpApiEndpoint.post("gateway.discover", "/api/v1/orgs/:org/gateway/providers/:id/discover", {
+      params: { ...org, id: Schema.String },
+      success: GatewayDiscovery,
+      error: failures,
+    }).annotate(Requires, "gateway.write"),
+  )
+  .add(
+    HttpApiEndpoint.get("gateway.calls", "/api/v1/orgs/:org/gateway/calls", {
+      params: org,
+      query: {
+        user: Schema.optional(Schema.String),
+        provider: Schema.optional(Schema.String),
+        // Only calls the gateway refused or the upstream failed.
+        failed: Schema.optional(Schema.Literals(["true", "false"])),
+        before: Schema.optional(Schema.NumberFromString),
+        limit: Schema.optional(Schema.NumberFromString),
+        ...Window,
+      },
+      success: GatewayCallPage,
+      error: failures,
+    }).annotate(Requires, "gateway.read"),
+  )
+  .add(
+    HttpApiEndpoint.get("gateway.call", "/api/v1/orgs/:org/gateway/calls/:id", {
+      params: { ...org, id: Schema.NumberFromString },
+      success: GatewayCallDetail,
+      error: failures,
+    }).annotate(Requires, "gateway.read"),
   )
   .middleware(OrgScope)
   .middleware(Authorization)

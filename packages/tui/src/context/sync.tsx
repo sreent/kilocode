@@ -678,6 +678,18 @@ export const {
           void sdk.client.config.get().then((result) => {
             if (result.data) setStore("config", reconcile(result.data))
           })
+          // A config change can add or remove models: an organization policy change does both.
+          void sdk.client.config.providers().then((result) => {
+            if (!result.data) return
+            setStore("provider", reconcile(result.data.providers))
+            setStore("provider_default", reconcile(result.data.default))
+          })
+          void sdk.client.provider.list().then((result) => {
+            if (result.data) setStore("provider_next", reconcile(result.data))
+          })
+          void sdk.client.app.agents().then((result) => {
+            if (result.data) setStore("agent", reconcile(result.data))
+          })
           break
         }
         case "indexing.status":

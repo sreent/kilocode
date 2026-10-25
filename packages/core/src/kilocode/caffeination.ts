@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs"
 import { delimiter, isAbsolute, join } from "node:path"
 import { spawn as nodeSpawn, type ChildProcess, type SpawnOptions } from "node:child_process"
+import { Brand } from "../tucode/brand"
 
 export interface CaffeinationDriver {
   readonly available: boolean
@@ -74,7 +75,7 @@ function args(platform: NodeJS.Platform, pid: number, shell?: string): string[] 
   if (platform === "linux")
     return [
       "--what=sleep",
-      "--who=Kilo Code",
+      `--who=${Brand.name}`,
       "--why=Kilo agent running",
       "--mode=block",
       shell ?? "/bin/sh",

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import type { AudioPlayOptions, AudioSound } from "@opentui/core"
 import { createTuiAttention } from "@opencode-ai/tui/attention"
 import type { TuiConfig } from "@opencode-ai/tui/config"
+import { Brand } from "../../../../src/tucode/brand" // kilocode_change - tucode
 
 type FocusEvent = "focus" | "blur"
 
@@ -161,7 +162,7 @@ describe("createTuiAttention", () => {
       notification: true,
       sound: false,
     })
-    expect(renderer.notifications).toEqual([{ title: "Kilo", message: "focused" }]) // kilocode_change
+    expect(renderer.notifications).toEqual([{ title: Brand.name, message: "focused" }]) // kilocode_change - tucode
   })
 
   test("notification can deliver while focused when requested", async () => {
@@ -176,7 +177,7 @@ describe("createTuiAttention", () => {
       sound: true,
     })
     expect(audio.playCalls).toBe(1)
-    expect(renderer.notifications).toEqual([{ title: "Kilo", message: "hello" }]) // kilocode_change
+    expect(renderer.notifications).toEqual([{ title: Brand.name, message: "hello" }]) // kilocode_change - tucode
   })
 
   test("notifies while blurred", async () => {
@@ -239,7 +240,7 @@ describe("createTuiAttention", () => {
       notification: true,
       sound: true,
     })
-    expect(renderer.notifications).toEqual([{ title: "Kilo", message: "hello again" }]) // kilocode_change
+    expect(renderer.notifications).toEqual([{ title: Brand.name, message: "hello again" }]) // kilocode_change - tucode
   })
 
   test("can disable notification per call while still playing sound", async () => {

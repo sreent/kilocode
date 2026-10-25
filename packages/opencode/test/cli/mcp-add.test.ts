@@ -3,6 +3,7 @@ import { Effect } from "effect"
 import path from "path"
 import { mkdir } from "node:fs/promises" // kilocode_change
 import { cliIt } from "../lib/cli-process"
+import { Brand } from "../../src/tucode/brand" // kilocode_change - tucode
 
 describe("opencode mcp add (non-interactive subprocess)", () => {
   cliIt.concurrent(
@@ -23,7 +24,7 @@ describe("opencode mcp add (non-interactive subprocess)", () => {
         opencode.expectExit(result, 0)
 
         const config = yield* Effect.promise(() =>
-          Bun.file(path.join(home, ".config", "kilo", "kilo.json")).json(), // kilocode_change
+          Bun.file(path.join(home, ".config", Brand.command, "kilo.json")).json(), // kilocode_change - tucode
         )
         expect(config.mcp.github).toEqual({
           type: "remote",
@@ -59,7 +60,7 @@ describe("opencode mcp add (non-interactive subprocess)", () => {
         opencode.expectExit(result, 0)
 
         const config = yield* Effect.promise(() =>
-          Bun.file(path.join(home, ".config", "kilo", "kilo.json")).json(), // kilocode_change
+          Bun.file(path.join(home, ".config", Brand.command, "kilo.json")).json(), // kilocode_change - tucode
         )
         expect(config.mcp.local).toEqual({
           type: "local",
@@ -88,9 +89,11 @@ describe("opencode mcp add (non-interactive subprocess)", () => {
 
         const config = yield* Effect.promise(() => Bun.file(path.join(profile, "kilo.json")).json())
         expect(config.mcp.profile).toEqual({ type: "remote", url: "https://example.com/profile" })
-        expect(yield* Effect.promise(() => Bun.file(path.join(home, ".config", "kilo", "kilo.json")).exists())).toBe(
+        // kilocode_change start - tucode
+        expect(yield* Effect.promise(() => Bun.file(path.join(home, ".config", Brand.command, "kilo.json")).exists())).toBe(
           false,
         )
+        // kilocode_change end
       }),
     60_000,
   )

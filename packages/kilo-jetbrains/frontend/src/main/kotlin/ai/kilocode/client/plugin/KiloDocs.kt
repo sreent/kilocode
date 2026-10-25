@@ -1,11 +1,13 @@
 package ai.kilocode.client.plugin
 
-/** Central place for kilo.ai/docs links so settings pages do not hardcode URLs. */
+import ai.kilocode.Brand
+
+/** Central place for documentation links so settings pages do not hardcode URLs. The pages live in this repository. */
 object KiloDocs {
-    const val BASE = "https://kilo.ai/docs"
-    const val AGENTS = "$BASE/customize/custom-modes"
-    const val MCP = "$BASE/automate/mcp/overview"
-    const val SKILLS = "$BASE/customize/skills"
-    const val COMMANDS = "$BASE/customize/workflows"
-    const val RULES = "$BASE/customize/custom-rules"
+    const val BASE = Brand.DOCS
+    const val AGENTS = "$BASE/customize/custom-modes.md"
+    const val MCP = "$BASE/automate/mcp/overview.md"
+    const val SKILLS = "$BASE/customize/skills.md"
+    const val COMMANDS = "$BASE/customize/workflows.md"
+    const val RULES = "$BASE/customize/custom-rules.md"
 }

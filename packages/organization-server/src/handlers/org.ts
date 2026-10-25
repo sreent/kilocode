@@ -19,13 +19,23 @@ export const OrgHandler = HttpApiBuilder.group(Api, "organization.org", (handler
         "org.get",
         Effect.fn(function* () {
           const scope = yield* Membership
-          return { org: view(scope.org), role: scope.role, inherited: scope.inherited }
+          const seats = yield* store.seats.usage(scope.org.id)
+          return {
+            org: view(scope.org),
+            role: scope.role,
+            inherited: scope.inherited,
+            seats: { limit: seats.limit, used: seats.used },
+          }
         }),
       )
       .handle(
         "org.update",
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
+          if (ctx.payload.seats !== undefined && scope.org.parent)
+            return yield* new InvalidRequestError({
+              message: "seats are set on the parent organization, and cover its sub-organizations",
+            })
           const after = view(yield* store.org.update(scope.org.id, ctx.payload))
           yield* audit("organization.settings_change", scope.org.id, { changed: changed(view(scope.org), after) })
           return { org: after }
@@ -40,7 +50,7 @@ export const OrgHandler = HttpApiBuilder.group(Api, "organization.org", (handler
           const suborgs = yield* Effect.forEach(children, (org) =>
             Effect.all({
               members: store.member.list(org.id),
-              spent: store.usage.spent({ org: org.id, from: month }),
+              spent: store.usage.spent({ orgs: [org.id], from: month }),
             }).pipe(Effect.map((stats) => ({ ...view(org), members: stats.members.length, spent: stats.spent }))),
           )
           return { suborgs }

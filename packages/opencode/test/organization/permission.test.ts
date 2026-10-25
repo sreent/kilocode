@@ -26,9 +26,11 @@ const enrolled = Layer.succeed(
     ready: () => Effect.void,
     refresh: () => Effect.void,
     current: () => Effect.succeed(undefined),
+    follow: () => Effect.void,
     status: () => Effect.die("unused"),
     blocked: () => Effect.succeed(undefined),
     refusal: () => Effect.succeed(undefined),
+    explain: () => Effect.succeed(undefined),
     permission: () => Effect.succeed(org),
     instructions: () => Effect.succeed(undefined),
     overlay: () => Effect.void,
@@ -53,6 +55,11 @@ const enrolled = Layer.succeed(
       flush: () => Effect.succeed(true),
       start: () => Effect.void,
       stop: () => Effect.void,
+    },
+    tools: {
+      push: () => Effect.void,
+      pending: () => Effect.succeed(0),
+      flush: () => Effect.succeed(true),
     },
   }),
 )

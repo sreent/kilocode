@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayInputStream
@@ -49,8 +50,8 @@ class KiloRepoCliTest {
 
         assertTrue(cli.isFile)
         assertEquals("current", cli.readText())
-        assertFalse(File(dir, "$other/bin/kilo.exe").exists())
-        assertFalse(File(dir, "$other/bin/kilo").exists())
+        assertFalse(File(dir, "$other/bin/${Brand.COMMAND}.exe").exists())
+        assertFalse(File(dir, "$other/bin/${Brand.COMMAND}").exists())
     }
 
     @Test
@@ -106,7 +107,7 @@ class KiloRepoCliTest {
             zip.putNextEntry(ZipEntry("$platform/bin/${KiloCliPlatform.exe()}"))
             zip.write("current".toByteArray())
             zip.closeEntry()
-            zip.putNextEntry(ZipEntry("$other/bin/kilo.exe"))
+            zip.putNextEntry(ZipEntry("$other/bin/${Brand.COMMAND}.exe"))
             zip.write("other".toByteArray())
             zip.closeEntry()
         }

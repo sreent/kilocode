@@ -3,6 +3,7 @@ import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
 import { isInsideWorktree, plansDir, readDocument } from "../../src/documents/document-reader"
+import { Brand } from "../../src/brand"
 
 function workspace() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "kilo-document-"))
@@ -75,7 +76,7 @@ describe("readDocument", () => {
 describe("plansDir", () => {
   it("honors XDG_DATA_HOME", () => {
     withDataHome(() => {
-      expect(plansDir()).toEqual(path.join(process.env.XDG_DATA_HOME!, "kilo", "plans"))
+      expect(plansDir()).toEqual(path.join(process.env.XDG_DATA_HOME!, Brand.command, "plans"))
     })
   })
 
@@ -83,7 +84,7 @@ describe("plansDir", () => {
     const previous = process.env.XDG_DATA_HOME
     delete process.env.XDG_DATA_HOME
     try {
-      expect(plansDir()).toEqual(path.join(os.homedir(), ".local", "share", "kilo", "plans"))
+      expect(plansDir()).toEqual(path.join(os.homedir(), ".local", "share", Brand.command, "plans"))
     } finally {
       if (previous !== undefined) process.env.XDG_DATA_HOME = previous
     }

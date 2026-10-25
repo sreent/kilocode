@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { plain, session, supports, tui } from "../../src/kilocode/cli/logo"
 
-describe("kilocode logo", () => {
+describe("tucode logo", () => {
   test("allows remote terminals", () => {
     expect(supports({ SSH_TTY: "/dev/pts/0" }, "linux")).toBe(true)
     expect(supports({ SSH_CLIENT: "127.0.0.1 12345 22" }, "linux")).toBe(true)
@@ -26,15 +26,22 @@ describe("kilocode logo", () => {
     expect(supports({ KILO_UNICODE_LOGO: "0" }, "linux")).toBe(false)
   })
 
-  test("uses modern and fallback logo variants", () => {
-    expect(tui({ KILO_UNICODE_LOGO: "1" }, "linux").join("\n")).toContain("🬺🬏")
-    expect(tui({}, "win32").join("\n")).not.toContain("🬺🬏")
-    expect(plain({}, "win32").join("\n")).not.toContain("🬁🬬")
+  test("draws the tucode wordmark in blocks on every terminal", () => {
+    expect(tui({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(tui({}, "win32"))
+    expect(plain({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(plain({}, "win32"))
+    expect(plain().join("\n")).toMatch(/^[█▀ \n]+$/)
+    // The TUI wordmark is the same letters with shadows under them, and a row for the last shadows.
+    expect(
+      tui()
+        .slice(0, -1)
+        .map((row) => row.replaceAll("~", " ").replaceAll("^", "▀")),
+    ).toEqual(plain())
+    expect(tui().at(-1)).toMatch(/^[~ ]+$/)
   })
 
   test("formats child session exit logo", () => {
     const out = session("Title", "ses_test", "<dim>", "<reset>", {}, "win32")
     expect(out).toContain("<dim>Title<reset>")
-    expect(out).not.toContain("🬺🬏")
+    expect(out).toContain("<dim>tucode -s ses_test<reset>")
   })
 })

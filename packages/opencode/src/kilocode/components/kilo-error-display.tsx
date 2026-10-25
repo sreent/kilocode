@@ -3,6 +3,7 @@ import { SplitBorder } from "@tui/ui/border"
 import { useTheme } from "@tui/context/theme"
 import { parseKiloErrorCode, kiloErrorTitle, kiloErrorDescription } from "@/kilocode/kilo-errors"
 import type { AssistantMessage } from "@kilocode/sdk/v2"
+import { Brand } from "@/tucode/brand"
 
 interface KiloErrorBlockProps {
   error: NonNullable<AssistantMessage["error"]>
@@ -41,7 +42,7 @@ export function KiloErrorBlock(props: KiloErrorBlockProps) {
         >
           <text fg={theme.text}>{title()}</text>
           <text fg={theme.textMuted}>{description()}</text>
-          <text fg={theme.primary}>{"Run /connect or `kilo auth login` to connect to Kilo Gateway"}</text>
+          <text fg={theme.primary}>{`Run /connect or \`${Brand.command} auth login\` to connect a provider`}</text>
         </box>
       </Match>
     </Switch>

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { AccountTransportError } from "../../src/account/schema"
 import { FormatError } from "../../src/cli/error"
 import { UI } from "../../src/cli/ui"
+import { Brand } from "../../src/tucode/brand" // kilocode_change - tucode
 
 describe("cli.error", () => {
   test("formats legacy and tagged config errors the same way", () => {
@@ -73,7 +74,7 @@ describe("cli.error", () => {
     const expected = [
       "Model not found: anthropic/claude-sonet-4",
       "Did you mean: claude-sonnet-4",
-      "Try: `kilo models` to list available models",
+      `Try: \`${Brand.command} models\` to list available models`, // kilocode_change - tucode
       "Or check your kilo.json provider/model names", // kilocode_change
     ].join("\n")
 

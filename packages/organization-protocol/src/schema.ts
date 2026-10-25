@@ -6,6 +6,7 @@ import { Effect, Schema } from "effect"
 const Text = Schema.String.check(Schema.isMinLength(1))
 const Count = Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0))
 const Whole = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))
+const Positive = Schema.Int.check(Schema.isGreaterThan(0))
 const Time = Schema.Finite
 const list = <S extends Schema.Top>(item: S) => Schema.Array(item).pipe(Schema.withDecodingDefault(Effect.succeed([])))
 
@@ -22,6 +23,9 @@ export const Org = Schema.Struct({
   slug: Schema.String,
   parent: Schema.NullOr(Schema.String),
   settings: Schema.Record(Schema.String, Schema.Unknown),
+  // How many people may hold a seat across this organization and its sub-organizations; set on
+  // top-level organizations only. Null means unlimited.
+  seats: Schema.NullOr(Count).pipe(Schema.withDecodingDefault(Effect.succeed(null))),
   created: Time,
 })
 export type Org = typeof Org.Type
@@ -123,6 +127,52 @@ export const RemoteServer = Schema.StructWithRest(
 export const Server = Schema.Union([LocalServer, RemoteServer])
 export type Server = typeof Server.Type
 
+// A provider id as clients know it ("anthropic", "openrouter"), and as the gateway routes it.
+export const ProviderID = Schema.String.check(
+  Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
+)
+
+// ---- data policy --------------------------------------------------------------------------
+
+// Where a provider processes data: a coarse geography such as "us", "eu" or "uk".
+export const Region = Schema.String.check(
+  Schema.isPattern(/^[a-z][a-z0-9-]{1,31}$/, { message: "must be a region code like us or eu" }),
+)
+
+// What a provider does with the organization's data under the organization's agreement with it.
+// Admins record these from the provider's terms; the data policy admits providers by them.
+export const DataTerms = Schema.Struct({
+  // Whether the provider may train models on prompts and completions.
+  training: Schema.Boolean,
+  // Days it keeps prompts and completions; 0 is zero data retention.
+  retention: Whole.check(Schema.isLessThanOrEqualTo(36_500)),
+  // Where it processes them. Empty when that isn't known, which no region filter admits.
+  regions: list(Region),
+  // An OpenRouter-compatible API that sends each request on to one of many companies. Requests carry
+  // the policy's training and retention filters as routing preferences, so only endpoints that meet
+  // them serve the request.
+  routing: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  note: Schema.optional(Schema.String.check(Schema.isMaxLength(500))),
+})
+export type DataTerms = typeof DataTerms.Type
+
+export const DataPolicy = Schema.Struct({
+  // "denied" admits only providers that don't train models on the organization's data.
+  training: Schema.Literals(["allowed", "denied"]).pipe(Schema.withDecodingDefault(Effect.succeed("allowed" as const))),
+  // "zero" admits only providers that keep nothing once they've answered.
+  retention: Schema.Literals(["any", "zero"]).pipe(Schema.withDecodingDefault(Effect.succeed("any" as const))),
+  // Admits only providers that process data in these regions; empty admits any region.
+  regions: list(Region),
+  // Each provider's terms, by its id. While any filter is on, a provider without terms is refused.
+  providers: Schema.Record(ProviderID, DataTerms).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+})
+export type DataPolicy = typeof DataPolicy.Type
+
+// What clients send to the audit log about the tools the agent runs: nothing, which tool ran on
+// what (a file, a site, a program) and how it went, or that and the tool's input too.
+export const ToolAudit = Schema.Literals(["off", "summary", "inputs"])
+export type ToolAudit = typeof ToolAudit.Type
+
 export const Policy = Schema.Struct({
   models: Schema.Struct({
     // Org-wide ceiling. A bare provider id ("openai") blocks all of its models; anything with a
@@ -154,6 +204,27 @@ export const Policy = Schema.Struct({
   gateway: Schema.Struct({
     // Only providers routed through the gateway may be used; clients refuse every other provider.
     exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+    // Per member and minute, across replicas. Unset means unlimited.
+    limits: Schema.Struct({
+      requests: Schema.optional(Positive),
+      // Input and output tokens, cache and reasoning included.
+      tokens: Schema.optional(Positive),
+    }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+    // Every call is logged with who made it, the model, the outcome, tokens and cost. With
+    // `bodies`, what was sent and received is kept too, so prompts become readable to admins.
+    log: Schema.Struct({
+      bodies: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+      // Days the log is kept.
+      retention: Whole.check(Schema.isBetween({ minimum: 1, maximum: 3650 })).pipe(
+        Schema.withDecodingDefault(Effect.succeed(30)),
+      ),
+    }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  // Which providers may see the organization's data, judged by the terms recorded for each.
+  data: DataPolicy.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  audit: Schema.Struct({
+    // Tool runs clients add to the audit log, and so to audit streams. Off unless an org opts in.
+    tools: ToolAudit.pipe(Schema.withDecodingDefault(Effect.succeed("off" as const))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Policy = typeof Policy.Type
@@ -197,18 +268,46 @@ export const GroupName = Schema.Struct({ id: Schema.String, name: Schema.String 
 
 // ---- budgets, usage, audit ----------------------------------------------------------------
 
-export const BudgetScope = Schema.Literals(["org", "member", "user"])
+// "org" caps everyone's spend, sub-organizations' included; "member" is each person's default cap
+// and "user" one person's own; "group" caps a group's combined spend; "suborg" is the allowance a
+// parent organization gives one of its sub-organizations, which that sub-organization can't change.
+export const BudgetScope = Schema.Literals(["org", "member", "user", "group", "suborg"])
+export type BudgetScope = typeof BudgetScope.Type
 export const Period = Schema.Literals(["day", "month"])
 
 export const Budget = Schema.Struct({
   scope: BudgetScope,
+  // The person for "user", the group for "group", the sub-organization for "suborg"; empty otherwise.
   target: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
   period: Period,
   amount: Count.check(Schema.isLessThanOrEqualTo(10_000_000)),
 })
+export type Budget = typeof Budget.Type
 
-export const BudgetStatus = Schema.Struct({ scope: BudgetScope, period: Period, amount: Count, spent: Count })
+// A budget and what its period has spent against it: everyone's spend it covers, or null for
+// "member", where each person has their own. Budgets a parent organization sets come with its name.
+export const BudgetSpend = Schema.Struct({
+  ...Budget.fields,
+  spent: Schema.NullOr(Count),
+  from: Schema.NullOr(Schema.String),
+})
+export type BudgetSpend = typeof BudgetSpend.Type
+
+// A budget that binds one person, as clients show it. Shared budgets ("org": the organization's,
+// a parent organization's, a sub-organization allowance or a group's) carry the name of what they
+// cover when it isn't the person's own organization; "member" and "user" are the person's own.
+export const BudgetStatus = Schema.Struct({
+  scope: Schema.Literals(["org", "member", "user"]),
+  period: Period,
+  amount: Count,
+  spent: Count,
+  name: Schema.optional(Schema.String),
+})
 export type BudgetStatus = typeof BudgetStatus.Type
+
+// Seats are people with an active membership in an organization or its sub-organizations, and
+// the limit is the top-level organization's. Null means unlimited.
+export const Seats = Schema.Struct({ limit: Schema.NullOr(Count), used: Count })
 
 export const UsageRecord = Schema.Struct({
   id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
@@ -229,6 +328,26 @@ export const UsageRecord = Schema.Struct({
   cost: Count.check(Schema.isLessThanOrEqualTo(1_000_000)).pipe(Schema.withDecodingDefault(Effect.succeed(0))),
 })
 export type UsageRecord = typeof UsageRecord.Type
+
+// One tool the agent ran, as a client reports it to the audit log.
+export const ToolRun = Schema.Struct({
+  // The tool call's id; the server ignores one it already has, so clients can resend.
+  id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  // When it started.
+  at: Whole,
+  session: Schema.optional(Schema.String.check(Schema.isMaxLength(200))),
+  project: Schema.optional(Schema.String.check(Schema.isMaxLength(500))),
+  tool: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  outcome: Schema.Literals(["completed", "error"]),
+  // Milliseconds it ran.
+  duration: Whole.pipe(Schema.withDecodingDefault(Effect.succeed(0))),
+  // What it acted on: a file, a site, a program.
+  subject: Schema.optional(Schema.String.check(Schema.isMaxLength(1000))),
+  // Its input as JSON, when the organization keeps inputs.
+  input: Schema.optional(Schema.String.check(Schema.isMaxLength(4000))),
+  error: Schema.optional(Schema.String.check(Schema.isMaxLength(1000))),
+})
+export type ToolRun = typeof ToolRun.Type
 
 // "source" separates usage the gateway metered from usage that clients reported.
 export const UsageBy = Schema.Literals(["user", "model", "provider", "day", "project", "source"])
@@ -262,12 +381,13 @@ export const AuditEvent = Schema.Struct({
 
 export const AuditPage = Schema.Struct({ events: Schema.Array(AuditEvent), next: Schema.NullOr(Schema.Finite) })
 
-// Destinations that receive every new audit event: a SIEM's HTTPS collector, or a syslog server.
-export const StreamKind = Schema.Literals(["webhook", "syslog"])
+// Destinations that receive every new audit event: a SIEM's HTTPS collector, a syslog server, or an
+// OpenTelemetry logs endpoint (OTLP over HTTP, JSON).
+export const StreamKind = Schema.Literals(["webhook", "syslog", "otlp"])
 export type StreamKind = typeof StreamKind.Type
 
-// Header names a webhook may set itself (an authorization header for the collector, say); the
-// signature and delivery headers are always the server's.
+// Header names a webhook or OTLP stream may set itself (an authorization header for the collector,
+// say); the signature and delivery headers are always the server's.
 const HeaderName = Schema.String.check(
   Schema.isPattern(/^(?!x-org-)[a-z0-9][a-z0-9-]{0,63}$/i, { message: "must be a header name" }),
 )
@@ -291,6 +411,11 @@ export const StreamTarget = Schema.Union([
     port: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 65535 })),
     tls: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
   }),
+  // The logs endpoint itself, such as https://collector.example.com:4318/v1/logs.
+  Schema.Struct({
+    kind: Schema.Literal("otlp"),
+    url: Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/, { message: "must be an http(s) URL" })),
+  }),
 ])
 export type StreamTarget = typeof StreamTarget.Type
 
@@ -298,7 +423,7 @@ export const AuditStream = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   target: StreamTarget,
-  // Names of the extra headers a webhook sends; their values are write-only.
+  // Names of the extra headers a webhook or OTLP stream sends; their values are write-only.
   headers: Schema.Array(Schema.String),
   enabled: Schema.Boolean,
   // Events not yet delivered.
@@ -340,6 +465,115 @@ export function instant(value: string | undefined, fallback: number) {
   if (!value) return fallback
   return /^\d+$/.test(value) ? Number(value) : Date.parse(value)
 }
+
+// ---- analytics ------------------------------------------------------------------------------
+
+// Days, weeks starting on Monday, and months, all in UTC.
+export const Interval = Schema.Literals(["day", "week", "month"])
+export type Interval = typeof Interval.Type
+
+export const ActivityPoint = Schema.Struct({
+  start: Time,
+  // People who made a request in the interval, and those whose first request ever was in it.
+  active: Count,
+  new: Count,
+  sessions: Count,
+  requests: Count,
+  cost: Count,
+})
+
+export const Adoption = Schema.Struct({
+  from: Time,
+  to: Time,
+  interval: Interval,
+  // Members with an active membership now, and the seats they hold.
+  members: Count,
+  seats: Seats,
+  // People who made a request in the range, and what they did.
+  active: Count,
+  new: Count,
+  sessions: Count,
+  requests: Count,
+  cost: Count,
+  series: Schema.Array(ActivityPoint),
+  // Members who made no request in the range, and when they last made one; null for never.
+  idle: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      email: Schema.String,
+      name: Schema.NullOr(Schema.String),
+      last: Schema.NullOr(Time),
+    }),
+  ),
+})
+
+// What a comparison sets side by side: the org's groups, the org and its sub-organizations, or models.
+export const CompareBy = Schema.Literals(["group", "suborg", "model"])
+export type CompareBy = typeof CompareBy.Type
+
+export const Activity = Schema.Struct({ active: Count, requests: Count, cost: Count, tokens: Count })
+export type Activity = typeof Activity.Type
+
+export const Comparison = Schema.Struct({
+  by: CompareBy,
+  from: Time,
+  to: Time,
+  // The range of the same length just before, to compare with.
+  previous: Schema.Struct({ from: Time, to: Time }),
+  rows: Schema.Array(
+    Schema.Struct({
+      key: Schema.String,
+      // The group or organization; null for a model.
+      id: Schema.NullOr(Schema.String),
+      // The people it covers now; null for a model.
+      members: Schema.NullOr(Count),
+      current: Activity,
+      previous: Activity,
+    }),
+  ),
+})
+
+// Summaries of an organization's AI use posted to a webhook after each week (Monday to Sunday) or
+// month, in UTC. "text" posts { "text": ... }, which Slack, Mattermost and Google Chat incoming
+// webhooks show as a message; "json" posts the whole summary.
+export const ReportCadence = Schema.Literals(["weekly", "monthly"])
+export const ReportFormat = Schema.Literals(["text", "json"])
+
+const ReportName = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100))
+const WebhookUrl = Schema.String.check(Schema.isPattern(/^https?:\/\/\S+$/, { message: "must be an http(s) URL" }))
+
+export const Report = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  cadence: ReportCadence,
+  format: ReportFormat,
+  url: Schema.String,
+  enabled: Schema.Boolean,
+  // When the next one is due, the last one went out, and why the last attempt failed, if it did.
+  next: Time,
+  sent: Schema.NullOr(Time),
+  error: Schema.NullOr(Schema.String),
+  created: Time,
+})
+
+export const ReportInput = Schema.Struct({
+  name: ReportName,
+  cadence: ReportCadence,
+  format: ReportFormat.pipe(Schema.withDecodingDefault(Effect.succeed("text" as const))),
+  url: WebhookUrl,
+  enabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+})
+
+export const ReportPatch = Schema.Struct({
+  name: Schema.optional(ReportName),
+  cadence: Schema.optional(ReportCadence),
+  format: Schema.optional(ReportFormat),
+  url: Schema.optional(WebhookUrl),
+  enabled: Schema.optional(Schema.Boolean),
+})
+
+// A new report's signing secret, shown once: deliveries carry x-org-signature like audit streams.
+export const ReportCreated = Schema.Struct({ report: Report, secret: Schema.String })
 
 // ---- identity: SSO, domains, SCIM tokens --------------------------------------------------
 
@@ -417,23 +651,104 @@ export const Suborg = Schema.Struct({ ...Org.fields, members: Count, spent: Coun
 
 // ---- LLM gateway --------------------------------------------------------------------------
 
-// The API an upstream speaks. It decides which endpoints the gateway forwards and how it reads
-// token usage from responses.
-export const GatewayKind = Schema.Literals(["anthropic", "openai", "openai-compatible"])
+// What a provider's upstream is. anthropic, openai and openai-compatible upstreams get requests as
+// clients send them; LiteLLM, vLLM, Azure OpenAI and other gateways are among them. bedrock and
+// vertex serve Claude: clients send Anthropic Messages requests, and the gateway turns them into
+// Amazon Bedrock or Google Vertex AI calls.
+export const GatewayKind = Schema.Literals(["anthropic", "openai", "openai-compatible", "bedrock", "vertex"])
 export type GatewayKind = typeof GatewayKind.Type
 
-// A client provider id ("anthropic", "openrouter"): clients send that provider's requests here.
-export const ProviderID = Schema.String.check(
-  Schema.isPattern(/^[a-z0-9][a-z0-9._-]{0,63}$/, { message: "must be a provider id like anthropic or openrouter" }),
+// The API clients speak to the gateway for a provider.
+export const GatewayApi = Schema.Literals(["anthropic", "openai", "openai-compatible"])
+export type GatewayApi = typeof GatewayApi.Type
+
+export const gatewayApi = (kind: GatewayKind): GatewayApi =>
+  kind === "bedrock" || kind === "vertex" ? "anthropic" : kind
+
+// A header the gateway may add to upstream requests. Framing and connection headers belong to the
+// HTTP client.
+const UpstreamHeader = Schema.String.check(
+  Schema.isPattern(
+    /^(?!(host|content-length|content-encoding|transfer-encoding|connection|keep-alive|upgrade|te|trailer|proxy-[a-z0-9-]*)$)[a-z0-9][a-z0-9-]{0,63}$/i,
+    { message: "must be a header name, other than a framing or connection header" },
+  ),
 )
+
+// How the gateway signs in to the upstream. The secret part, an API key, an AWS secret access key
+// or a Google service account's JSON key, is write-only and stored sealed.
+export const GatewayAuth = Schema.Union([
+  // Authorization: Bearer <key>: OpenAI and the servers compatible with it, and Bedrock API keys.
+  Schema.Struct({ type: Schema.Literal("bearer") }),
+  // The key in a header of its own: x-api-key for Anthropic, api-key for Azure OpenAI.
+  Schema.Struct({ type: Schema.Literal("header"), name: UpstreamHeader }),
+  // No credential, for an upstream on a private network that trusts this server.
+  Schema.Struct({ type: Schema.Literal("none") }),
+  // AWS Signature Version 4 with an IAM access key; the secret is its secret access key.
+  Schema.Struct({
+    type: Schema.Literal("aws"),
+    region: Schema.String.check(
+      Schema.isPattern(/^[a-z]{2}(-[a-z]+)+-[0-9]$/, { message: "must be an AWS region like us-east-1" }),
+    ),
+    access_key: Schema.String.check(
+      Schema.isPattern(/^[A-Z0-9]{16,128}$/, { message: "must be an AWS access key id" }),
+    ),
+  }),
+  // A Google Cloud service account; the secret is its JSON key.
+  Schema.Struct({ type: Schema.Literal("google") }),
+])
+export type GatewayAuth = typeof GatewayAuth.Type
+
+// What an upstream expects when an admin doesn't say.
+export const defaultAuth = (kind: GatewayKind): GatewayAuth =>
+  kind === "anthropic"
+    ? { type: "header", name: "x-api-key" }
+    : kind === "vertex"
+      ? { type: "google" }
+      : { type: "bearer" }
+
+// Prices per million tokens.
+export const Rates = Schema.Struct({
+  input: Count,
+  output: Count,
+  cache_read: Schema.optional(Count),
+  cache_write: Schema.optional(Count),
+})
+export type Rates = typeof Rates.Type
+
+// A model of a provider clients don't know, such as LiteLLM's aliases or Bedrock's model ids.
+// Clients list these, and the gateway prices calls with `cost`.
+export const GatewayModel = Schema.Struct({
+  id: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  name: Schema.optional(Schema.String.check(Schema.isMaxLength(200))),
+  // Context window and longest output, in tokens.
+  context: Schema.optional(Positive),
+  output: Schema.optional(Positive),
+  reasoning: Schema.optional(Schema.Boolean),
+  // Whether it reads images and PDFs.
+  attachments: Schema.optional(Schema.Boolean),
+  cost: Schema.optional(Rates),
+})
+export type GatewayModel = typeof GatewayModel.Type
 
 export const GatewayProvider = Schema.Struct({
   id: Schema.String,
   kind: GatewayKind,
-  // Upstream base URL, including the API version path (https://api.anthropic.com/v1).
+  // Upstream base URL, including the API version path (https://api.anthropic.com/v1). For bedrock,
+  // the runtime endpoint (https://bedrock-runtime.us-east-1.amazonaws.com); for vertex, the project
+  // and location (https://us-east5-aiplatform.googleapis.com/v1/projects/p/locations/us-east5).
   base: Schema.String,
-  // The key's last characters, so admins can tell keys apart. The key itself is write-only.
+  auth: GatewayAuth,
+  // Tells credentials apart without revealing them: a key's last characters, an AWS access key id's,
+  // a service account's email. The secret itself is write-only.
   hint: Schema.String,
+  // Names of the extra headers sent upstream, such as a gateway's own key. Values are write-only.
+  headers: Schema.Array(Schema.String),
+  // Extra query parameters sent upstream, such as Azure's api-version.
+  query: Schema.Record(Schema.String, Schema.String),
+  // The name and models clients show for a provider they don't know. Empty for providers they do
+  // (anthropic, openai, openrouter), whose models come from the models.dev catalog.
+  name: Schema.NullOr(Schema.String),
+  models: Schema.Array(GatewayModel),
   created: Time,
   updated: Time,
 })
@@ -441,8 +756,22 @@ export const GatewayProvider = Schema.Struct({
 export const GatewayProviderInput = Schema.Struct({
   kind: GatewayKind,
   base: Schema.String.check(Schema.isPattern(/^https?:\/\/[^\s?#]+$/, { message: "must be an http(s) URL" })),
-  // Required for a new provider; omit it to keep the current key.
-  key: Schema.optional(Text.check(Schema.isMaxLength(4096))),
+  // Defaults to what the upstream kind expects: x-api-key for anthropic, a service account for
+  // vertex, a bearer key otherwise.
+  auth: Schema.optional(GatewayAuth),
+  // The secret `auth` uses. Required for a new provider and whenever the credential changes; omit
+  // it to keep the current one.
+  key: Schema.optional(Text.check(Schema.isMaxLength(16_384))),
+  // Replaces every extra header when given; omit it to keep them.
+  headers: Schema.optional(Schema.Record(UpstreamHeader, Schema.String.check(Schema.isMaxLength(4096)))),
+  query: Schema.Record(
+    Schema.String.check(Schema.isPattern(/^[A-Za-z0-9._~-]{1,64}$/, { message: "must be a query parameter name" })),
+    Schema.String.check(Schema.isMaxLength(1024)),
+  ).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  name: Schema.optional(Schema.NullOr(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(100)))),
+  models: Schema.Array(GatewayModel)
+    .check(Schema.isMaxLength(1000))
+    .pipe(Schema.withDecodingDefault(Effect.succeed([]))),
 })
 
 export const Gateway = Schema.Struct({
@@ -451,8 +780,73 @@ export const Gateway = Schema.Struct({
   providers: Schema.Array(GatewayProvider),
 })
 
-// What a client needs to route a provider through the gateway.
-export const GatewayRoute = Schema.Struct({ id: Schema.String, kind: GatewayKind })
+// Models an upstream lists, for an admin to pick from.
+export const GatewayDiscovery = Schema.Struct({
+  models: Schema.Array(Schema.Struct({ id: Schema.String, name: Schema.optional(Schema.String) })),
+})
+
+// What a client needs to route a provider through the gateway. `name` and `models` are set for
+// providers clients don't know.
+export const GatewayRoute = Schema.Struct({
+  id: Schema.String,
+  kind: GatewayApi,
+  name: Schema.optional(Schema.String),
+  models: Schema.optional(Schema.Array(GatewayModel)),
+})
+
+// One call through the gateway, refused or relayed.
+export const GatewayCall = Schema.Struct({
+  id: Schema.Finite,
+  at: Time,
+  user: Schema.NullOr(Schema.Struct({ id: Schema.String, email: Schema.String })),
+  provider: Schema.String,
+  model: Schema.NullOr(Schema.String),
+  method: Schema.String,
+  path: Schema.String,
+  status: Schema.Int,
+  // Why the gateway refused or failed the call: model_not_allowed, budget_exceeded, rate_limited,
+  // upstream_unreachable and so on. Null when the upstream answered.
+  code: Schema.NullOr(Schema.String),
+  // Milliseconds until the response ended.
+  latency: Count,
+  tokens: Schema.Struct({ input: Count, output: Count, reasoning: Count, read: Count, write: Count }),
+  cost: Count,
+  session: Schema.NullOr(Schema.String),
+  project: Schema.NullOr(Schema.String),
+  ip: Schema.NullOr(Schema.String),
+  // Whether what was sent and received was kept.
+  bodies: Schema.Boolean,
+})
+export type GatewayCall = typeof GatewayCall.Type
+
+export const GatewayCallPage = Schema.Struct({ calls: Schema.Array(GatewayCall), next: Schema.NullOr(Schema.Finite) })
+
+export const GatewayCallDetail = Schema.Struct({
+  ...GatewayCall.fields,
+  request: Schema.NullOr(Schema.String),
+  response: Schema.NullOr(Schema.String),
+})
+
+// ---- prices -------------------------------------------------------------------------------
+
+// The organization's own rates for a provider's models, replacing the catalog's: negotiated
+// prices, or prices for models the catalog doesn't have. They apply to gateway-metered and
+// client-reported usage alike.
+export const Price = Schema.Struct({
+  provider: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
+  // A model id, or "*" for every model of the provider.
+  model: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(300)),
+  // Either rates per million tokens, or a percentage off the catalog's rates.
+  rates: Schema.optional(Rates),
+  discount: Schema.optional(Count.check(Schema.isLessThanOrEqualTo(100))),
+}).check(
+  Schema.makeFilter((price) => (price.rates === undefined) !== (price.discount === undefined), {
+    message: "must set either rates or a discount",
+  }),
+)
+export type Price = typeof Price.Type
+
+export const Prices = Schema.Struct({ prices: Schema.Array(Price).check(Schema.isMaxLength(2000)) })
 
 // ---- device login (RFC 8628) --------------------------------------------------------------
 
@@ -498,6 +892,21 @@ export const Effective = Schema.Struct({
   gateway: Schema.Struct({
     exclusive: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
     providers: list(GatewayRoute),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  // The data policy as clients apply it.
+  data: Schema.Struct({
+    training: DataPolicy.fields.training,
+    retention: DataPolicy.fields.retention,
+    regions: list(Schema.String),
+    // The only providers that meet it; null while it has no filters.
+    providers: Schema.NullOr(Schema.Array(Schema.String)).pipe(Schema.withDecodingDefault(Effect.succeed(null))),
+    // Why providers whose terms are on record fall short of it.
+    reasons: Schema.Record(Schema.String, Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+    // Providers whose requests carry its filters as OpenRouter routing preferences.
+    routing: list(Schema.String),
+  }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
+  audit: Schema.Struct({
+    tools: ToolAudit.pipe(Schema.withDecodingDefault(Effect.succeed("off" as const))),
   }).pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 })
 export type Effective = typeof Effective.Type

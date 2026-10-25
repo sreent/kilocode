@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { copyFile, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import { dirname, join } from "path"
+import { Brand } from "../../src/tucode/brand"
 
 const source = join(import.meta.dir, "..", "..", "bin", "kilo")
 const helper = join(import.meta.dir, "..", "..", "bin", "kilocode", "windows-avx2.cjs")
@@ -33,12 +34,12 @@ type Output = {
 
 async function fixture() {
   const root = await realpath(await mkdtemp(join(tmpdir(), "kilo-bin-startup-")))
-  const pkg = join(root, "node_modules", "@kilocode", "cli")
+  const pkg = join(root, "node_modules", Brand.npm.cli)
   const wrapper = join(pkg, "bin", "kilo")
   const helperTarget = join(pkg, "bin", "kilocode", "windows-avx2.cjs")
   const cached = join(pkg, "bin", ".kilo")
-  const optimized = join(pkg, "node_modules", "@kilocode", "cli-windows-x64", "bin", "kilo.exe")
-  const baseline = join(pkg, "node_modules", "@kilocode", "cli-windows-x64-baseline", "bin", "kilo.exe")
+  const optimized = join(pkg, "node_modules", `${Brand.npm.cli}-windows-x64`, "bin", `${Brand.command}.exe`)
+  const baseline = join(pkg, "node_modules", `${Brand.npm.cli}-windows-x64-baseline`, "bin", `${Brand.command}.exe`)
   const home = join(root, "home")
   const cache = join(root, "cache")
   const file = join(cache, "kilo", "bin", "windows-avx2.json")
@@ -55,7 +56,10 @@ async function fixture() {
   await copyFile(source, wrapper)
   await mkdir(dirname(helperTarget), { recursive: true })
   await copyFile(helper, helperTarget)
-  await writeFile(join(pkg, "package.json"), JSON.stringify({ name: "@kilocode/cli", type: "commonjs" }))
+  await writeFile(
+    join(pkg, "package.json"),
+    JSON.stringify({ name: Brand.npm.cli, bin: { [Brand.command]: "./bin/kilo" }, type: "commonjs" }),
+  )
   await writeFile(
     preload,
     `const os = require("node:os")
@@ -250,7 +254,7 @@ describe("npm launcher startup", () => {
     await using item = await fixture()
     await rm(item.optimized)
     await rm(item.baseline)
-    const pkg = join(item.root, "node_modules", "@kilocode", "cli")
+    const pkg = join(item.root, "node_modules", Brand.npm.cli)
     const wrapper = join(pkg, "bin", "kilo")
     const preload = join(item.root, "preload.cjs")
     
@@ -264,7 +268,7 @@ describe("npm launcher startup", () => {
     })
     const stderr = proc.stderr.toString()
     expect(proc.exitCode).toBe(1)
-    expect(stderr).toContain("The Kilo CLI native binary for Windows ARM64 could not be found.")
+    expect(stderr).toContain(`The ${Brand.npm.cli} native binary for Windows ARM64 could not be found.`)
     expect(stderr).toContain("GitHub Releases page to run under Windows 11 emulation")
   })
 // kilocode_change end

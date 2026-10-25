@@ -48,6 +48,50 @@ describe("model access resolution", () => {
   })
 })
 
+describe("data policy resolution", () => {
+  const providers = {
+    anthropic: { training: false, retention: 0, regions: ["eu"] },
+    openai: { training: false, retention: 30, regions: ["us"] },
+    openrouter: { training: false, retention: 0, regions: ["eu"], routing: true },
+    together: { training: true, retention: 0, regions: ["eu"], routing: true },
+  }
+
+  test("without filters every provider stays open and nothing is routed", () => {
+    expect(base({ policy: Policy.parse({ data: { providers } }) }).data).toEqual({
+      training: "allowed",
+      retention: "any",
+      regions: [],
+      providers: null,
+      reasons: {},
+      routing: [],
+    })
+  })
+
+  test("with filters only providers whose terms meet them are admitted, and routed ones carry them", () => {
+    const policy = Policy.parse({ data: { training: "denied", retention: "zero", regions: ["eu"], providers } })
+    expect(base({ policy }).data).toEqual({
+      training: "denied",
+      retention: "zero",
+      regions: ["eu"],
+      providers: ["anthropic", "openrouter"],
+      reasons: {
+        openai: "it keeps data for 30 days; it processes data in us",
+        together: "it may train models on your data",
+      },
+      routing: ["openrouter"],
+    })
+  })
+
+  test("a region filter refuses providers whose regions aren't on record", () => {
+    const policy = Policy.parse({
+      data: { regions: ["eu"], providers: { mistral: { training: false, retention: 30 } } },
+    })
+    const data = base({ policy }).data
+    expect(data.providers).toEqual([])
+    expect(data.reasons).toEqual({ mistral: "where it processes data isn't on record" })
+  })
+})
+
 describe("mcp resolution", () => {
   test("open mode allows anything not blocked", () => {
     const policy = Policy.parse({ mcp: { block: ["npx -y evil-*"] } })

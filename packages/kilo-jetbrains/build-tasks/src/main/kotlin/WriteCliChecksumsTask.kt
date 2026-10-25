@@ -19,7 +19,8 @@ abstract class WriteCliChecksumsTask : DefaultTask() {
     companion object {
         private val DIGEST = Regex("^sha256:[a-f0-9]{64}$")
         private val JSON = Json { ignoreUnknownKeys = true }
-        private const val API = "https://api.github.com/repos/Kilo-Org/kilocode/releases/tags"
+        // The CLI's releases in the brand's repository, whose archives are named after its command.
+        private val API = "${Brand.REPOSITORY.replace("https://github.com/", "https://api.github.com/repos/")}/releases/tags"
         // Keep in sync with KiloCliPlatform.current() and StageBundledCliTask.PLATFORMS.
         private val PLATFORMS = listOf(
             "darwin-arm64",
@@ -45,7 +46,7 @@ abstract class WriteCliChecksumsTask : DefaultTask() {
         val ver = cliVersion.get()
         val assets = assets(ver)
         val values = PLATFORMS.associateWith { platform ->
-            val name = "kilo-$platform.${ext(platform)}"
+            val name = "${Brand.COMMAND}-$platform.${ext(platform)}"
             assets[name] ?: throw GradleException("Kilo CLI release $ver did not include $name")
         }
 

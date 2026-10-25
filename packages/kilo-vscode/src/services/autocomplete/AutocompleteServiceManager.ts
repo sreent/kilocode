@@ -34,10 +34,13 @@ export interface AutocompleteServiceSettings {
 function readSettings(): AutocompleteServiceSettings {
   const config = vscode.workspace.getConfiguration(CONFIG_SECTION)
   const info = getAutocompleteModel(config.get<string>("provider"), config.get<string>("model"))
+  // tucode has no Kilo Gateway, so autocomplete only runs through Mistral or Inception, which people
+  // choose in the autocomplete settings and connect themselves.
+  const gateway = info.providerID === "kilo"
   return {
-    enableAutoTrigger: config.get<boolean>("enableAutoTrigger") ?? true,
+    enableAutoTrigger: !gateway && (config.get<boolean>("enableAutoTrigger") ?? true),
     enableSmartInlineTaskKeybinding: config.get<boolean>("enableSmartInlineTaskKeybinding") ?? true,
-    enableChatAutocomplete: config.get<boolean>("enableChatAutocomplete") ?? true,
+    enableChatAutocomplete: !gateway && (config.get<boolean>("enableChatAutocomplete") ?? true),
     provider: info.providerID,
     model: info.modelID,
     snoozeUntil: config.get<number>("snoozeUntil"),

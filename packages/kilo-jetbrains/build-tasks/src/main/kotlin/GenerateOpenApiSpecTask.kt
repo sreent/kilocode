@@ -26,13 +26,16 @@ import java.util.zip.ZipInputStream
 import javax.inject.Inject
 
 /**
- * Generates the CLI OpenAPI spec from the pinned release binary.
+ * Generates the CLI OpenAPI spec from the pinned release binary. For the CLI in this repository it
+ * takes the spec committed with the SDK (packages/sdk/openapi.json), which script/generate.ts writes
+ * from the same source, so building the plugin needs neither Bun nor a built CLI.
  */
 abstract class GenerateOpenApiSpecTask : DefaultTask() {
     companion object {
         private val DIGEST = Regex("^sha256:[a-f0-9]{64}$")
         private val JSON = Json { ignoreUnknownKeys = true }
-        private const val API = "https://api.github.com/repos/Kilo-Org/kilocode/releases/tags"
+        // The CLI's releases in the brand's repository, whose archives are named after its command.
+        private val API = "${Brand.REPOSITORY.replace("https://github.com/", "https://api.github.com/repos/")}/releases/tags"
         private const val ATTEMPTS = 8
         private const val DELAY_MS = 5_000L
     }
@@ -44,16 +47,13 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
     abstract val repo: Property<Boolean>
 
     @get:Internal
-    abstract val repoRoot: DirectoryProperty
+    abstract val repoSpec: RegularFileProperty
 
     @get:Internal
     abstract val token: Property<String>
 
     @get:Internal
     abstract val cacheDir: DirectoryProperty
-
-    @get:Internal
-    abstract val bunPath: Property<String>
 
     @get:OutputFile
     abstract val spec: RegularFileProperty
@@ -77,17 +77,11 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
     }
 
     private fun generateFromRepo() {
-        val root = repoRoot.asFile.get()
-        val out = ByteArrayOutputStream()
-        val err = ByteArrayOutputStream()
-        val result = exec.exec {
-            workingDir = root
-            commandLine(bunPath.get(), "run", "--conditions=browser", "./src/index.ts", "generate")
-            standardOutput = out
-            errorOutput = err
-            isIgnoreExitValue = true
+        val file = repoSpec.asFile.get()
+        if (!file.isFile) {
+            throw GradleException("The SDK's OpenAPI spec is missing at ${file.absolutePath}. Run ./script/generate.ts from the repository root.")
         }
-        writeSpec(result.exitValue, out, err)
+        spec.get().asFile.also { it.parentFile.mkdirs() }.writeText(file.readText())
     }
 
     private fun generate(kilo: String) {
@@ -128,13 +122,13 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
         val exe = File(dir, "bin/${exe()}")
         val done = File(dir, ".complete")
         val cached = done.takeIf { it.isFile }?.readText()?.trim()
-        val archive = File(dir, "kilo-$platform.$ext")
+        val archive = File(dir, "${Brand.COMMAND}-$platform.$ext")
         if (exe.isFile && cached != null && cached.matches(DIGEST) && matches(archive, cached)) {
             if (!windows()) exe.setExecutable(true)
             return exe
         }
 
-        val name = "kilo-$platform.$ext"
+        val name = "${Brand.COMMAND}-$platform.$ext"
         val digest = asset(version, name)
         if (dir.exists() && !dir.deleteRecursively()) {
             throw GradleException("Failed to delete cached pinned Kilo CLI under ${dir.absolutePath}")
@@ -142,7 +136,7 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
         if (!dir.isDirectory && !dir.mkdirs()) {
             throw GradleException("Failed to create pinned Kilo CLI cache directory ${dir.absolutePath}")
         }
-        download("https://github.com/Kilo-Org/kilocode/releases/download/v$version/kilo-$platform.$ext", archive)
+        download("${Brand.REPOSITORY}/releases/download/v$version/$name", archive)
         verify(archive, digest)
         extract(archive, dir)
         if (!exe.isFile) throw GradleException("Downloaded CLI archive did not contain bin/${exe()}")
@@ -297,7 +291,7 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
         }
         target.parentFile.mkdirs()
         target.outputStream().use(copy)
-        if (!windows() && (target.name == "kilo" || target.name == "bwrap")) target.setExecutable(true)
+        if (!windows() && (target.name == Brand.COMMAND || target.name == "bwrap")) target.setExecutable(true)
     }
 
     private fun platform(): String {
@@ -316,7 +310,7 @@ abstract class GenerateOpenApiSpecTask : DefaultTask() {
         return "$name-$arch"
     }
 
-    private fun exe() = if (windows()) "kilo.exe" else "kilo"
+    private fun exe() = if (windows()) "${Brand.COMMAND}.exe" else Brand.COMMAND
 
     private fun windows() = System.getProperty("os.name").lowercase().contains("windows")
 }

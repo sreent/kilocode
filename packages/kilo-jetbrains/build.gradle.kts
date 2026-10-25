@@ -210,8 +210,8 @@ intellijPlatform {
     pluginInstallationTarget = PluginInstallationTarget.BOTH
 
     pluginConfiguration {
-        id = "ai.kilocode.jetbrains"
-        name = "Kilo Code"
+        id = "com.tucode.jetbrains"
+        name = "tucode"
         version = provider { ver }
         changeNotes = notes
 
@@ -220,8 +220,8 @@ intellijPlatform {
         }
 
         vendor {
-            name = "Kilo Code"
-            url = "https://kilo.ai"
+            name = "tucode"
+            url = "https://github.com/sreent/kilocode"
         }
     }
 

@@ -8,6 +8,7 @@ import { usePluginRuntime } from "../../plugin/runtime"
 
 import { getScrollAcceleration } from "../../util/scroll"
 import { WorkspaceLabel } from "../../component/workspace-label"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 export function Sidebar(props: { sessionID: string; overlay?: boolean }) {
   const pluginRuntime = usePluginRuntime()
@@ -90,7 +91,7 @@ export function Sidebar(props: { sessionID: string; overlay?: boolean }) {
           <pluginRuntime.Slot name="sidebar_footer" mode="single_winner" session_id={props.sessionID}>
             {/* kilocode_change start */}
             <text fg={theme.textMuted}>
-              <span style={{ fg: theme.success }}>•</span> <b>Kilo</b> <span>{InstallationVersion}</span>
+              <span style={{ fg: theme.success }}>•</span> <b>{Brand.name}</b> <span>{InstallationVersion}</span>
             </text>
             {/* kilocode_change end */}
           </pluginRuntime.Slot>

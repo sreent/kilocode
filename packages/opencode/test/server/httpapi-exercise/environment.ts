@@ -1,6 +1,7 @@
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { Effect } from "effect"
 import path from "path"
+import { Brand } from "../../../src/tucode/brand" // kilocode_change - tucode
 
 const preserveExerciseGlobalRoot = !!process.env.KILO_HTTPAPI_EXERCISE_GLOBAL
 export const exerciseGlobalRoot =
@@ -16,7 +17,7 @@ process.env.KILO_DISABLE_PRESENCE = "1" // kilocode_change - presence now has a 
 process.env.KILO_DISABLE_CODEBASE_INDEXING = "vscode-no-workspace" // kilocode_change - route scenarios do not need an indexing worker per temp project
 process.env.KILO_MARKETPLACE_BASE_URL = "http://127.0.0.1:9" // kilocode_change - keep marketplace catalog fetches hermetic; the list scenario degrades to an empty catalog instead of calling api.kilo.ai
 export const exerciseConfigDirectory = path.join(exerciseGlobalRoot, "config", "opencode")
-export const exerciseDataDirectory = path.join(exerciseGlobalRoot, "data", "kilo") // kilocode_change
+export const exerciseDataDirectory = path.join(exerciseGlobalRoot, "data", Brand.command) // kilocode_change - tucode
 
 const preserveExerciseDatabase = !!process.env.KILO_HTTPAPI_EXERCISE_DB
 export const exerciseDatabasePath =

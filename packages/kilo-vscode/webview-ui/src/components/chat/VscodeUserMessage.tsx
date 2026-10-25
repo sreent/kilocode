@@ -5,6 +5,7 @@ import { Tooltip } from "@kilocode/kilo-ui/tooltip"
 import { partFeedback } from "../../../../src/shared/browser-feedback"
 import { injectedView } from "../../../../src/shared/injected-prompt"
 import { imageMime } from "../../../../src/shared/image-data-url"
+import { Brand } from "../../../../src/brand"
 import type { Message, Part, TextPart } from "../../types/messages"
 import { BrowserReferences } from "./BrowserReferences"
 import { ReviewComments } from "./ReviewComments"
@@ -50,7 +51,7 @@ export const VscodeUserMessage: Component<VscodeUserMessageProps> = (props) => {
   const view = createMemo(() => {
     const value = full()
     if (value == null) return undefined
-    if (attribution()) return { label: "Sent by Kilo from another session" }
+    if (attribution()) return { label: `Sent by ${Brand.name} from another session` }
     return injectedView(text()?.metadata, value)
   })
   const [open, setOpen] = createSignal(false)

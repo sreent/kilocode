@@ -56,8 +56,8 @@ export function Loading() {
 
 export function Splash() {
   return (
-    <section class="console-loading console-loading-fullscreen" role="status" aria-label="Loading Kilo Organization">
-      <img src={`${import.meta.env.BASE_URL}kilo-logo.svg`} class="console-loading-logo" alt="" />
+    <section class="console-loading console-loading-fullscreen" role="status" aria-label="Loading tucode Organization">
+      <img src={`${import.meta.env.BASE_URL}tucode-logo.svg`} class="console-loading-logo" alt="" />
     </section>
   )
 }

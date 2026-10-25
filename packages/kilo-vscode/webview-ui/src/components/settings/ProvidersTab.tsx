@@ -26,12 +26,7 @@ import {
   providerNoteKey,
   sortProviders,
 } from "./provider-catalog"
-import {
-  canChangeProviderKey,
-  disabledProviderOptions,
-  providersWithKiloFallback,
-  visibleConnectedIds,
-} from "./provider-visibility"
+import { canChangeProviderKey, disabledProviderOptions, visibleConnectedIds } from "./provider-visibility"
 import { isCustomProviderPackage, KILO_PROVIDER_ID } from "../../../../src/shared/provider-model"
 import { createProviderAction } from "../../utils/provider-action"
 
@@ -76,7 +71,7 @@ const ProvidersTab: Component = () => {
 
   const disabledProviders = createMemo(() => config().disabled_providers ?? [])
   const disabledIds = createMemo(() => new Set(disabledProviders()))
-  const providers = createMemo(() => providersWithKiloFallback(provider.providers()))
+  const providers = createMemo(() => provider.providers())
   const disabledOptions = createMemo(() => disabledProviderOptions(providers(), disabledProviders()))
 
   function source(item: Provider): ProviderSource | undefined {

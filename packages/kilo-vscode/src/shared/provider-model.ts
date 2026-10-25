@@ -34,21 +34,6 @@ export function providerOrderIndex(providerID: string, order = PROVIDER_PRIORITY
   return index >= 0 ? index : order.length
 }
 
-export function createKiloFallbackProvider() {
-  return {
-    id: KILO_PROVIDER_ID,
-    name: "Kilo Gateway",
-    source: "custom" as const,
-    env: ["KILO_API_KEY"],
-    metadata: {
-      noteKey: "settings.providers.note.kilo",
-      icon: KILO_PROVIDER_ID,
-      priority: 0,
-    },
-    models: {},
-  }
-}
-
 /** Look up the typed failure reported for a provider, if any. */
 export function providerFailure(providerID: string, failures: ProviderFailure[]): ProviderFailure | undefined {
   return failures.find((item) => item.providerID === providerID)

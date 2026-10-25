@@ -1,8 +1,16 @@
+import { sql } from "drizzle-orm"
 import { Clock, Effect } from "effect"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { Api } from "@organization/protocol/api"
-import { DeviceError, ForbiddenError, InvalidRequestError, NotFoundError } from "@organization/protocol/errors"
+import {
+  DeviceError,
+  ForbiddenError,
+  InvalidRequestError,
+  NotFoundError,
+  UnavailableError,
+} from "@organization/protocol/errors"
 import { ServerConfig } from "../config"
+import { Database } from "../db/database"
 import { RequestContext } from "../request"
 import { Store } from "../store"
 
@@ -17,7 +25,18 @@ export const ttl = {
 export const interval = 5
 
 export const HealthHandler = HttpApiBuilder.group(Api, "organization.health", (handlers) =>
-  handlers.handle("health.get", () => Effect.succeed({ ok: true as const })),
+  Effect.gen(function* () {
+    const { db } = yield* Database.Service
+    return handlers
+      .handle("health.get", () => Effect.succeed({ ok: true as const }))
+      .handle("health.ready", () =>
+        db.execute(sql`select 1`).pipe(
+          Effect.timeout("2 seconds"),
+          Effect.as({ ok: true as const }),
+          Effect.catch(() => Effect.fail(new UnavailableError({ message: "the database does not answer" }))),
+        ),
+      )
+  }),
 )
 
 // RFC 8628 device authorization: the CLI shows a code, the user approves it in the browser via SSO.
@@ -103,6 +122,8 @@ export const SigninHandler = HttpApiBuilder.group(Api, "organization.signin", (h
             })
           const user = yield* store.user.ensure({ email: row.email, name: ctx.payload.name })
           if (!user.active) return yield* new ForbiddenError({ message: "this account is deactivated" })
+          const full = yield* store.seats.full(row.org, user.id)
+          if (full) return yield* new ForbiddenError({ message: full })
           const issued = yield* store.transaction(
             Effect.gen(function* () {
               if (!(yield* store.invite.accept(row.id)))

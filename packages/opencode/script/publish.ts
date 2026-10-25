@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { $ } from "bun"
-import pkg from "../package.json"
+import manifest from "../package.json" // kilocode_change - tucode
 import { Script } from "@opencode-ai/script"
 import { fileURLToPath } from "url"
 // kilocode_change start
@@ -10,10 +10,15 @@ import { NpmPublish } from "./kilocode/npm-publish"
 import * as KiloSbom from "./kilocode/sbom"
 import * as KiloRelease from "../../../script/kilocode/release"
 import type { Manifest } from "../../../script/kilocode/sbom/index"
+import { Brand } from "../src/tucode/brand"
 // kilocode_change end
 
 const dir = fileURLToPath(new URL("..", import.meta.url))
 process.chdir(dir)
+
+// kilocode_change start - tucode: the CLI is published under the brand's npm name, not the workspace's
+const pkg = { ...manifest, name: Brand.npm.cli }
+// kilocode_change end
 
 // kilocode_change start
 const evidence: Manifest.Entry[] = []
@@ -120,9 +125,8 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
     {
       name: pkg.name, // kilocode_change
       bin: {
-        // kilocode_change start
-        kilo: `./bin/kilo`,
-        kilocode: `./bin/kilo`,
+        // kilocode_change start - tucode: the brand's command runs the launcher, bin/kilo
+        [Brand.command]: `./bin/kilo`,
         // kilocode_change end
       },
       scripts: {
@@ -138,7 +142,7 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
       // kilocode_change start
       repository: {
         type: "git",
-        url: "https://github.com/Kilo-Org/kilocode",
+        url: Brand.repository,
       },
       // kilocode_change end
     },
@@ -153,7 +157,7 @@ const tasks = Object.entries(binaries).map(async ([name]) => {
 await Promise.all(tasks)
 await publish(`./dist/${pkg.name}`, pkg.name, version) // kilocode_change
 
-const image = "ghcr.io/kilo-org/kilocode" // kilocode_change
+const image = Brand.image // kilocode_change - tucode
 const platforms = "linux/amd64,linux/arm64"
 const tags = [`${image}:${version}`, `${image}:${Script.channel}`]
 const tagFlags = tags.flatMap((t) => ["-t", t])
@@ -166,6 +170,11 @@ if (!Script.preview) {
   const metadata = path.resolve("dist", "oci-metadata.json")
   await $`docker buildx build --platform ${platforms} ${tagFlags} --provenance=mode=max --sbom=true --metadata-file ${metadata} --push .`
   evidence.push(...(await describeImages(metadata)))
+  // kilocode_change end
+  // kilocode_change start - tucode: the AUR package and the Homebrew tap below are Kilo's, so only a build
+  // that carries Kilo's identity updates them. tucode ships through npm, its image and its GitHub releases.
+}
+if (!Script.preview && Brand.repository === "https://github.com/Kilo-Org/kilocode") {
   // kilocode_change end
   // Calculate SHA values
   const arm64Sha = await $`sha256sum ./dist/kilo-linux-arm64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())

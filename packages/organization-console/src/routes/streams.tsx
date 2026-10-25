@@ -18,11 +18,12 @@ const listStreams = (org: string) => call((api) => api["organization.insight"]["
 const kinds = [
   { value: "webhook", label: "HTTPS webhook" },
   { value: "syslog", label: "Syslog (RFC 5424)" },
+  { value: "otlp", label: "OpenTelemetry logs (OTLP/HTTP)" },
 ] satisfies ReadonlyArray<{ value: StreamKind; label: string }>
 
 function destination(row: Row) {
   const target = row.target
-  return target.kind === "webhook" ? target.url : `${target.host}:${target.port}`
+  return target.kind === "syslog" ? `${target.host}:${target.port}` : target.url
 }
 
 export function Streams() {
@@ -55,7 +56,7 @@ export function Streams() {
   return (
     <Page
       title="Audit streaming"
-      description="Send every new audit event to your SIEM as it happens, as signed HTTPS webhooks or syslog. Delivery is in order and at least once, and resumes where it stopped after an outage."
+      description="Send every new audit event to your SIEM as it happens: as signed HTTPS webhooks, syslog, or OpenTelemetry logs. Delivery is in order and at least once, and resumes where it stopped after an outage."
     >
       <Panel title="Streams" flush>
         <Show when={!streams.error} fallback={<Failure error={streams.error} />}>
@@ -75,6 +76,9 @@ export function Streams() {
                         </span>
                         <Show when={row.target.kind === "syslog" && row.target.tls}>
                           <Tag>TLS</Tag>
+                        </Show>
+                        <Show when={row.target.kind === "otlp"}>
+                          <Tag>OTLP</Tag>
                         </Show>
                       </span>
                     ),
@@ -197,12 +201,15 @@ function AddStream(props: { created: (secret: string | null) => void }) {
           payload: {
             name: name().trim(),
             enabled: true,
-            ...(kind() === "webhook"
-              ? {
-                  target: { kind: "webhook" as const, url: url().trim() },
+            ...(kind() === "syslog"
+              ? { target: { kind: "syslog" as const, host: host().trim(), port: Number(port()), tls: secure() } }
+              : {
+                  target:
+                    kind() === "otlp"
+                      ? { kind: "otlp" as const, url: url().trim() }
+                      : { kind: "webhook" as const, url: url().trim() },
                   ...(header().trim() ? { headers: { [header().trim()]: value() } } : {}),
-                }
-              : { target: { kind: "syslog" as const, host: host().trim(), port: Number(port()), tls: secure() } }),
+                }),
           },
         }),
       )
@@ -228,7 +235,7 @@ function AddStream(props: { created: (secret: string | null) => void }) {
           <Choice label="Destination" value={kind()} options={kinds} onValue={setKind} />
         </div>
         <Show
-          when={kind() === "webhook"}
+          when={kind() !== "syslog"}
           fallback={
             <>
               <div class="grid-2">
@@ -257,8 +264,16 @@ function AddStream(props: { created: (secret: string | null) => void }) {
           <TextInput
             label="URL"
             type="url"
-            placeholder="https://http-inputs.example.splunkcloud.com/services/collector/raw"
-            hint="Receives a JSON POST with the org and a batch of events."
+            placeholder={
+              kind() === "otlp"
+                ? "https://otel-collector.example.com:4318/v1/logs"
+                : "https://http-inputs.example.splunkcloud.com/services/collector/raw"
+            }
+            hint={
+              kind() === "otlp"
+                ? "The collector's OTLP/HTTP logs endpoint, usually ending in /v1/logs. Each event is a log record in JSON encoding."
+                : "Receives a JSON POST with the org and a batch of events."
+            }
             value={url()}
             onValue={setUrl}
             required
@@ -275,7 +290,7 @@ function AddStream(props: { created: (secret: string | null) => void }) {
             <TextInput
               label="Header value"
               type="password"
-              placeholder="Splunk 1234-…"
+              placeholder={kind() === "otlp" ? "Bearer …" : "Splunk 1234-…"}
               hint="Stored encrypted. It cannot be read back."
               autocomplete="new-password"
               value={value()}

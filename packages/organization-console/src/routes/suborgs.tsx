@@ -22,6 +22,13 @@ export function Suborgs() {
   const [suborgs, { refetch }] = createResource(scope.slug, (org) =>
     call((api) => api["organization.org"]["suborgs.list"]({ params: { org } })),
   )
+  const [budgets] = createResource(
+    () => scope.can("usage.read") && scope.slug(),
+    (org) => call((api) => api["organization.governance"]["budgets.get"]({ params: { org } })),
+  )
+  // The monthly allowance this organization gives a sub-organization, set on the Budgets page.
+  const allowance = (id: string) =>
+    budgets()?.budgets.find((row) => row.scope === "suborg" && row.target === id && row.period === "month")?.amount
   const [name, setName] = createSignal("")
   const [slug, setSlug] = createSignal("")
   const [edited, setEdited] = createSignal(false)
@@ -51,7 +58,7 @@ export function Suborgs() {
   return (
     <Page
       title="Sub-organizations"
-      description="Each sub-organization has its own members, policy and budgets. Owners, admins and billing managers of this organization manage them without a seat."
+      description="Each sub-organization has its own members, policy and budgets. Owners, admins and billing managers of this organization manage them without a seat. Give each an allowance on the Budgets page; this organization's own budget covers them all."
     >
       <Show when={scope.can("suborg.write") && !scope.org().parent}>
         <Panel title="New sub-organization">
@@ -106,6 +113,14 @@ export function Suborgs() {
                   { label: "Slug", cell: (row) => <span class="mono">{row.slug}</span> },
                   { label: "Members", align: "end", cell: (row) => count(row.members) },
                   { label: "Spend this month", align: "end", cell: (row) => money(row.spent) },
+                  {
+                    label: "Monthly allowance",
+                    align: "end",
+                    cell: (row) => {
+                      const amount = allowance(row.id)
+                      return amount === undefined ? <span class="muted">None</span> : money(amount)
+                    },
+                  },
                 ]}
               />
             )}

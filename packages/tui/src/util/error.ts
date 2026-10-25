@@ -1,4 +1,5 @@
 import { isRecord } from "./record"
+import { Brand } from "@/tucode/brand" // kilocode_change - tucode
 
 type ConfigIssue = { message: string; path: string[] }
 
@@ -24,7 +25,7 @@ export function cliErrorMessage(input: unknown): string | undefined {
     return [
       `Model not found: ${field(model, "providerID")}/${field(model, "modelID")}`,
       ...(suggestions.length ? ["Did you mean: " + suggestions.join(", ")] : []),
-      "Try: `kilo models` to list available models", // kilocode_change
+      `Try: \`${Brand.command} models\` to list available models`, // kilocode_change - tucode
       "Or check your config (kilo.json) provider/model names", // kilocode_change
     ].join("\n")
   }

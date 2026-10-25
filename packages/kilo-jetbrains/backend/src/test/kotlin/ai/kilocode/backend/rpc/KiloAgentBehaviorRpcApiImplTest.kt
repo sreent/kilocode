@@ -1,5 +1,6 @@
 package ai.kilocode.backend.rpc
 
+import ai.kilocode.Brand
 import ai.kilocode.backend.app.KiloAppState
 import ai.kilocode.backend.app.KiloBackendAppService
 import ai.kilocode.backend.testing.FakeCliServer
@@ -191,7 +192,7 @@ class KiloAgentBehaviorRpcApiImplTest {
 
     @Test
     fun `url cached skills are read only`() = runBlocking {
-        val cache = Path.of(System.getProperty("user.home"), ".cache", "kilo", "skills", "remote")
+        val cache = Path.of(System.getProperty("user.home"), ".cache", Brand.COMMAND, "skills", "remote")
         val file = Files.createDirectories(cache).resolve("SKILL.md")
         Files.writeString(file, "# Remote")
         mock.skills = """[

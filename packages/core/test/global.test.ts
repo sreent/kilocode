@@ -3,10 +3,11 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import { Global } from "@opencode-ai/core/global"
+import { Brand } from "@opencode-ai/core/tucode/brand" // kilocode_change - tucode
 
 describe("global paths", () => {
   test("tmp path is under the system temp directory", () => {
-    expect(Global.Path.tmp).toBe(path.join(os.tmpdir(), "kilo")) // kilocode_change
+    expect(Global.Path.tmp).toBe(path.join(os.tmpdir(), Brand.command)) // kilocode_change - tucode
     expect(Global.make().tmp).toBe(Global.Path.tmp)
   })
 

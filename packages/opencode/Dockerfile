@@ -8,17 +8,17 @@ RUN apk add libgcc libstdc++ ripgrep
 
 FROM base AS build-amd64
 # kilocode_change start
-COPY dist/@kilocode/cli-linux-x64-baseline-musl/bin/kilo dist/@kilocode/cli-linux-x64-baseline-musl/bin/bwrap /usr/local/bin/
-COPY dist/@kilocode/cli-linux-x64-baseline-musl/bin/licenses /usr/local/share/licenses/kilo
+COPY dist/@tucode/cli-linux-x64-baseline-musl/bin/tucode dist/@tucode/cli-linux-x64-baseline-musl/bin/bwrap /usr/local/bin/
+COPY dist/@tucode/cli-linux-x64-baseline-musl/bin/licenses /usr/local/share/licenses/tucode
 # kilocode_change end
 
 FROM base AS build-arm64
 # kilocode_change start
-COPY dist/@kilocode/cli-linux-arm64-musl/bin/kilo dist/@kilocode/cli-linux-arm64-musl/bin/bwrap /usr/local/bin/
-COPY dist/@kilocode/cli-linux-arm64-musl/bin/licenses /usr/local/share/licenses/kilo
+COPY dist/@tucode/cli-linux-arm64-musl/bin/tucode dist/@tucode/cli-linux-arm64-musl/bin/bwrap /usr/local/bin/
+COPY dist/@tucode/cli-linux-arm64-musl/bin/licenses /usr/local/share/licenses/tucode
 # kilocode_change end
 
 ARG TARGETARCH
 FROM build-${TARGETARCH}
-RUN kilo --version
-ENTRYPOINT ["kilo"]
+RUN tucode --version
+ENTRYPOINT ["tucode"]

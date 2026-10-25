@@ -10,8 +10,15 @@ import {
   Mode,
   ModelAccess,
   Policy,
+  type Budget,
+  type BudgetSpend,
   type BudgetStatus,
+  type CompareBy,
+  type GatewayAuth,
   type GatewayKind,
+  type GatewayModel,
+  type Interval,
+  type Price,
   type Role,
   type StreamTarget,
   type UsageBy,
@@ -24,7 +31,9 @@ import {
   BudgetTable,
   DeviceTable,
   DomainTable,
+  GatewayCallTable,
   GatewayProviderTable,
+  GatewayWindowTable,
   GroupMemberTable,
   GroupTable,
   InviteTable,
@@ -33,6 +42,8 @@ import {
   ModeTable,
   OrgTable,
   PolicyTable,
+  PriceTable,
+  ReportTable,
   SsoTable,
   StreamTable,
   TokenTable,
@@ -65,12 +76,13 @@ export type SamlConnection = Connection & {
 }
 export type Sso = (OidcConnection | SamlConnection) & { readonly org: string; readonly updated: number }
 export type GatewayProvider = typeof GatewayProviderTable.$inferSelect
+export type GatewayCall = typeof GatewayCallTable.$inferSelect
+export type PriceRule = typeof PriceTable.$inferSelect
+export type Report = typeof ReportTable.$inferSelect
 export type Stream = typeof StreamTable.$inferSelect
 
 // Who an audit event is attributed to; SCIM provisioning has no user, only a token name.
 export type Actor = { readonly id: string | null; readonly email: string }
-
-type Budget = { scope: BudgetStatus["scope"]; target: string; period: BudgetStatus["period"]; amount: number }
 
 const day = 24 * 60 * 60 * 1000
 const now = Clock.currentTimeMillis
@@ -112,11 +124,12 @@ const make = Effect.gen(function* () {
     }, Effect.orDie),
     update: Effect.fn("Store.org.update")(function* (
       id: string,
-      input: { name?: string; settings?: Record<string, unknown> },
+      input: { name?: string; settings?: Record<string, unknown>; seats?: number | null },
     ) {
       const patch = {
         ...(input.name != null && { name: input.name }),
         ...(input.settings != null && { settings: input.settings }),
+        ...(input.seats !== undefined && { seats: input.seats }),
       }
       if (Object.keys(patch).length > 0) yield* db.update(OrgTable).set(patch).where(eq(OrgTable.id, id))
       return (yield* findOrg(id))!
@@ -508,7 +521,7 @@ const make = Effect.gen(function* () {
         .values({
           name: lower(name),
           org: orgID,
-          token: `kilo-org-verify=${Crypto.secret(18)}`,
+          token: `tucode-org-verify=${Crypto.secret(18)}`,
           created: yield* now,
         })
         .returning())[0]
@@ -548,8 +561,10 @@ const make = Effect.gen(function* () {
       org: string
       name: string
       ttl?: number
+      // A token the caller generated, such as one an operator configured; otherwise a new one.
+      value?: string
     }) {
-      const value = Crypto.token(input.kind)
+      const value = input.value ?? Crypto.token(input.kind)
       const id = Crypto.id("tok")
       const created = yield* now
       yield* db.insert(TokenTable).values({
@@ -777,6 +792,44 @@ const make = Effect.gen(function* () {
         }),
       )
     }, Effect.orDie),
+    // Tool runs a client reported, as "client.tool_run" events attributed to the person. Runs it
+    // already has are skipped. Returns how many were new.
+    runs: Effect.fn("Store.audit.runs")(function* (input: {
+      org: string
+      actor: Actor
+      ip: string | null
+      runs: ReadonlyArray<{ id: string; at: number; tool: string; details: Record<string, unknown> }>
+    }) {
+      if (input.runs.length === 0) return 0
+      const time = yield* now
+      return yield* db.transaction(() =>
+        Effect.gen(function* () {
+          yield* db.execute(sql`select pg_advisory_xact_lock(hashtext('kilo-organization:audit'))`)
+          const rows = yield* db
+            .insert(AuditTable)
+            .values(
+              input.runs.map((run) => ({
+                org: input.org,
+                // A client's clock can run ahead; nothing is logged in the future.
+                at: Math.min(run.at, time),
+                action: "client.tool_run",
+                actor: input.actor.id,
+                email: input.actor.email,
+                target: run.tool,
+                // Postgres refuses JSON holding half a surrogate pair, which a client can send.
+                details: JSON.parse(
+                  JSON.stringify(run.details, (_, value) => (typeof value === "string" ? value.toWellFormed() : value)),
+                ),
+                ip: input.ip,
+                ref: `tool:${run.id}`,
+              })),
+            )
+            .onConflictDoNothing({ target: [AuditTable.org, AuditTable.ref] })
+            .returning({ id: AuditTable.id })
+          return rows.length
+        }),
+      )
+    }, Effect.orDie),
     query: Effect.fn("Store.audit.query")(function* (input: {
       org: string
       actions?: ReadonlyArray<string>
@@ -821,6 +874,12 @@ const make = Effect.gen(function* () {
     yield* db.delete(DeviceTable).where(lt(DeviceTable.expires, time - day))
     yield* db.delete(LoginTable).where(lt(LoginTable.created, time - day))
     yield* db.delete(AssertionTable).where(lt(AssertionTable.expires, time))
+    yield* db.delete(GatewayWindowTable).where(lt(GatewayWindowTable.start, time - 60 * 60 * 1000))
+    // Each org keeps its gateway log for its own policy's retention, 30 days by default.
+    yield* db.execute(sql`
+      delete from gateway_calls c
+      where c.at < ${time} - ${day}::bigint * coalesce(
+        (select (p.data -> 'gateway' -> 'log' ->> 'retention')::bigint from policies p where p.org = c.org), 30)`)
     if (retention == null) return 0
     return yield* audit.prune(time - retention)
   }, Effect.orDie)
@@ -925,16 +984,31 @@ const make = Effect.gen(function* () {
         from usage s join users u on u.id = s.user
         where ${window(input)} order by s.at`)
     }, Effect.orDie),
-    // Rounded to micro-dollars so float summation noise never reaches budgets or the UI.
-    spent: Effect.fn("Store.usage.spent")(function* (input: { org: string; from: number; user?: string }) {
+    // Spend since `from` in these orgs: everyone's, one person's, or a group's members'. Rounded to
+    // micro-dollars so float summation noise never reaches budgets or the UI.
+    spent: Effect.fn("Store.usage.spent")(function* (input: {
+      orgs: ReadonlyArray<string>
+      from: number
+      user?: string
+      group?: string
+    }) {
       const row = (yield* db
         .select({ n: sql<number | null>`sum(${UsageTable.cost})` })
         .from(UsageTable)
         .where(
           and(
-            eq(UsageTable.org, input.org),
+            inArray(UsageTable.org, [...input.orgs]),
             gte(UsageTable.at, input.from),
             input.user ? eq(UsageTable.user, input.user) : undefined,
+            input.group
+              ? inArray(
+                  UsageTable.user,
+                  db
+                    .select({ user: GroupMemberTable.user })
+                    .from(GroupMemberTable)
+                    .where(eq(GroupMemberTable.grp, input.group)),
+                )
+              : undefined,
           ),
         )
         .limit(1))[0]
@@ -955,11 +1029,22 @@ const make = Effect.gen(function* () {
     get: Effect.fn("Store.gateway.get")(function* (orgID: string, id: string) {
       return (yield* db.select().from(GatewayProviderTable).where(where(orgID, id)).limit(1))[0]
     }, Effect.orDie),
-    // `secret` is already sealed.
+    // `secret` and `headers` are already sealed.
     set: Effect.fn("Store.gateway.set")(function* (
       orgID: string,
       id: string,
-      input: { kind: GatewayKind; base: string; secret: string; hint: string },
+      input: {
+        kind: GatewayKind
+        base: string
+        auth: GatewayAuth | null
+        secret: string
+        hint: string
+        headers: string | null
+        names: string[]
+        query: Record<string, string>
+        name: string | null
+        models: GatewayModel[]
+      },
     ) {
       const time = yield* now
       return (yield* db
@@ -977,6 +1062,118 @@ const make = Effect.gen(function* () {
         .where(where(orgID, id))
         .returning({ id: GatewayProviderTable.id }))[0]
       return row !== undefined
+    }, Effect.orDie),
+  }
+
+  const price = {
+    list: Effect.fn("Store.price.list")(function* (orgID: string) {
+      return yield* db
+        .select()
+        .from(PriceTable)
+        .where(eq(PriceTable.org, orgID))
+        .orderBy(asc(PriceTable.provider), asc(PriceTable.model))
+    }, Effect.orDie),
+    replace: Effect.fn("Store.price.replace")(function* (orgID: string, prices: ReadonlyArray<Price>) {
+      yield* db.transaction(() =>
+        Effect.gen(function* () {
+          yield* db.delete(PriceTable).where(eq(PriceTable.org, orgID))
+          if (prices.length === 0) return
+          yield* db.insert(PriceTable).values(
+            prices.map((item) => ({
+              org: orgID,
+              provider: item.provider,
+              model: item.model,
+              rates: item.rates ?? null,
+              discount: item.discount ?? null,
+            })),
+          )
+        }),
+      )
+    }, Effect.orDie),
+    // The rule for one model: its own, else the provider's "*".
+    rule: Effect.fn("Store.price.rule")(function* (orgID: string, provider: string, model: string) {
+      const rows = yield* db
+        .select()
+        .from(PriceTable)
+        .where(
+          and(eq(PriceTable.org, orgID), eq(PriceTable.provider, provider), inArray(PriceTable.model, [model, "*"])),
+        )
+      return rows.find((row) => row.model === model) ?? rows.find((row) => row.model === "*")
+    }, Effect.orDie),
+  }
+
+  // Fixed one-minute windows, counted in the database so every replica sees the same totals.
+  const rate = {
+    // Counts a call into the window and returns the window's totals with it.
+    hit: Effect.fn("Store.rate.hit")(function* (orgID: string, userID: string, start: number) {
+      return (yield* db
+        .insert(GatewayWindowTable)
+        .values({ org: orgID, user: userID, start, requests: 1 })
+        .onConflictDoUpdate({
+          target: [GatewayWindowTable.org, GatewayWindowTable.user, GatewayWindowTable.start],
+          set: { requests: sql`${GatewayWindowTable.requests} + 1` },
+        })
+        .returning({ requests: GatewayWindowTable.requests, tokens: GatewayWindowTable.tokens }))[0]!
+    }, Effect.orDie),
+    spend: Effect.fn("Store.rate.spend")(function* (orgID: string, userID: string, start: number, tokens: number) {
+      yield* db
+        .insert(GatewayWindowTable)
+        .values({ org: orgID, user: userID, start, tokens })
+        .onConflictDoUpdate({
+          target: [GatewayWindowTable.org, GatewayWindowTable.user, GatewayWindowTable.start],
+          set: { tokens: sql`${GatewayWindowTable.tokens} + ${tokens}` },
+        })
+    }, Effect.orDie),
+  }
+
+  const call = {
+    record: Effect.fn("Store.call.record")(function* (row: typeof GatewayCallTable.$inferInsert) {
+      return (yield* db.insert(GatewayCallTable).values(row).returning({ id: GatewayCallTable.id }))[0]!.id
+    }, Effect.orDie),
+    list: Effect.fn("Store.call.list")(function* (input: {
+      org: string
+      from: number
+      to: number
+      user?: string
+      provider?: string
+      failed?: boolean
+      before?: number
+      limit: number
+    }) {
+      const { request: _request, response: _response, ...columns } = getColumns(GatewayCallTable)
+      return yield* db
+        .select({
+          ...columns,
+          email: UserTable.email,
+          bodies: sql<boolean>`(${GatewayCallTable.request} is not null or ${GatewayCallTable.response} is not null)`,
+        })
+        .from(GatewayCallTable)
+        .leftJoin(UserTable, eq(UserTable.id, GatewayCallTable.user))
+        .where(
+          and(
+            eq(GatewayCallTable.org, input.org),
+            gte(GatewayCallTable.at, input.from),
+            lt(GatewayCallTable.at, input.to),
+            input.user ? eq(GatewayCallTable.user, input.user) : undefined,
+            input.provider ? eq(GatewayCallTable.provider, input.provider) : undefined,
+            input.failed === undefined
+              ? undefined
+              : input.failed
+                ? or(gte(GatewayCallTable.status, 400), sql`${GatewayCallTable.code} is not null`)
+                : and(lt(GatewayCallTable.status, 400), isNull(GatewayCallTable.code)),
+            input.before ? lt(GatewayCallTable.id, input.before) : undefined,
+          ),
+        )
+        .orderBy(desc(GatewayCallTable.id))
+        .limit(input.limit)
+    }, Effect.orDie),
+    get: Effect.fn("Store.call.get")(function* (orgID: string, id: number) {
+      return (yield* db
+        .select({ ...getColumns(GatewayCallTable), email: UserTable.email })
+        .from(GatewayCallTable)
+        .leftJoin(UserTable, eq(UserTable.id, GatewayCallTable.user))
+        .where(and(eq(GatewayCallTable.org, orgID), eq(GatewayCallTable.id, id)))
+        .limit(1))[0]
     }, Effect.orDie),
   }
 
@@ -1125,6 +1322,224 @@ const make = Effect.gen(function* () {
       .orderBy(asc(BudgetTable.scope), asc(BudgetTable.target), asc(BudgetTable.period))
   }, Effect.orDie)
 
+  // Adoption and comparisons. Activity counts people who made a request, and what they spent.
+  const activity = sql`count(distinct s.user)::float8 as active, count(s.id)::float8 as requests,
+    coalesce(round(sum(s.cost)::numeric, 6), 0)::float8 as cost,
+    coalesce(sum(s.input + s.output + s.reasoning + s.cache_read + s.cache_write), 0)::float8 as tokens`
+  type Row = { id: string | null; key: string; active: number; requests: number; cost: number; tokens: number }
+  const analytics = {
+    // Interval by interval, for the intervals that had any requests.
+    series: Effect.fn("Store.analytics.series")(function* (input: {
+      org: string
+      from: number
+      to: number
+      interval: Interval
+    }) {
+      const bucket = sql`date_trunc(${input.interval}, to_timestamp(s.at / 1000.0) at time zone 'UTC')`
+      return yield* db.execute<{
+        start: number
+        active: number
+        new: number
+        sessions: number
+        requests: number
+        cost: number
+      }>(sql`
+        with first as (select u.user, min(u.at) as at from usage u where u.org = ${input.org} group by u.user)
+        select (extract(epoch from ${bucket}) * 1000)::float8 as start, count(distinct s.user)::float8 as active,
+          count(distinct s.user) filter (
+            where date_trunc(${input.interval}, to_timestamp(f.at / 1000.0) at time zone 'UTC') = ${bucket}
+          )::float8 as new,
+          count(distinct s.session)::float8 as sessions, count(*)::float8 as requests,
+          round(sum(s.cost)::numeric, 6)::float8 as cost
+        from usage s join first f on f.user = s.user
+        where s.org = ${input.org} and s.at >= ${input.from} and s.at < ${input.to}
+        group by 1 order by 1`)
+    }, Effect.orDie),
+    totals: Effect.fn("Store.analytics.totals")(function* (input: { org: string; from: number; to: number }) {
+      const row = (yield* db.execute<{
+        active: number
+        new: number
+        sessions: number
+        requests: number
+        cost: number
+      }>(sql`
+        with first as (select u.user, min(u.at) as at from usage u where u.org = ${input.org} group by u.user)
+        select count(distinct s.user)::float8 as active,
+          count(distinct s.user) filter (where f.at >= ${input.from})::float8 as new,
+          count(distinct s.session)::float8 as sessions, count(*)::float8 as requests,
+          coalesce(round(sum(s.cost)::numeric, 6), 0)::float8 as cost
+        from usage s join first f on f.user = s.user
+        where s.org = ${input.org} and s.at >= ${input.from} and s.at < ${input.to}`))[0]
+      return row ?? { active: 0, new: 0, sessions: 0, requests: 0, cost: 0 }
+    }, Effect.orDie),
+    // Members with an active membership who made no request in the range, and when they last did.
+    idle: Effect.fn("Store.analytics.idle")(function* (input: { org: string; from: number; to: number }) {
+      return yield* db.execute<{ id: string; email: string; name: string | null; last: number | null }>(sql`
+        select u.id, u.email, u.name, (select max(x.at) from usage x where x.org = m.org and x.user = m.user)::float8 as last
+        from members m join users u on u.id = m.user
+        where m.org = ${input.org} and m.suspended is null and u.active
+          and not exists (
+            select 1 from usage x where x.org = m.org and x.user = m.user and x.at >= ${input.from} and x.at < ${input.to}
+          )
+        order by last nulls first, u.email`)
+    }, Effect.orDie),
+    members: Effect.fn("Store.analytics.members")(function* (orgID: string) {
+      return yield* db.$count(MemberTable, and(eq(MemberTable.org, orgID), isNull(MemberTable.suspended)))
+    }, Effect.orDie),
+    // Activity per group, per org of the org's tree, or per model, with the people each covers.
+    compare: Effect.fn("Store.analytics.compare")(function* (input: {
+      org: string
+      by: CompareBy
+      from: number
+      to: number
+    }) {
+      const range = sql`s.at >= ${input.from} and s.at < ${input.to}`
+      if (input.by === "model")
+        return (yield* db.execute<Row>(sql`
+          select null as id, s.provider || '/' || s.model as key, ${activity}
+          from usage s where s.org = ${input.org} and ${range} group by 2`)).map((row) => ({ ...row, members: null }))
+      if (input.by === "group")
+        return yield* db.execute<Row & { members: number }>(sql`
+          select g.id, g.name as key, ${activity},
+            (select count(*) from group_members gm join members m on m.user = gm.user and m.org = g.org
+              where gm.grp = g.id and m.suspended is null)::float8 as members
+          from org_groups g
+          left join group_members gm on gm.grp = g.id
+          left join usage s on s.user = gm.user and s.org = g.org and ${range}
+          where g.org = ${input.org} group by g.id, g.name`)
+      return yield* db.execute<Row & { members: number }>(sql`
+        select o.id, o.name as key, ${activity},
+          (select count(*) from members m where m.org = o.id and m.suspended is null)::float8 as members
+        from orgs o left join usage s on s.org = o.id and ${range}
+        where o.id = ${input.org} or o.parent = ${input.org} group by o.id, o.name`)
+    }, Effect.orDie),
+  }
+
+  const report = {
+    list: Effect.fn("Store.report.list")(function* (orgID: string) {
+      return yield* db.select().from(ReportTable).where(eq(ReportTable.org, orgID)).orderBy(asc(ReportTable.name))
+    }, Effect.orDie),
+    get: Effect.fn("Store.report.get")(function* (orgID: string, id: string) {
+      return (yield* db
+        .select()
+        .from(ReportTable)
+        .where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+        .limit(1))[0]
+    }, Effect.orDie),
+    create: Effect.fn("Store.report.create")(function* (
+      orgID: string,
+      input: Pick<Report, "name" | "cadence" | "format" | "url" | "secret" | "enabled" | "next">,
+    ) {
+      return (yield* db
+        .insert(ReportTable)
+        .values({ id: Crypto.id("rpt"), org: orgID, ...input, created: yield* now })
+        .returning())[0]!
+    }, Effect.orDie),
+    update: Effect.fn("Store.report.update")(function* (
+      orgID: string,
+      id: string,
+      patch: Partial<Pick<Report, "name" | "cadence" | "format" | "url" | "enabled" | "next" | "error">>,
+    ) {
+      return (yield* db
+        .update(ReportTable)
+        .set(patch)
+        .where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+        .returning())[0]
+    }, Effect.orDie),
+    remove: Effect.fn("Store.report.remove")(function* (orgID: string, id: string) {
+      yield* db.delete(ReportTable).where(and(eq(ReportTable.org, orgID), eq(ReportTable.id, id)))
+    }, Effect.orDie),
+    // Atomic, so of several replicas racing for a due report exactly one sends it.
+    claim: Effect.fn("Store.report.claim")(function* (ttl: number) {
+      const time = yield* now
+      return yield* db
+        .update(ReportTable)
+        .set({ lease: time + ttl })
+        .where(
+          and(
+            eq(ReportTable.enabled, true),
+            lte(ReportTable.next, time),
+            or(isNull(ReportTable.lease), lt(ReportTable.lease, time)),
+          ),
+        )
+        .returning()
+    }, Effect.orDie),
+    sent: Effect.fn("Store.report.sent")(function* (id: string, next: number) {
+      yield* db
+        .update(ReportTable)
+        .set({ sent: yield* now, next, error: null, lease: null })
+        .where(eq(ReportTable.id, id))
+    }, Effect.orDie),
+    // Keeps the report due, held back until `retry`.
+    failed: Effect.fn("Store.report.failed")(function* (id: string, error: string, retry: number) {
+      yield* db.update(ReportTable).set({ error, lease: retry }).where(eq(ReportTable.id, id))
+    }, Effect.orDie),
+  }
+
+  // An org with its sub-orgs: what an "org" budget covers.
+  const tree = Effect.fn("Store.org.tree")(function* (orgID: string) {
+    const children = yield* db.select({ id: OrgTable.id }).from(OrgTable).where(eq(OrgTable.parent, orgID))
+    return [orgID, ...children.map((child) => child.id)]
+  }, Effect.orDie)
+
+  const periods = Effect.gen(function* () {
+    const date = new Date(yield* now)
+    return {
+      day: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+      month: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
+    }
+  })
+
+  // What a budget row has spent this period: the whole of what it covers, or null for "member",
+  // where each person has their own.
+  const spending = Effect.fn("Store.budget.spending")(function* (
+    orgID: string,
+    row: Budget,
+    start: { day: number; month: number },
+  ) {
+    const from = start[row.period]
+    if (row.scope === "member") return null
+    if (row.scope === "org") return yield* usage.spent({ orgs: yield* tree(orgID), from })
+    if (row.scope === "user") return yield* usage.spent({ orgs: [orgID], from, user: row.target })
+    if (row.scope === "group") return yield* usage.spent({ orgs: [orgID], from, group: row.target })
+    return yield* usage.spent({ orgs: [row.target], from })
+  })
+
+  // The seat limit that governs an org (its own, or its parent's) and how many seats are taken:
+  // people with an active membership anywhere in the top-level org's tree.
+  const occupied = Effect.fn("Store.seats.usage")(function* (orgID: string) {
+    const found = yield* findOrg(orgID)
+    const root = found?.parent ? yield* findOrg(found.parent) : found
+    if (!root) return { root: orgID, limit: null, used: 0 }
+    const row = (yield* db
+      .select({ n: sql<number>`count(distinct ${MemberTable.user})::int` })
+      .from(MemberTable)
+      .where(and(inArray(MemberTable.org, yield* tree(root.id)), isNull(MemberTable.suspended)))
+      .limit(1))[0]
+    return { root: root.id, limit: root.seats, used: row?.n ?? 0 }
+  }, Effect.orDie)
+
+  const seats = {
+    usage: occupied,
+    // Why adding this person would need a seat there isn't, if it would. Someone already seated
+    // elsewhere in the tree doesn't take another.
+    full: Effect.fn("Store.seats.full")(function* (orgID: string, userID: string) {
+      const taken = yield* occupied(orgID)
+      if (taken.limit === null || taken.used < taken.limit) return undefined
+      const seated = yield* db.$count(
+        MemberTable,
+        and(
+          eq(MemberTable.user, userID),
+          inArray(MemberTable.org, yield* tree(taken.root)),
+          isNull(MemberTable.suspended),
+        ),
+      )
+      if (seated > 0) return undefined
+      const root = yield* findOrg(taken.root)
+      return `${root?.name ?? "This organization"} has no seats left: all ${taken.limit} are taken. An owner can add seats, or free one by removing or suspending someone.`
+    }, Effect.orDie),
+  }
+
   const budget = {
     list: listBudgets,
     replace: Effect.fn("Store.budget.replace")(function* (orgID: string, rows: ReadonlyArray<Budget>) {
@@ -1135,28 +1550,83 @@ const make = Effect.gen(function* () {
         }),
       )
     }, Effect.orDie),
-    // Budgets that bind this user, with spend for the current UTC day/month.
+    // Budgets that bind this user, with spend for the current UTC day/month: the org's own, and
+    // a parent org's budget and the allowance it gives this org.
     status: Effect.fn("Store.budget.status")(function* (orgID: string, userID: string) {
-      const date = new Date(yield* now)
-      const start = {
-        day: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-        month: Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
-      }
+      const start = yield* periods
+      const found = yield* findOrg(orgID)
+      const parent = found?.parent ? yield* findOrg(found.parent) : undefined
       const rows = yield* listBudgets(orgID)
+      const groups = new Map((yield* group.of(orgID, userID)).map((row) => [row.id, row.name]))
       const own = new Set(rows.filter((row) => row.scope === "user" && row.target === userID).map((row) => row.period))
       const binding = rows.filter((row) => {
         if (row.scope === "org") return true
         if (row.scope === "user") return row.target === userID
+        if (row.scope === "group") return groups.has(row.target)
+        // Allowances for sub-orgs bind their members, not this org's.
+        if (row.scope === "suborg") return false
         // A per-user override replaces the member default for the same period.
         return !own.has(row.period)
       })
-      return yield* Effect.forEach(
+      const inherited = parent
+        ? (yield* listBudgets(parent.id)).filter(
+            (row) => row.scope === "org" || (row.scope === "suborg" && row.target === orgID),
+          )
+        : []
+      const mine = yield* Effect.forEach(
         binding,
         (row): Effect.Effect<BudgetStatus> =>
-          usage
-            .spent({ org: orgID, from: start[row.period], user: row.scope === "org" ? undefined : userID })
-            .pipe(Effect.map((spent) => ({ scope: row.scope, period: row.period, amount: row.amount, spent }))),
+          Effect.gen(function* () {
+            const scope = row.scope === "member" || row.scope === "user" ? row.scope : "org"
+            const spent =
+              scope === "org"
+                ? ((yield* spending(orgID, row, start)) ?? 0)
+                : yield* usage.spent({ orgs: [orgID], from: start[row.period], user: userID })
+            return {
+              scope,
+              period: row.period,
+              amount: row.amount,
+              spent,
+              ...(row.scope === "group" ? { name: `${groups.get(row.target)} group` } : {}),
+            }
+          }),
       )
+      const theirs = yield* Effect.forEach(
+        inherited,
+        (row): Effect.Effect<BudgetStatus> =>
+          spending(parent!.id, row, start).pipe(
+            Effect.map((spent) => ({
+              scope: "org" as const,
+              period: row.period,
+              amount: row.amount,
+              spent: spent ?? 0,
+              // The parent's own budget covers everyone under it; its allowance is this org's budget.
+              ...(row.scope === "org" ? { name: parent!.name } : {}),
+            })),
+          ),
+      )
+      return [...mine, ...theirs]
+    }),
+    // The org's budgets with this period's spend, and the parent org's budgets that bind it too.
+    spend: Effect.fn("Store.budget.spend")(function* (orgID: string) {
+      const start = yield* periods
+      const found = yield* findOrg(orgID)
+      const parent = found?.parent ? yield* findOrg(found.parent) : undefined
+      const mine = yield* Effect.forEach(
+        yield* listBudgets(orgID),
+        (row): Effect.Effect<BudgetSpend> =>
+          spending(orgID, row, start).pipe(Effect.map((spent) => ({ ...row, spent, from: null }))),
+      )
+      const theirs = parent
+        ? yield* Effect.forEach(
+            (yield* listBudgets(parent.id)).filter(
+              (row) => row.scope === "org" || (row.scope === "suborg" && row.target === orgID),
+            ),
+            (row): Effect.Effect<BudgetSpend> =>
+              spending(parent.id, row, start).pipe(Effect.map((spent) => ({ ...row, spent, from: parent.name }))),
+          )
+        : []
+      return [...mine, ...theirs]
     }),
   }
 
@@ -1177,8 +1647,14 @@ const make = Effect.gen(function* () {
     audit,
     usage,
     gateway,
+    price,
+    rate,
+    call,
     stream,
     budget,
+    seats,
+    analytics,
+    report,
     sweep,
     // Runs an effect atomically; store calls inside it share the transaction. SQL failures are defects.
     transaction: <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>

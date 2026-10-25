@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import * as vscode from "vscode"
 import { AutocompleteInlineCompletionProvider } from "../../src/services/autocomplete/classic-auto-complete/AutocompleteInlineCompletionProvider"
 
@@ -7,7 +7,7 @@ function createProvider(state = "connected") {
   ;(vscode.window as any).onDidChangeTextEditorSelection = () => ({ dispose: () => {} })
   return new AutocompleteInlineCompletionProvider(
     {} as any,
-    "kilo/mistralai/codestral-2508",
+    "mistral/codestral-2508",
     { getConnectionState: () => state } as any,
     () => {},
     () => ({ enableAutoTrigger: true }),
@@ -30,6 +30,19 @@ async function tick() {
 }
 
 describe("autocomplete FIM abort scope", () => {
+  // Autocomplete only runs through a provider people connect themselves, here Mistral.
+  const original = vscode.workspace.getConfiguration
+  const settings: Record<string, string> = { provider: "mistral", model: "codestral-2508" }
+  beforeEach(() => {
+    ;(vscode.workspace as any).getConfiguration = (section?: string) => ({
+      get: (key: string, fallback?: unknown) =>
+        section === "kilo-code.new.autocomplete" && key in settings ? settings[key] : fallback,
+    })
+  })
+  afterEach(() => {
+    ;(vscode.workspace as any).getConfiguration = original
+  })
+
   it("does not abort in-flight requests from another scope", async () => {
     const provider = createProvider()
     const signals: AbortSignal[] = []

@@ -4,11 +4,12 @@ import { HttpApiBuilder, HttpApiSchema } from "effect/unstable/httpapi"
 import { Api } from "@organization/protocol/api"
 import { ConflictError, InvalidRequestError, NotFoundError } from "@organization/protocol/errors"
 import { Caller, Membership } from "@organization/protocol/middleware"
+import type { Budget } from "@organization/protocol/schema"
 import * as Crypto from "../crypto"
 import { effective } from "../policy"
 import { ServerConfig } from "../config"
 import { RequestContext } from "../request"
-import { Store } from "../store"
+import { Store, type PriceRule } from "../store"
 import { changed, delta } from "./shared"
 
 export const GovernanceHandler = HttpApiBuilder.group(Api, "organization.governance", (handlers) =>
@@ -103,25 +104,61 @@ export const GovernanceHandler = HttpApiBuilder.group(Api, "organization.governa
       .handle(
         "budgets.get",
         Effect.fn(function* () {
-          return { budgets: yield* store.budget.list((yield* Membership).org.id) }
+          const scope = yield* Membership
+          return { budgets: yield* store.budget.list(scope.org.id), spend: yield* store.budget.spend(scope.org.id) }
         }),
       )
       .handle(
         "budgets.update",
         Effect.fn(function* (ctx) {
           const scope = yield* Membership
-          const rows = ctx.payload.budgets.map((row) => ({ ...row, target: row.scope === "user" ? row.target : "" }))
+          const targeted = (row: Budget) => row.scope === "user" || row.scope === "group" || row.scope === "suborg"
+          const rows = ctx.payload.budgets.map((row) => ({ ...row, target: targeted(row) ? row.target : "" }))
           // Two limits for the same people and period would be ambiguous (and collide in storage).
           if (new Set(rows.map((row) => `${row.scope}/${row.target}/${row.period}`)).size !== rows.length)
             return yield* new InvalidRequestError({ message: "budgets must differ in scope, target or period" })
-          for (const row of rows)
+          const children = new Set((yield* store.org.children(scope.org.id)).map((child) => child.id))
+          for (const row of rows) {
             if (row.scope === "user" && !(yield* store.member.get(scope.org.id, row.target)))
               return yield* new InvalidRequestError({ message: `not a member: ${row.target}` })
+            if (row.scope === "group" && !(yield* store.group.get(scope.org.id, row.target)))
+              return yield* new InvalidRequestError({ message: `not a group of this organization: ${row.target}` })
+            if (row.scope === "suborg" && !children.has(row.target))
+              return yield* new InvalidRequestError({ message: `not a sub-organization of this one: ${row.target}` })
+          }
           const before = yield* store.budget.list(scope.org.id)
           yield* store.budget.replace(scope.org.id, rows)
           yield* audit("budget.update", scope.org.id, { before, after: rows })
           return { budgets: yield* store.budget.list(scope.org.id) }
         }),
       )
+      .handle(
+        "prices.get",
+        Effect.fn(function* () {
+          const scope = yield* Membership
+          return { prices: (yield* store.price.list(scope.org.id)).map(price) }
+        }),
+      )
+      .handle(
+        "prices.update",
+        Effect.fn(function* (ctx) {
+          const scope = yield* Membership
+          const rows = ctx.payload.prices
+          if (new Set(rows.map((row) => `${row.provider}/${row.model}`)).size !== rows.length)
+            return yield* new InvalidRequestError({ message: "each provider and model may have one price" })
+          const before = (yield* store.price.list(scope.org.id)).map(price)
+          yield* store.price.replace(scope.org.id, rows)
+          const after = (yield* store.price.list(scope.org.id)).map(price)
+          yield* audit("price.update", scope.org.id, { before, after })
+          return { prices: after }
+        }),
+      )
   }),
 )
+
+const price = (row: PriceRule) => ({
+  provider: row.provider,
+  model: row.model,
+  ...(row.rates ? { rates: row.rates } : {}),
+  ...(row.discount !== null ? { discount: row.discount } : {}),
+})

@@ -28,6 +28,7 @@ const groups: ReadonlyArray<Group> = [
     label: "Governance",
     items: [
       { path: "/policy", label: "Policy", requires: "policy.read" },
+      { path: "/data", label: "Data policy", requires: "policy.read" },
       { path: "/modes", label: "Modes" },
       { path: "/budgets", label: "Budgets", requires: "usage.read" },
       { path: "/gateway", label: "LLM gateway", requires: "gateway.read" },
@@ -37,6 +38,9 @@ const groups: ReadonlyArray<Group> = [
     label: "Insight",
     items: [
       { path: "/usage", label: "Usage" },
+      { path: "/analytics", label: "Analytics", requires: "usage.read" },
+      { path: "/reports", label: "Scheduled reports", requires: "usage.read" },
+      { path: "/gateway/calls", label: "Gateway call log", requires: "gateway.read" },
       { path: "/audit", label: "Audit log", requires: "audit.read" },
       { path: "/streams", label: "Audit streaming", requires: "audit.read" },
     ],
@@ -82,10 +86,10 @@ function Header(props: { account: Me }) {
   const scope = useOrg()
   return (
     <header class="app-header">
-      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="Kilo Organization home">
+      <A class="header-brand" href={`/${scope.slug()}`} end aria-label="tucode Organization home">
         <img
           class="header-mark header-mark-logo"
-          src={`${import.meta.env.BASE_URL}kilo-logo.svg`}
+          src={`${import.meta.env.BASE_URL}tucode-logo.svg`}
           alt=""
           width="28"
           height="28"

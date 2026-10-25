@@ -1,6 +1,7 @@
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
+import { Brand } from "../brand"
 
 const MAX_TEXT_BYTES = 2_000_000
 const MAX_IMAGE_BYTES = 5_000_000
@@ -39,7 +40,7 @@ export function isInsideWorktree(
  * CLI's plan-file logic already admits the dir — see #14588.
  */
 export function plansDir(dataHome = process.env.XDG_DATA_HOME ?? path.join(os.homedir(), ".local", "share")): string {
-  return path.join(dataHome, "kilo", "plans")
+  return path.join(dataHome, Brand.command, "plans")
 }
 
 /** Whether `resolved` lives in the canonical plans dir (realpath-folded for tmpfs/symlink cases). */

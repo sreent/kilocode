@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "40f50100-1d70-4cee-b480-63a42f34ec8e",
+  "id": "0e9ef9ce-8d37-4129-bf4c-5d4ab514e201",
   "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
+    "4adbe6d8-d05b-4d1b-b8f0-74985357aaff"
   ],
   "ddl": [
     {
@@ -38,7 +38,19 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "gateway_calls",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "gateway_providers",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "gateway_windows",
       "entityType": "tables",
       "schema": "public"
     },
@@ -87,6 +99,18 @@
     {
       "isRlsEnabled": false,
       "name": "policies",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "prices",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "reports",
       "entityType": "tables",
       "schema": "public"
     },
@@ -281,6 +305,19 @@
       "generated": null,
       "identity": null,
       "name": "ip",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "audit"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ref",
       "entityType": "columns",
       "schema": "public",
       "table": "audit"
@@ -520,6 +557,301 @@
       "table": "domains"
     },
     {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": {
+        "type": "byDefault",
+        "name": "gateway_calls_id_seq",
+        "increment": "1",
+        "startWith": "1",
+        "minValue": "1",
+        "maxValue": "9223372036854775807",
+        "cache": 1,
+        "cycle": false
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "org",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "model",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "method",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "code",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "latency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "input",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "output",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "reasoning",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "cache_read",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "cache_write",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "cost",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "session",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "project",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ip",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "request",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "response",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -572,6 +904,19 @@
       "table": "gateway_providers"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -593,6 +938,71 @@
       "generated": null,
       "identity": null,
       "name": "hint",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "headers",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "names",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "query",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_providers"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "models",
       "entityType": "columns",
       "schema": "public",
       "table": "gateway_providers"
@@ -622,6 +1032,71 @@
       "entityType": "columns",
       "schema": "public",
       "table": "gateway_providers"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "org",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "start",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "requests",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "tokens",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "gateway_windows"
     },
     {
       "type": "text",
@@ -1157,6 +1632,19 @@
       "table": "orgs"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seats",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "orgs"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -1233,6 +1721,240 @@
       "entityType": "columns",
       "schema": "public",
       "table": "policies"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "org",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "model",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rates",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "discount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "org",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cadence",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "format",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "secret",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "enabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "next",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lease",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "error",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "created",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "reports"
     },
     {
       "type": "text",
@@ -2074,6 +2796,62 @@
           "opclass": null
         },
         {
+          "value": "ref",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "audit_org_ref",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "audit"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "org",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "gateway_calls_org_at",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "org",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "name",
           "isExpression": false,
           "asc": true,
@@ -2167,6 +2945,48 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "modes"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "org",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "reports_org",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "next",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "reports_next",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "reports"
     },
     {
       "nameExplicit": true,
@@ -2363,10 +3183,78 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
+      "name": "gateway_calls_org_orgs_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "user"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "name": "gateway_calls_user_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "gateway_calls"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "org"
+      ],
+      "schemaTo": "public",
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
       "name": "gateway_providers_org_orgs_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "gateway_providers"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "org"
+      ],
+      "schemaTo": "public",
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "gateway_windows_org_orgs_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "user"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "gateway_windows_user_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "gateway_windows"
     },
     {
       "nameExplicit": false,
@@ -2567,6 +3455,40 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
+      "name": "prices_org_orgs_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "prices"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "org"
+      ],
+      "schemaTo": "public",
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "reports_org_orgs_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "org"
+      ],
+      "schemaTo": "public",
+      "tableTo": "orgs",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
       "name": "sso_org_orgs_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -2694,6 +3616,18 @@
     },
     {
       "columns": [
+        "org",
+        "user",
+        "start"
+      ],
+      "nameExplicit": false,
+      "name": "gateway_windows_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "gateway_windows"
+    },
+    {
+      "columns": [
         "grp",
         "user"
       ],
@@ -2713,6 +3647,18 @@
       "entityType": "pks",
       "schema": "public",
       "table": "members"
+    },
+    {
+      "columns": [
+        "org",
+        "provider",
+        "model"
+      ],
+      "nameExplicit": false,
+      "name": "prices_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "prices"
     },
     {
       "columns": [
@@ -2753,6 +3699,16 @@
       "name": "domains_pkey",
       "schema": "public",
       "table": "domains",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "gateway_calls_pkey",
+      "schema": "public",
+      "table": "gateway_calls",
       "entityType": "pks"
     },
     {
@@ -2813,6 +3769,16 @@
       "name": "policies_pkey",
       "schema": "public",
       "table": "policies",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "reports_pkey",
+      "schema": "public",
+      "table": "reports",
       "entityType": "pks"
     },
     {
@@ -2911,7 +3877,7 @@
       "entityType": "uniques"
     },
     {
-      "value": "\"scope\" in ('org', 'member', 'user')",
+      "value": "\"scope\" in ('org', 'member', 'user', 'group', 'suborg')",
       "name": "budgets_scope",
       "entityType": "checks",
       "schema": "public",
@@ -2932,7 +3898,7 @@
       "table": "devices"
     },
     {
-      "value": "\"kind\" in ('anthropic', 'openai', 'openai-compatible')",
+      "value": "\"kind\" in ('anthropic', 'openai', 'openai-compatible', 'bedrock', 'vertex')",
       "name": "gateway_providers_kind",
       "entityType": "checks",
       "schema": "public",
@@ -2951,6 +3917,20 @@
       "entityType": "checks",
       "schema": "public",
       "table": "members"
+    },
+    {
+      "value": "\"cadence\" in ('weekly', 'monthly')",
+      "name": "reports_cadence",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "reports"
+    },
+    {
+      "value": "\"format\" in ('text', 'json')",
+      "name": "reports_format",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "reports"
     },
     {
       "value": "\"protocol\" in ('oidc', 'saml')",

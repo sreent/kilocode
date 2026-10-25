@@ -103,8 +103,8 @@ describe("managed deployments", () => {
     const organization = await client()
     expect(await run(organization.settings())).toMatchObject({ source: "managed", required: true })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
-    expect(await run(organization.refusal({ type: "local", command: ["npx", "server"] }))).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
+    expect(await run(organization.refusal({ type: "local", command: ["npx", "server"] }))).toContain("tucode org login")
     expect(await run(organization.telemetry())).toBe(false)
     expect(await run(organization.sync())).toBe(false)
   })
@@ -115,7 +115,7 @@ describe("managed deployments", () => {
     const organization = await client()
     expect(await run(organization.settings())).toMatchObject({ source: "managed", required: true })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("CI variables named before the rename keep the device enrolled", async () => {
@@ -130,7 +130,7 @@ describe("managed deployments", () => {
       required: true,
     })
     await run(organization.ready())
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("a malformed managed file blocks with a clear message instead of crashing", async () => {
@@ -206,6 +206,41 @@ describe("policy enforcement", () => {
     const output = { system: [] as string[] }
     await hooks["experimental.chat.system.transform"]!({ model: {} } as never, output)
     expect(output.system.join("\n")).toContain("Never paste customer data into prompts.")
+  })
+})
+
+describe("data policy", () => {
+  test("the plugin refuses providers it doesn't admit and routes OpenRouter-compatible ones by it", async () => {
+    expect(
+      (
+        await cp.admin("PUT", "/policy", {
+          data: {
+            training: "denied",
+            retention: "zero",
+            providers: {
+              anthropic: { training: false, retention: 0, regions: ["us"] },
+              openai: { training: false, retention: 30, regions: ["us"] },
+              openrouter: { training: false, retention: 0, regions: ["us"], routing: true },
+            },
+          },
+        })
+      ).status,
+    ).toBe(200)
+    signin((await cp.join("data@acme.com", "member")).token)
+    const hooks = await OrganizationPlugin(await client())({} as never)
+    const params = hooks["chat.params"]!
+    const request = (providerID: string, id: string, options: Record<string, unknown> = {}) => {
+      const output = { options }
+      return params({ model: { providerID, id } } as never, output as never).then(() => output.options)
+    }
+    await expect(request("openai", "gpt-5")).rejects.toThrow(
+      "Your organization's data policy doesn't allow openai: it keeps data for 30 days.",
+    )
+    await expect(request("mistral", "codestral")).rejects.toThrow("its data terms aren't on record")
+    expect(await request("anthropic", "claude-sonnet-4")).toEqual({})
+    expect(await request("openrouter", "anthropic/claude-sonnet-4", { provider: { order: ["anthropic"] } })).toEqual({
+      provider: { order: ["anthropic"], data_collection: "deny", zdr: true },
+    })
   })
 })
 
@@ -316,8 +351,156 @@ describe("usage and budgets", () => {
   })
 })
 
+describe("tool-run audit", () => {
+  // A finished tool part, as the session publishes it.
+  const tool = (id: string, name: string, state: Record<string, unknown>) => ({
+    event: {
+      type: "message.part.updated",
+      properties: {
+        part: { id, sessionID: "ses_t", messageID: "msg_t", type: "tool", callID: `call_${id}`, tool: name, state },
+      },
+    },
+  })
+  const time = { start: Date.now() - 1_500, end: Date.now() }
+
+  test("finished tool runs go to the org audit log at the level the policy sets", async () => {
+    expect((await cp.admin("PUT", "/policy", { audit: { tools: "summary" } })).status).toBe(200)
+    const dev = await cp.join("tools@acme.com", "member")
+    signin(dev.token)
+    const organization = await client()
+    const hooks = await OrganizationPlugin(organization)({} as never)
+    await hooks.event!({
+      event: {
+        type: "message.updated",
+        properties: {
+          info: {
+            id: "msg_t",
+            sessionID: "ses_t",
+            role: "assistant",
+            providerID: "anthropic",
+            modelID: "claude-sonnet-4",
+            path: { cwd: "/work/web", root: "/work/web" },
+          },
+        },
+      },
+    } as never)
+    const read = tool("prt_read", "read", {
+      status: "completed",
+      input: { filePath: "/work/web/src/app.ts" },
+      output: "export {}",
+      title: "src/app.ts",
+      metadata: {},
+      time,
+    })
+    for (const event of [
+      // Running parts are not finished yet.
+      tool("prt_read", "read", { status: "running", input: { filePath: "/work/web/src/app.ts" }, time }),
+      read,
+      // A later update to a finished part reports nothing new.
+      read,
+      tool("prt_bash", "bash", {
+        status: "error",
+        input: { command: "TOKEN=secret rm -rf build", description: "Clean" },
+        error: "The user rejected permission to use this specific tool call.",
+        time,
+      }),
+      tool("prt_fetch", "webfetch", {
+        status: "completed",
+        input: { url: "https://docs.acme.dev/guide?token=secret" },
+        output: "",
+        title: "",
+        metadata: {},
+        time,
+      }),
+      // Compaction rewrites parts that finished long before.
+      tool("prt_old", "read", {
+        status: "completed",
+        input: { filePath: "/work/web/old.ts" },
+        output: "",
+        title: "",
+        metadata: {},
+        time: { ...time, compacted: Date.now() },
+      }),
+    ])
+      await hooks.event!(event as never)
+    expect(await run(organization.tools.pending())).toBe(3)
+    expect(await run(organization.tools.flush())).toBe(true)
+
+    const logged = async () =>
+      (await cp.store.audit.query({ org: cp.owner.org.id, actions: ["client.tool_run"], limit: 10 })).filter(
+        (event) => event.actor === dev.user.id,
+      )
+    const summary = await logged()
+    expect(summary.map((event) => [event.target, event.details])).toEqual([
+      [
+        "webfetch",
+        {
+          tool: "webfetch",
+          outcome: "completed",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "https://docs.acme.dev",
+        },
+      ],
+      [
+        "bash",
+        {
+          tool: "bash",
+          outcome: "error",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "rm",
+          error: "The user rejected permission to use this specific tool call.",
+        },
+      ],
+      [
+        "read",
+        {
+          tool: "read",
+          outcome: "completed",
+          duration_ms: 1_500,
+          session: "ses_t",
+          project: "web",
+          subject: "src/app.ts",
+        },
+      ],
+    ])
+    expect(summary.every((event) => event.email === "tools@acme.com")).toBe(true)
+
+    // With inputs on, the tool's input comes too.
+    expect((await cp.admin("PUT", "/policy", { audit: { tools: "inputs" } })).status).toBe(200)
+    await run(organization.refresh())
+    await hooks.event!(
+      tool("prt_grep", "grep", {
+        status: "completed",
+        input: { pattern: "password", path: "/work/web/src" },
+        output: "",
+        title: "",
+        metadata: {},
+        time,
+      }) as never,
+    )
+    expect(await run(organization.tools.flush())).toBe(true)
+    expect((await logged())[0].details).toMatchObject({
+      subject: "src",
+      input: JSON.stringify({ pattern: "password", path: "/work/web/src" }),
+    })
+
+    // Off again, nothing is queued.
+    expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
+    await run(organization.refresh())
+    await hooks.event!(
+      tool("prt_list", "list", { status: "completed", input: {}, output: "", title: "", metadata: {}, time }) as never,
+    )
+    expect(await run(organization.tools.pending())).toBe(0)
+    expect(await logged()).toHaveLength(4)
+  })
+})
+
 describe("sign-in", () => {
-  // What the IDEs drive through `kilo serve`, and `kilo org login` in the terminal.
+  // What the IDEs drive through `tucode serve`, and `tucode org login` in the terminal.
   test("a device sign-in waits for the browser; a token signs in at once; signing out forgets both", async () => {
     const dev = await cp.join("device@acme.com", "member")
     // Device sign-in goes through the org's SSO; the browser leg is approved directly below.
@@ -365,6 +548,66 @@ describe("sign-in", () => {
 })
 
 describe("LLM gateway", () => {
+  test("providers clients don't know arrive with their name, models and SDK", async () => {
+    const litellm = {
+      kind: "openai-compatible",
+      base: "https://litellm.acme.internal/v1",
+      key: "sk-litellm-virtual-key",
+      name: "LiteLLM",
+      models: [
+        {
+          id: "claude-sonnet",
+          name: "Claude Sonnet",
+          context: 200000,
+          output: 64000,
+          reasoning: true,
+          attachments: true,
+        },
+        { id: "llama-70b", cost: { input: 0.5, output: 0.8 } },
+      ],
+    }
+    const bedrock = {
+      kind: "bedrock",
+      base: "https://bedrock-runtime.us-east-1.amazonaws.com",
+      auth: { type: "bearer" },
+      key: "bedrock-api-key",
+      models: [{ id: "us.anthropic.claude-sonnet-4-5-20250929-v1:0", context: 200000 }],
+    }
+    expect((await cp.admin("PUT", "/gateway/providers/litellm", litellm)).status).toBe(200)
+    expect((await cp.admin("PUT", "/gateway/providers/bedrock-claude", bedrock)).status).toBe(200)
+    try {
+      const dev = await cp.join("custom@acme.com", "member")
+      signin(dev.token)
+      const organization = await client()
+      const cfg: Config.Info = {}
+      await run(organization.overlay(cfg))
+      expect(cfg.provider?.litellm).toEqual({
+        name: "LiteLLM",
+        npm: "@ai-sdk/openai-compatible",
+        models: {
+          "claude-sonnet": {
+            name: "Claude Sonnet",
+            limit: { context: 200000, output: 64000 },
+            reasoning: true,
+            attachment: true,
+            modalities: { input: ["text", "image", "pdf"] },
+          },
+          "llama-70b": { name: "llama-70b", cost: { input: 0.5, output: 0.8 } },
+        },
+        options: { baseURL: `${cp.url}/gateway/litellm`, apiKey: dev.token },
+      })
+      // Claude on Bedrock is reached through Anthropic's API at the gateway.
+      expect(cfg.provider?.["bedrock-claude"]).toMatchObject({
+        name: "bedrock-claude",
+        npm: "@ai-sdk/anthropic",
+        models: { "us.anthropic.claude-sonnet-4-5-20250929-v1:0": { limit: { context: 200000, output: 0 } } },
+      })
+    } finally {
+      await cp.admin("DELETE", "/gateway/providers/litellm")
+      await cp.admin("DELETE", "/gateway/providers/bedrock-claude")
+    }
+  })
+
   test("routed providers call the control plane with the organization token and are metered there", async () => {
     expect((await cp.admin("PUT", "/policy", {})).status).toBe(200)
     const route = { kind: "openai-compatible", base: "https://openrouter.ai/api/v1", key: "sk-or-org-key-0123456789" }
@@ -464,7 +707,7 @@ describe("resilience", () => {
     await cp.store.user.update(dev.user.id, { active: false })
     await run(organization.refresh())
     expect(await run(organization.current())).toBeUndefined()
-    expect(await run(organization.blocked())).toContain("kilo org login")
+    expect(await run(organization.blocked())).toContain("tucode org login")
   })
 
   test("an unchanged policy is confirmed with a 304 and keeps the cached copy", async () => {

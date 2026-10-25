@@ -1,6 +1,13 @@
 import { Context } from "effect"
 import { HttpApiMiddleware } from "effect/unstable/httpapi"
-import { ForbiddenError, InvalidRequestError, NotFoundError, ScimUnauthorizedJson, UnauthorizedError } from "./errors"
+import {
+  ForbiddenError,
+  InvalidRequestError,
+  NotFoundError,
+  RateLimitError,
+  ScimUnauthorizedJson,
+  UnauthorizedError,
+} from "./errors"
 import type { Org, Role } from "./schema"
 
 export const cookie = "org_session"
@@ -53,3 +60,9 @@ export class SchemaErrorMiddleware extends HttpApiMiddleware.Service<SchemaError
   "@organization/SchemaError",
   { error: InvalidRequestError },
 ) {}
+
+// Requests over the server's rate limits are refused before they are routed. Declared once on the
+// whole API so clients decode the refusal and the OpenAPI document lists it.
+export class RateLimit extends HttpApiMiddleware.Service<RateLimit>()("@organization/RateLimit", {
+  error: RateLimitError,
+}) {}

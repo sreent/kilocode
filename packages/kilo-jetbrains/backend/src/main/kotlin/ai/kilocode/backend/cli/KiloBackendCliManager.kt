@@ -1,5 +1,6 @@
 package ai.kilocode.backend.cli
 
+import ai.kilocode.Brand
 import ai.kilocode.KiloPlugin
 import ai.kilocode.backend.dev.KiloDevMode
 import ai.kilocode.log.KiloLog
@@ -625,7 +626,7 @@ internal fun buildKiloCliEnv(
  * makes those requests target $HOME. Point it at an empty plugin-owned directory instead.
  */
 internal fun workDir(
-    root: File = File(PathManager.getSystemPath(), "kilo"),
+    root: File = File(PathManager.getSystemPath(), Brand.COMMAND),
     log: KiloLog = KiloLog.create(KiloBackendCliManager::class.java),
 ): File? {
     val dir = File(root, "cwd")
@@ -656,7 +657,7 @@ private fun ideEnv(log: KiloLog): Map<String, String> = buildMap {
 }
 
 private fun machineId(): String {
-    val file = File(PathManager.getSystemPath(), "kilo/machine-id")
+    val file = File(PathManager.getSystemPath(), "${Brand.COMMAND}/machine-id")
     if (file.exists()) return file.readText().trim()
     val id = UUID.randomUUID().toString()
     file.parentFile.mkdirs()

@@ -161,39 +161,35 @@ describe("Telemetry", () => {
 
 const shell = process.platform === "win32" ? test.skip : test
 
-shell("uses conda's effective client ID in events", async () => {
+shell("reads conda's client ID but never starts conda, since tucode sends no events", async () => {
   const root = await mkdtemp(join(tmpdir(), "kilo-aau-"))
   const home = process.env.HOME
   const exe = process.env.CONDA_EXE
   const token = "abcdefghijklmnopqrstuv"
   const conda = join(root, "conda")
+  const runs = join(root, "runs")
   const capture = spyOn(Client, "capture").mockImplementation(() => {})
   const machine = spyOn(Identity, "getMachineId").mockResolvedValue(undefined)
 
   try {
     await mkdir(join(root, ".conda"))
     await Bun.write(join(root, ".conda", "aau_token"), token)
-    await Bun.write(conda, `#!/bin/sh\nprintf '%s\\n' '{"user_agent":"conda/26.1 c/${token}"}'\n`)
+    await Bun.write(
+      conda,
+      `#!/bin/sh\necho run >> '${runs}'\nprintf '%s\\n' '{"user_agent":"conda/26.1 c/${token}"}'\n`,
+    )
     await chmod(conda, 0o755)
     process.env.HOME = root
     process.env.CONDA_EXE = conda
 
     expect(await Conda.clientToken()).toBe(token)
+    expect((await Bun.file(runs).text()).trim().split("\n")).toHaveLength(1)
+
     await Telemetry.init({ dataPath: root, version: "test", enabled: true })
+    expect((await Bun.file(runs).text()).trim().split("\n")).toHaveLength(1)
     Telemetry.trackCliStart()
-    expect(capture).toHaveBeenCalledWith(TelemetryEvent.CLI_START, expect.objectContaining({ aauClientToken: token }))
-
-    await Bun.write(conda, "#!/bin/sh\nprintf '%s\\n' '{\"user_agent\":\"conda/26.1\"}'\n")
-    expect(await Conda.clientToken()).toBeUndefined()
-
-    Telemetry.setEnabled(false)
-    capture.mockClear()
-    Telemetry.trackCliStart()
-    expect(capture).toHaveBeenCalledTimes(1)
     expect(capture.mock.calls.at(0)?.at(1)).not.toHaveProperty("aauClientToken")
   } finally {
-    // Clear conda properties while the client is still active; shutdown alone
-    // leaves them behind for tests that run later in randomized order.
     Telemetry.setEnabled(false)
     capture.mockRestore()
     machine.mockRestore()

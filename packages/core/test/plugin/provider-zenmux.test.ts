@@ -6,6 +6,7 @@ import { PluginHost } from "@opencode-ai/core/plugin/host"
 import { ProviderPlugins } from "@opencode-ai/core/plugin/provider"
 import { ZenmuxPlugin } from "@opencode-ai/core/plugin/provider/zenmux"
 import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Brand } from "@opencode-ai/core/tucode/brand" // kilocode_change - tucode
 import { testEffect } from "../lib/effect"
 import { PluginTestLayer } from "./fixture"
 
@@ -41,7 +42,7 @@ describe("ZenmuxPlugin", () => {
       })
       yield* addPlugin()
       const result = required(yield* catalog.provider.get(ProviderV2.ID.make("zenmux")))
-      expect(result.request.headers).toEqual({ "HTTP-Referer": "https://kilo.ai/", "X-Title": "Kilo Code" })
+      expect(result.request.headers).toEqual({ "HTTP-Referer": Brand.repository, "X-Title": Brand.name }) // kilocode_change - tucode
       expect(Object.keys(result.request.headers).sort()).toEqual(["HTTP-Referer", "X-Title"])
     }),
   )
@@ -63,8 +64,8 @@ describe("ZenmuxPlugin", () => {
 
       expect(required(yield* catalog.provider.get(ProviderV2.ID.make("zenmux"))).request.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://kilo.ai/",
-        "X-Title": "Kilo Code",
+        "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+        "X-Title": Brand.name, // kilocode_change - tucode
       })
     }),
   )

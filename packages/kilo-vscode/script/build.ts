@@ -9,6 +9,7 @@ import {
 } from "../src/services/cli-backend/cli-resources"
 import { ensureFfmpegForTarget } from "./ffmpeg-helper"
 import { evidence as sbom } from "./sbom"
+import { Brand } from "../src/brand"
 
 const packageJsonPath = join(import.meta.dir, "..", "package.json")
 const packageJson = await Bun.file(packageJsonPath).json()
@@ -30,15 +31,16 @@ if (!existsSync(cliDistDir)) {
   throw new Error(`CLI dist directory not found: ${cliDistDir}`)
 }
 
+// The CLI build names its packages and binary after brand/brand.json.
 const targets = [
-  { target: "linux-x64", cliDir: "@kilocode/cli-linux-x64", binary: "kilo" },
-  { target: "linux-arm64", cliDir: "@kilocode/cli-linux-arm64", binary: "kilo" },
-  { target: "alpine-x64", cliDir: "@kilocode/cli-linux-x64-musl", binary: "kilo" },
-  { target: "alpine-arm64", cliDir: "@kilocode/cli-linux-arm64-musl", binary: "kilo" },
-  { target: "darwin-x64", cliDir: "@kilocode/cli-darwin-x64", binary: "kilo" },
-  { target: "darwin-arm64", cliDir: "@kilocode/cli-darwin-arm64", binary: "kilo" },
-  { target: "win32-x64", cliDir: "@kilocode/cli-windows-x64", binary: "kilo.exe" },
-  { target: "win32-arm64", cliDir: "@kilocode/cli-windows-arm64", binary: "kilo.exe" },
+  { target: "linux-x64", cliDir: `${Brand.cli}-linux-x64`, binary: Brand.command },
+  { target: "linux-arm64", cliDir: `${Brand.cli}-linux-arm64`, binary: Brand.command },
+  { target: "alpine-x64", cliDir: `${Brand.cli}-linux-x64-musl`, binary: Brand.command },
+  { target: "alpine-arm64", cliDir: `${Brand.cli}-linux-arm64-musl`, binary: Brand.command },
+  { target: "darwin-x64", cliDir: `${Brand.cli}-darwin-x64`, binary: Brand.command },
+  { target: "darwin-arm64", cliDir: `${Brand.cli}-darwin-arm64`, binary: Brand.command },
+  { target: "win32-x64", cliDir: `${Brand.cli}-windows-x64`, binary: `${Brand.command}.exe` },
+  { target: "win32-arm64", cliDir: `${Brand.cli}-windows-arm64`, binary: `${Brand.command}.exe` },
 ]
 
 const binDir = join(import.meta.dir, "..", "bin")
@@ -85,7 +87,7 @@ for (const config of targets) {
   await copySandboxResources(sourceBinary, targetBinary)
   await copyKiloSandboxWorker(sourceBinary, targetBinary)
 
-  if (config.binary !== "kilo.exe") {
+  if (!config.binary.endsWith(".exe")) {
     chmodSync(targetBinary, 0o755)
   }
 

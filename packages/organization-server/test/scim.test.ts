@@ -165,6 +165,45 @@ describe("scim users", () => {
   })
 })
 
+describe("scim seats", () => {
+  test("a full organization refuses new users and reactivations with a SCIM 403", async () => {
+    const env = await scim()
+    const created = await env.scim("POST", "/Users", alice)
+    expect(created.status).toBe(201)
+    await env.call("PATCH", "/api/v1/orgs/acme", { token: env.owner.token, body: { seats: 2 } })
+
+    const bob = { ...alice, userName: "bob@acme.com", externalId: "okta-456", emails: [{ value: "bob@acme.com" }] }
+    const refused = await env.scim("POST", "/Users", bob)
+    expect(refused.status).toBe(403)
+    expect(refused.headers.get("content-type")).toContain("application/scim+json")
+    expect(refused.data).toMatchObject({ status: "403", detail: expect.stringContaining("no seats left") })
+    // Provisioned inactive, a user takes no seat.
+    expect((await env.scim("POST", "/Users", { ...bob, active: false })).status).toBe(201)
+
+    // Alice's suspension frees her seat for someone else, so she can't come back while it's taken.
+    const off = { schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"], Operations: [] as unknown[] }
+    await env.scim("PATCH", `/Users/${created.data.id}`, {
+      ...off,
+      Operations: [{ op: "replace", path: "active", value: false }],
+    })
+    const users = await env.scim("GET", `/Users?filter=${encodeURIComponent('userName eq "bob@acme.com"')}`)
+    const id = users.data.Resources[0].id
+    expect(
+      (
+        await env.scim("PATCH", `/Users/${id}`, {
+          ...off,
+          Operations: [{ op: "replace", path: "active", value: true }],
+        })
+      ).status,
+    ).toBe(200)
+    const back = await env.scim("PATCH", `/Users/${created.data.id}`, {
+      ...off,
+      Operations: [{ op: "replace", path: "active", value: true }],
+    })
+    expect(back.status).toBe(403)
+  })
+})
+
 describe("scim groups", () => {
   test("create with members, then add, remove and rename via PATCH", async () => {
     const env = await scim()
