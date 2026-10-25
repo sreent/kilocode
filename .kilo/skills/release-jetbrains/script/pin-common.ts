@@ -2,12 +2,12 @@ import { $ } from "bun"
 import semver from "semver"
 
 export const assets = [
-  "kilo-darwin-arm64.zip",
-  "kilo-darwin-x64.zip",
-  "kilo-linux-arm64.tar.gz",
-  "kilo-linux-x64.tar.gz",
-  "kilo-windows-arm64.zip",
-  "kilo-windows-x64.zip",
+  "tucode-darwin-arm64.zip",
+  "tucode-darwin-x64.zip",
+  "tucode-linux-arm64.tar.gz",
+  "tucode-linux-x64.tar.gz",
+  "tucode-windows-arm64.zip",
+  "tucode-windows-x64.zip",
 ]
 
 export async function latest(repo: string) {

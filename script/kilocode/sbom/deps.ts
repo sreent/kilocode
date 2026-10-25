@@ -14,6 +14,7 @@
 
 import fs from "node:fs"
 import path from "node:path"
+import brand from "../../../brand/brand.json"
 import { ref, type Component, type Gap } from "./model"
 
 export type Lock = {
@@ -216,7 +217,7 @@ export function closure(input: { lock: Lock; workspace: string; platform?: Platf
             name: resolved.name,
             version: meta.version ?? "0.0.0",
             ref,
-            supplier: "Kilo Code",
+            supplier: brand.name,
             delivery: "contained",
             properties: { origin: "workspace", workspace: dir },
           })

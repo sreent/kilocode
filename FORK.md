@@ -52,11 +52,7 @@ tucode keeps its files under `tucode` (`~/.config/tucode`, `~/.local/share/tucod
 
 ### Publishing
 
-Builds carry the brand's names: the `@tucode/cli` npm package and its `@tucode/cli-<platform>` binaries, the `tucode` binary, `tucode-<platform>` release archives, the container image and their SBOMs. Kilo's AUR package and Homebrew tap are left alone.
-
-The release workflows are Kilo's and run only in `Kilo-Org/kilocode`. Adapt them, with your own secrets, before you publish. When this repository has no releases yet, the release script reads its next version from Kilo's npm package, so set `KILO_VERSION` for the first one.
-
-The JetBrains plugin builds against the CLI in this repository. A release build of it needs `kilo.cli.pinned=true`, which production builds and `packages/kilo-jetbrains/script/build-version.sh` enforce, and the pinned version's CLI release, with its `tucode-<platform>` archives, published in the repository in `brand.json`.
+Builds carry the brand's names: the `@tucode/cli` npm package and its `@tucode/cli-<platform>` binaries, the `tucode` binary, `tucode-<platform>` release archives, `tucode-vscode-<target>.vsix` files, the container image, and their checksums and SBOMs. Kilo's own listings are left alone: the `@kilocode/sdk` and `@kilocode/plugin` npm packages, the AUR package and the Homebrew tap. [Releasing](#releasing) covers how to publish.
 
 ## What's fork-owned
 
@@ -179,13 +175,61 @@ The import brought upstream's GitHub Actions workflows along. Two adjustments ma
 
 Still open, and yours to decide before the fork lands on `main`:
 
-- **Missing secrets:** release and publish workflows need Kilo's secrets.
+- **Release credentials:** each store publishes once its secrets are set (see [Releasing](#releasing)).
 - **Scheduled bots:** stale-PR, auto-close, community sweep and beta releases run on a schedule from the default branch. Most are guarded like the Blacksmith workflows, but not all.
 
 Turn off the workflows you don't want in the repository's Actions settings, or move them under `.github/workflows/disabled/` (the pattern upstream uses).
 
 The husky `pre-push` hook runs a full monorepo typecheck, then the JetBrains plugin typecheck. The JetBrains plugin builds against this repository: its API client comes from the SDK's committed OpenAPI spec (`packages/sdk/openapi.json`), so it needs neither the network nor a built CLI. Regenerate that spec with `./script/generate.ts` after changing the CLI's server routes, as for the SDK.
 
+## Releasing
+
+Releases publish from the repository in `brand.json`. Every release creates a GitHub release with the CLI archives, the VSIX files, and their checksums and SBOMs. A store is added once the repository has its credentials. Until then the release skips it and says so in the log.
+
+### Start a release
+
+Run the **publish** workflow on `main` from the Actions tab:
+
+- **bump** (`patch`, `minor` or `major`) is added to the highest GitHub release. Before the first release it starts from the CLI version in this repository, so the first patch release is `7.8.18`. **version** sets the version instead.
+- **pre_release** is on by default. It publishes to npm's `rc` tag and as a VS Code pre-release, without a container image. Turn it off for a stable release.
+
+The workflow builds and checks the CLI on every platform, and packages the VS Code extension. Then it commits the version and changelog to `main`, tags `v<version>`, writes the release notes, and publishes. Last, it opens a pull request that pins the JetBrains plugin to the new CLI.
+
+### Credentials
+
+Set these under Settings → Secrets and variables → Actions:
+
+| For | Secrets and variables | Without them |
+|---|---|---|
+| npm | Secret `NPM_TOKEN`, or variable `NPM_TRUSTED_PUBLISHING` set to `true` | Skipped |
+| VS Code Marketplace | Secret `VSCE_TOKEN`, a token for the `tucode` publisher | Skipped |
+| Open VSX | Secret `OVSX_TOKEN`, a token for the `tucode` namespace | Skipped |
+| Container image | None: the job's token pushes it to `ghcr.io` on stable releases. Set who can pull it in the package's settings after the first push | |
+| Windows code signing | Variable `WINDOWS_SIGNING` set to `true`, and secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_KEY_VAULT_URI` and `AZURE_CERT_NAME` for the certificate in Azure Key Vault | Windows binaries ship unsigned |
+| Release commits and pull requests | Secrets `KILO_MAINTAINER_APP_ID` and `KILO_MAINTAINER_APP_SECRET`, a GitHub App's ID and private key | They come from `github-actions[bot]` |
+
+- **npm's first release** needs `NPM_TOKEN`, a token that can publish to the `@tucode` scope, because npm can set up trusted publishing only for a package that exists. Afterwards, make `publish.yml` in this repository the trusted publisher of `@tucode/cli` and each `@tucode/cli-<platform>` package, set `NPM_TRUSTED_PUBLISHING`, and delete the token.
+- **`main`:** the release pushes its commit and tag straight to `main`. If `main` requires pull requests, the release needs a GitHub App that may bypass that rule.
+- **Pull requests from `github-actions[bot]`** need "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General). GitHub starts no workflows for them, so push to the branch, or close and reopen the pull request, to run its checks.
+- **Kilo's own steps stay off:** its benchmark (`smoke-test.yml`, which runs through Kilo Gateway), the AUR package, the Homebrew tap, and the `@kilocode/sdk` and `@kilocode/plugin` npm packages. The hourly beta channel (`beta.yml`) and the CI image builds (`containers.yml`) stay Kilo's, on its Blacksmith runners.
+
+### From a private repository
+
+- Only people with access to the repository can download its release files. For anyone else the install script fails, and so does the JetBrains plugin from Marketplace, which downloads its CLI from them. Install the CLI from npm, and hand out the bundled JetBrains ZIP, which carries the CLI.
+- npm accepts provenance only from a public repository, so the release publishes to npm without it.
+- GitHub artifact attestations need GitHub Enterprise Cloud. Without it the attestation steps fail, but the release goes on while `SBOM_ENFORCE` is unset.
+
+### The JetBrains plugin
+
+The plugin releases on its own, pinned to a published CLI release:
+
+1. Merge the pin pull request from the CLI release, and set `kilo.cli.pinned=true` in `packages/kilo-jetbrains/gradle.properties`. This repository builds with `false`, against its own CLI, because it had no CLI release to pin.
+2. Set the secrets `JETBRAINS_MARKETPLACE_TOKEN`, a Marketplace token, and `JETBRAINS_CERTIFICATE_CHAIN`, `JETBRAINS_PRIVATE_KEY` and `JETBRAINS_PRIVATE_KEY_PASSWORD`, the plugin signing certificate.
+3. Upload the first signed ZIP to JetBrains Marketplace by hand, under the `tucode` vendor. Marketplace takes automated uploads only for a plugin that exists.
+4. In a public repository, enable GitHub Pages with GitHub Actions as the source. Stable releases publish a plugin repository there that installs the bundled ZIP. Without Pages, a stable release's last job fails, after everything is published. A private repository skips it.
+
+Then follow [`packages/kilo-jetbrains/RELEASING.md`](packages/kilo-jetbrains/RELEASING.md). Its steps for installing release candidates still name Kilo's Marketplace listing.
+
 ## Roadmap
 
-1. **Publishing.** Replace the placeholders in `brand/brand.json`, adapt the release workflows and their secrets, publish the CLI (npm, GitHub releases, container image) and the VS Code extension, then pin the JetBrains plugin to the published CLI release and publish it.
+1. **Publishing.** Claim the names listed in [brand/README.md](brand/README.md#before-publishing), and set the four placeholders there once the repository moves. Then add the store credentials (see [Releasing](#releasing)), publish the CLI and the VS Code extension, and pin the JetBrains plugin to that CLI release and publish it.

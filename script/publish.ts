@@ -4,6 +4,7 @@ import { Script } from "@opencode-ai/script"
 import { $ } from "bun"
 import { fileURLToPath } from "url"
 import { apply } from "./kilocode/changeset-version" // kilocode_change
+import { Channels } from "./kilocode/channels" // kilocode_change
 
 console.log("=== publishing ===\n")
 
@@ -95,11 +96,15 @@ await import(`../packages/opencode/script/publish.ts`)
 
 // kilocode_change - Kilo does not ship the upstream preview CLI package
 
-console.log("\n=== sdk ===\n")
-await import(`../packages/sdk/js/script/publish.ts`)
+// kilocode_change start - @kilocode/sdk and @kilocode/plugin are Kilo's npm packages
+if (Channels.kilo) {
+  console.log("\n=== sdk ===\n")
+  await import(`../packages/sdk/js/script/publish.ts`)
 
-console.log("\n=== plugin ===\n")
-await import(`../packages/plugin/script/publish.ts`)
+  console.log("\n=== plugin ===\n")
+  await import(`../packages/plugin/script/publish.ts`)
+}
+// kilocode_change end
 
 // kilocode_change - Kilo does not publish the upstream-owned @opencode-ai/ui package
 

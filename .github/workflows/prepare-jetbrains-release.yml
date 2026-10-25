@@ -30,8 +30,8 @@ concurrency:
 
 jobs:
   prepare:
-    if: github.repository == 'Kilo-Org/kilocode'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    if: github.repository == 'sreent/kilocode'
+    runs-on: ubuntu-24.04 # fork: GitHub-hosted runners; this fork cannot use Kilo's Blacksmith runners
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

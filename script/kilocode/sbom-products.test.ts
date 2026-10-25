@@ -4,6 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import * as JetBrains from "../../packages/kilo-jetbrains/script/sbom"
 import * as VsCode from "../../packages/kilo-vscode/script/sbom"
+import brand from "../../brand/brand.json"
 import { validate } from "./sbom/index"
 
 const release = { version: "9.9.9", channel: "latest" }
@@ -88,7 +89,7 @@ describe("jetbrains plugin", () => {
         value: "Bun runtime for CLI 9.9.9 requires release-specific evidence",
       })
       for (const platform of JetBrains.PLATFORMS) {
-        expect(scope(bom, `kilo-cli-${platform}`)).toBe("optional")
+        expect(scope(bom, `${brand.command}-cli-${platform}`)).toBe("optional")
       }
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
@@ -150,7 +151,7 @@ describe("jetbrains plugin", () => {
 
       expect(await validate(bom)).toEqual([])
       for (const platform of JetBrains.PLATFORMS) {
-        expect(scope(bom, `kilo-cli-${platform}`)).toBe("required")
+        expect(scope(bom, `${brand.command}-cli-${platform}`)).toBe("required")
       }
     } finally {
       await fs.promises.rm(dir, { recursive: true, force: true })
@@ -245,7 +246,7 @@ describe("vscode vsix", () => {
   test("describes the embedded CLI target and bundled FFmpeg helper", async () => {
     const dir = await scratch()
     try {
-      const file = path.join(dir, "kilo-vscode-linux-x64.vsix")
+      const file = path.join(dir, `${VsCode.VSIX}linux-x64.vsix`)
       await Bun.write(file, "vsix")
       const result = await VsCode.vsix({ file, target: "linux-x64", release })
       const bom = await Bun.file(result.sidecar).json()
@@ -262,7 +263,7 @@ describe("vscode vsix", () => {
   test("does not claim a bundled FFmpeg helper on Windows ARM64", async () => {
     const dir = await scratch()
     try {
-      const file = path.join(dir, "kilo-vscode-win32-arm64.vsix")
+      const file = path.join(dir, `${VsCode.VSIX}win32-arm64.vsix`)
       await Bun.write(file, "vsix")
       const result = await VsCode.vsix({ file, target: "win32-arm64", release })
       const bom = await Bun.file(result.sidecar).json()
@@ -278,7 +279,7 @@ describe("vscode vsix", () => {
   test("rejects an unknown target instead of guessing a CLI build", async () => {
     const dir = await scratch()
     try {
-      const file = path.join(dir, "kilo-vscode-solaris-sparc.vsix")
+      const file = path.join(dir, `${VsCode.VSIX}solaris-sparc.vsix`)
       await Bun.write(file, "vsix")
       await expect(VsCode.vsix({ file, target: "solaris-sparc", release })).rejects.toThrow(/Unknown VS Code target/)
     } finally {
@@ -289,8 +290,8 @@ describe("vscode vsix", () => {
   test("covers each packaged VSIX exactly once", async () => {
     const dir = await scratch()
     try {
-      await Bun.write(path.join(dir, "kilo-vscode-darwin-arm64.vsix"), "a")
-      await Bun.write(path.join(dir, "kilo-vscode-alpine-x64.vsix"), "b")
+      await Bun.write(path.join(dir, `${VsCode.VSIX}darwin-arm64.vsix`), "a")
+      await Bun.write(path.join(dir, `${VsCode.VSIX}alpine-x64.vsix`), "b")
       const result = await VsCode.evidence({ dir, release, expected: 2 })
 
       expect(result.manifest.entries.map((entry) => entry.target).sort()).toEqual(["alpine-x64", "darwin-arm64"])

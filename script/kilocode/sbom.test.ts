@@ -4,6 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import { Artifact, Deps, Manifest, Policy, Scan, compose, dedupe, serial, validate } from "./sbom/index"
 import type { Component } from "./sbom/index"
+import brand from "../../brand/brand.json"
 
 const DIGEST = "a".repeat(64)
 
@@ -396,7 +397,7 @@ describe("deps", () => {
   test("records workspace packages as first-party without inventing npm purls", () => {
     const result = Deps.closure({ lock, workspace: "packages/app" })
     const workspace = result.components.find((item) => item.name === "@kilo/lib")
-    expect(workspace).toMatchObject({ version: "2.0.0", supplier: "Kilo Code", properties: { origin: "workspace" } })
+    expect(workspace).toMatchObject({ version: "2.0.0", supplier: brand.name, properties: { origin: "workspace" } })
     expect(workspace?.purl).toBeUndefined()
     expect(result.components.map((item) => item.name)).toContain("nested")
   })

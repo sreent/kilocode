@@ -4,23 +4,28 @@ inputs:
   # kilocode_change start
   kilo-maintainer-app-id:
     description: "Kilo Maintainer GitHub App ID"
-    required: true
+    # fork: optional. Without an App, release commits are pushed with the job's GITHUB_TOKEN as
+    # github-actions[bot], which branch protection on main must allow.
+    required: false
+    default: ""
   kilo-maintainer-app-secret:
     description: "Kilo Maintainer GitHub App private key"
-    required: true
+    required: false
+    default: ""
   # kilocode_change end
 outputs:
   token:
     description: "GitHub App token"
-    value: ${{ steps.apptoken.outputs.token }}
+    value: ${{ steps.committer.outputs.token }} # kilocode_change
   app-slug:
     description: "GitHub App slug"
-    value: ${{ steps.apptoken.outputs.app-slug }}
+    value: ${{ steps.committer.outputs.app-slug }} # kilocode_change
 runs:
   using: "composite"
   steps:
     - name: Create app token
       id: apptoken
+      if: inputs['kilo-maintainer-app-id'] != '' # kilocode_change
       uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
       with:
         # kilocode_change start
@@ -29,9 +34,21 @@ runs:
         # kilocode_change end
         owner: ${{ github.repository_owner }}
 
+    # kilocode_change start - fork: without an App, the job's token, as github-actions[bot]
+    - name: Resolve committer
+      id: committer
+      run: |
+        echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+        echo "app-slug=$SLUG" >> "$GITHUB_OUTPUT"
+      env:
+        TOKEN: ${{ steps.apptoken.outputs.token || github.token }}
+        SLUG: ${{ steps.apptoken.outputs.app-slug || 'github-actions' }}
+      shell: bash
+    # kilocode_change end
+
     - name: Configure git user
       run: |
-        slug="${{ steps.apptoken.outputs.app-slug }}"
+        slug="${{ steps.committer.outputs.app-slug }}" # kilocode_change
         git config --global user.name "${slug}[bot]"
         git config --global user.email "${slug}[bot]@users.noreply.github.com"
       shell: bash
@@ -52,5 +69,5 @@ runs:
 
     - name: Configure git remote
       run: |
-        git remote set-url origin https://x-access-token:${{ steps.apptoken.outputs.token }}@github.com/${{ github.repository }}
+        git remote set-url origin https://x-access-token:${{ steps.committer.outputs.token }}@github.com/${{ github.repository }} # kilocode_change
       shell: bash

@@ -11,6 +11,7 @@ import * as KiloSbom from "./kilocode/sbom"
 import * as KiloRelease from "../../../script/kilocode/release"
 import type { Manifest } from "../../../script/kilocode/sbom/index"
 import { Brand } from "../src/tucode/brand"
+import { Channels } from "../../../script/kilocode/channels"
 // kilocode_change end
 
 const dir = fileURLToPath(new URL("..", import.meta.url))
@@ -95,10 +96,11 @@ async function publish(dir: string, name: string, version: string) {
   const tarball = packed[0]
   await describe(path.join(dir, tarball), name, version)
 
+  const provenance = Channels.provenance ? ["--provenance"] : []
   await NpmPublish.retry({
     name,
     version,
-    run: () => $`npm publish ${tarball} --access public --tag ${Script.channel} --provenance`.cwd(dir),
+    run: () => $`npm publish ${tarball} --access public --tag ${Script.channel} ${provenance}`.cwd(dir),
     exists: () => published(name, version),
   })
   // kilocode_change end
@@ -151,11 +153,16 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
   ),
 )
 
-const tasks = Object.entries(binaries).map(async ([name]) => {
-  await publish(`./dist/${name}`, name, binaries[name])
-})
-await Promise.all(tasks)
-await publish(`./dist/${pkg.name}`, pkg.name, version) // kilocode_change
+// kilocode_change start - tucode: npm only once this repository can publish there
+if (!Channels.npm) console.log("npm: skipped, since neither NPM_TOKEN nor NPM_TRUSTED_PUBLISHING is set")
+if (Channels.npm) {
+  const tasks = Object.entries(binaries).map(async ([name]) => {
+    await publish(`./dist/${name}`, name, binaries[name])
+  })
+  await Promise.all(tasks)
+  await publish(`./dist/${pkg.name}`, pkg.name, version)
+}
+// kilocode_change end
 
 const image = Brand.image // kilocode_change - tucode
 const platforms = "linux/amd64,linux/arm64"
@@ -174,7 +181,7 @@ if (!Script.preview) {
   // kilocode_change start - tucode: the AUR package and the Homebrew tap below are Kilo's, so only a build
   // that carries Kilo's identity updates them. tucode ships through npm, its image and its GitHub releases.
 }
-if (!Script.preview && Brand.repository === "https://github.com/Kilo-Org/kilocode") {
+if (!Script.preview && Channels.kilo) {
   // kilocode_change end
   // Calculate SHA values
   const arm64Sha = await $`sha256sum ./dist/kilo-linux-arm64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
@@ -318,7 +325,7 @@ if (!Script.preview && Brand.repository === "https://github.com/Kilo-Org/kilocod
 if (Script.release) {
   // Expected coverage is derived from what this release had to produce, not from
   // what happened to be recorded, so a missing package or image is a shortfall.
-  const packages = Object.keys(binaries).length + 1
+  const packages = Channels.npm ? Object.keys(binaries).length + 1 : 0
   const images = Script.preview ? 0 : platforms.split(",").length + 1
   const described = await KiloSbom.distribution({
     dir: path.resolve("dist"),

@@ -10,6 +10,7 @@
 import { createHash } from "node:crypto"
 import { Contrib, Models } from "@cyclonedx/cyclonedx-library"
 import spdxExpressionParse from "spdx-expression-parse"
+import brand from "../../../brand/brand.json"
 
 export const SPEC_VERSION = "1.6"
 export const PROPERTY_NAMESPACE = "kilocode"
@@ -118,7 +119,7 @@ export type Bom = {
   dependencies: { ref: string; dependsOn: string[] }[]
 }
 
-const SUPPLIER = { name: "Kilo Code", url: ["https://kilo.ai"] }
+const SUPPLIER = { name: brand.name, url: [brand.repository] }
 
 /**
  * Deterministic serial number.

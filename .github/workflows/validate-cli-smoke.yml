@@ -38,16 +38,16 @@ jobs:
         include:
           - target: darwin-arm64
             runner: macos-15
-            package: "@kilocode/cli-darwin-arm64"
+            package: "@tucode/cli-darwin-arm64"
           - target: darwin-x64
             runner: macos-15-intel
-            package: "@kilocode/cli-darwin-x64"
+            package: "@tucode/cli-darwin-x64"
           - target: linux-x64
             runner: ubuntu-24.04
-            package: "@kilocode/cli-linux-x64"
+            package: "@tucode/cli-linux-x64"
           - target: windows-x64
             runner: windows-2025
-            package: "@kilocode/cli-windows-x64"
+            package: "@tucode/cli-windows-x64"
     steps:
       - uses: actions/checkout@v6
 
@@ -64,7 +64,7 @@ jobs:
         if: runner.os != 'Windows'
         working-directory: packages/opencode
         run: |
-          binary="./dist/${{ matrix.package }}/bin/kilo"
+          binary="./dist/${{ matrix.package }}/bin/tucode"
           "$binary" --version
           root="$(mktemp -d)"
           trap 'rm -rf "$root"' EXIT
@@ -88,7 +88,7 @@ jobs:
         shell: pwsh
         run: |
           $package = "${{ matrix.package }}".Replace("/", "\")
-          $binary = ".\dist\$package\bin\kilo.exe"
+          $binary = ".\dist\$package\bin\tucode.exe"
           & $binary --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

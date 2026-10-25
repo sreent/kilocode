@@ -14,6 +14,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { Artifact, Deps, Manifest, Policy, Scan, compose, serialize } from "../../../script/kilocode/sbom/index"
 import type { Component, Manifest as ManifestType } from "../../../script/kilocode/sbom/index"
+import { Brand } from "../src/brand"
 import * as Cli from "../../opencode/script/kilocode/sbom"
 import { packages as ffmpeg } from "./ffmpeg-helper"
 
@@ -94,10 +95,10 @@ export async function vsix(input: { file: string; target: string; release: Relea
   const bom = compose({
     subject,
     product: {
-      name: "kilo-code",
+      name: Brand.name,
       version: input.release.version,
       type: "application",
-      description: `Kilo Code VS Code extension for ${input.target}`,
+      description: `${Brand.name} VS Code extension for ${input.target}`,
     },
     target: { platform: input.target, ...constraint(input.target) },
     build: {
@@ -128,7 +129,9 @@ export async function vsix(input: { file: string; target: string; release: Relea
   }
 }
 
-export const CHECKSUMS = "kilo-vscode-SHA256SUMS"
+/** Release files are named after the product: <command>-vscode-<target>.vsix and their checksums. */
+export const VSIX = `${Brand.command}-vscode-`
+export const CHECKSUMS = `${VSIX}SHA256SUMS`
 
 /**
  * Describe every VSIX in `dir`.
@@ -142,7 +145,7 @@ export async function evidence(input: { dir: string; release: Release; expected?
 
   const entries: Manifest.Entry[] = []
   for (const file of files) {
-    const target = file.replace(/^kilo-vscode-/, "").replace(/\.vsix$/, "")
+    const target = file.slice(VSIX.length).replace(/\.vsix$/, "")
     try {
       const result = await vsix({ file: path.join(input.dir, file), target, release: input.release, lock })
       entries.push(result.entry)

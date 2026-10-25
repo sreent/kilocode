@@ -29,6 +29,7 @@ What users see:
 - The product name in text people read: CLI help and tips, agent prompts, VS Code and JetBrains strings in every language, and release notes (changesets).
 - Identities: the VS Code manifest (publisher, name, display name, repository), the extension ID in code, and the JetBrains plugin's ID, name, vendor and description.
 - The Dockerfile, the installer script, and the icons in VS Code, JetBrains and the admin console.
+- The release workflows and their scripts: the repository they run in, and the packages, binaries, archives and checksum files they handle (see [Releasing](../FORK.md#releasing)).
 - Generated constants, for code that can't import `brand.json` itself:
   - `packages/kilo-vscode/src/brand.ts`
   - `packages/kilo-jetbrains/shared/src/main/kotlin/ai/kilocode/Brand.kt`

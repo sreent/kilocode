@@ -7,7 +7,7 @@ import { parseArgs } from "util"
 
 const props = new URL("../packages/kilo-jetbrains/gradle.properties", import.meta.url).pathname
 const log = new URL("../packages/kilo-jetbrains/CHANGELOG.md", import.meta.url).pathname
-const repo = process.env.GH_REPO ?? process.env.GITHUB_REPOSITORY ?? "Kilo-Org/kilocode"
+const repo = process.env.GH_REPO ?? process.env.GITHUB_REPOSITORY ?? "sreent/kilocode"
 
 const { values } = parseArgs({
   args: Bun.argv.slice(2),
