@@ -7,6 +7,7 @@ import {
   partInjected,
 } from "../../src/shared/injected-prompt"
 import { PUSH_INSTRUCTION } from "../../src/shared/review-comments"
+import { Brand } from "../../src/brand"
 
 describe("injected prompt metadata", () => {
   it("round-trips the title", () => {
@@ -41,21 +42,21 @@ describe("injectedView", () => {
   it("labels marked prompts and collapses long ones", () => {
     const long = "Update the branch.\n\nFetch.\nMerge.\nTest.\nPush."
     expect(injectedView(injectedMetadata("Update from main"), long)).toEqual({
-      label: "Sent by Kilo \u00B7 Update from main",
+      label: `Sent by ${Brand.name} \u00B7 Update from main`,
       preview: "Update the branch.",
     })
-    expect(injectedView(injectedMetadata("/init"), "short")).toEqual({ label: "Sent by Kilo \u00B7 /init" })
+    expect(injectedView(injectedMetadata("/init"), "short")).toEqual({ label: `Sent by ${Brand.name} \u00B7 /init` })
   })
 
   it("does not collapse a long body that has no paragraph break", () => {
     expect(injectedView(injectedMetadata("/demo"), "one\ntwo\nthree\nfour\nfive")).toEqual({
-      label: "Sent by Kilo \u00B7 /demo",
+      label: `Sent by ${Brand.name} \u00B7 /demo`,
     })
   })
 
   it("labels an auto-sent pull request fix as sent by Kilo", () => {
     expect(injectedView(undefined, PUSH_INSTRUCTION)).toEqual({
-      label: "Sent by Kilo \u00B7 Fix pull request feedback",
+      label: `Sent by ${Brand.name} \u00B7 Fix pull request feedback`,
     })
   })
 

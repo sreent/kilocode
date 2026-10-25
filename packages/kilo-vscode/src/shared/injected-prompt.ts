@@ -1,4 +1,5 @@
 import { PUSH_INSTRUCTION, record } from "./review-comments"
+import { Brand } from "../brand"
 
 /**
  * Marker for user-role prompts that Kilo composed on behalf of the user, such
@@ -14,7 +15,7 @@ export interface InjectedPrompt {
 
 /** What the user bubble shows for a prompt that Kilo composed or extended. */
 export interface InjectedView {
-  /** Header label, e.g. "Sent by Kilo · /review branch". */
+  /** Header label, e.g. "Sent by TU Code · /review branch". */
   label: string
   /** Collapsed body. Undefined when the full text is short enough to show as is. */
   preview?: string
@@ -83,12 +84,12 @@ function scheduled(body: string): InjectedView | undefined {
  */
 export function injectedView(metadata: unknown, text: string): InjectedView | undefined {
   const marked = partInjected(metadata)
-  if (marked) return { label: `Sent by Kilo \u00B7 ${marked.title}`, preview: injectedPreview(text) }
+  if (marked) return { label: `Sent by ${Brand.name} \u00B7 ${marked.title}`, preview: injectedPreview(text) }
   const body = text.trim()
   const sched = scheduled(body)
   if (sched) return sched
   if (!body.startsWith(PUSH_INSTRUCTION)) return undefined
   const rest = body.slice(PUSH_INSTRUCTION.length).trim()
-  if (!rest) return { label: "Sent by Kilo \u00B7 Fix pull request feedback" }
+  if (!rest) return { label: `Sent by ${Brand.name} \u00B7 Fix pull request feedback` }
   return { label: "Kilo added: push fixes to the pull request", preview: rest }
 }
