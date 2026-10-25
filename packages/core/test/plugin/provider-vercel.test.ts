@@ -7,6 +7,7 @@ import { PluginV2 } from "@opencode-ai/core/plugin"
 import { PluginHost } from "@opencode-ai/core/plugin/host"
 import { VercelPlugin } from "@opencode-ai/core/plugin/provider/vercel"
 import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Brand } from "@opencode-ai/core/tucode/brand" // kilocode_change - tucode
 import { testEffect } from "../lib/effect"
 import { PluginTestLayer } from "./fixture"
 
@@ -32,8 +33,8 @@ describe("VercelPlugin", () => {
       yield* addPlugin()
       expect((yield* catalog.provider.get(ProviderV2.ID.make("vercel")))?.request.headers).toEqual({
         Existing: "1",
-        "http-referer": "https://kilo.ai/",
-        "x-title": "Kilo Code",
+        "http-referer": Brand.repository, // kilocode_change - tucode
+        "x-title": Brand.name, // kilocode_change - tucode
       })
     }),
   )

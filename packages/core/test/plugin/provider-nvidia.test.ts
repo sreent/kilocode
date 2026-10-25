@@ -6,6 +6,7 @@ import { PluginHost } from "@opencode-ai/core/plugin/host"
 import { ProviderPlugins } from "@opencode-ai/core/plugin/provider"
 import { NvidiaPlugin } from "@opencode-ai/core/plugin/provider/nvidia"
 import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Brand } from "@opencode-ai/core/tucode/brand" // kilocode_change - tucode
 import { testEffect } from "../lib/effect"
 import { PluginTestLayer } from "./fixture"
 
@@ -39,9 +40,9 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
       expect((yield* catalog.provider.get(ProviderV2.ID.make("nvidia")))?.request.headers).toEqual({
         Existing: "value",
-        "HTTP-Referer": "https://kilo.ai/",
-        "X-Title": "Kilo Code",
-        "X-BILLING-INVOKE-ORIGIN": "KiloCode",
+        "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+        "X-Title": Brand.name, // kilocode_change - tucode
+        "X-BILLING-INVOKE-ORIGIN": "TUCode", // kilocode_change - tucode
       })
       expect((yield* catalog.provider.get(ProviderV2.ID.openrouter))?.request.headers).toEqual({})
     }),
@@ -62,9 +63,9 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
 
       expect((yield* catalog.provider.get(ProviderV2.ID.make("nvidia")))?.request.headers).toEqual({
-        "HTTP-Referer": "https://kilo.ai/",
-        "X-Title": "Kilo Code",
-        "X-BILLING-INVOKE-ORIGIN": "KiloCode",
+        "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+        "X-Title": Brand.name, // kilocode_change - tucode
+        "X-BILLING-INVOKE-ORIGIN": "TUCode", // kilocode_change - tucode
       })
     }),
   )
@@ -88,8 +89,8 @@ describe("NvidiaPlugin", () => {
       yield* addPlugin()
 
       expect((yield* catalog.provider.get(ProviderV2.ID.make("nvidia")))?.request.headers).toEqual({
-        "HTTP-Referer": "https://kilo.ai/",
-        "X-Title": "Kilo Code",
+        "HTTP-Referer": Brand.repository, // kilocode_change - tucode
+        "X-Title": Brand.name, // kilocode_change - tucode
         "X-BILLING-INVOKE-ORIGIN": "CustomOrigin",
       })
     }),
