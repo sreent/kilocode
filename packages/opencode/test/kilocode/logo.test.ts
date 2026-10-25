@@ -26,12 +26,17 @@ describe("tucode logo", () => {
     expect(supports({ KILO_UNICODE_LOGO: "0" }, "linux")).toBe(false)
   })
 
-  test("draws the tucode wordmark in full blocks on every terminal", () => {
+  test("draws the tucode wordmark in blocks on every terminal", () => {
     expect(tui({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(tui({}, "win32"))
     expect(plain({ KILO_UNICODE_LOGO: "1" }, "linux")).toEqual(plain({}, "win32"))
-    expect(plain().join("\n")).toMatch(/^[█ \n]+$/)
-    // Both start with the same letters; the TUI wordmark adds shadows below them.
-    expect(tui().slice(0, 1)).toEqual(plain().slice(0, 1))
+    expect(plain().join("\n")).toMatch(/^[█▀ \n]+$/)
+    // The TUI wordmark is the same letters with shadows under them, and a row for the last shadows.
+    expect(
+      tui()
+        .slice(0, -1)
+        .map((row) => row.replaceAll("~", " ").replaceAll("^", "▀")),
+    ).toEqual(plain())
+    expect(tui().at(-1)).toMatch(/^[~ ]+$/)
   })
 
   test("formats child session exit logo", () => {

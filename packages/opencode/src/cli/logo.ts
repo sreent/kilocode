@@ -2,7 +2,7 @@
 import { plain } from "../kilocode/cli/logo"
 
 export const logo = {
-  left: ["", "", ""],
+  left: plain().map(() => ""),
   right: plain(),
 }
 // kilocode_change end
