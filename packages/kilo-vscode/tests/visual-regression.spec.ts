@@ -68,6 +68,16 @@ async function settle(page: Page) {
     undefined,
     { timeout: 5_000 },
   )
+  // A diff view draws its lines as plain text first and swaps in the colours a web worker
+  // returns, so wait until every diff shows coloured tokens. (A plain-text diff never would.)
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("diffs-container")].every((host) =>
+        host.shadowRoot?.querySelector("[data-line] span[style]"),
+      ),
+    undefined,
+    { timeout: 10_000 },
+  )
   await frames()
 }
 
