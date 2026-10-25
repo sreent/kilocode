@@ -8,8 +8,8 @@ tucode's identity: its name, command, package and extension IDs, container image
 | `rules.ts` | What `apply.ts` rewrites, file by file. |
 | `apply.ts` | The script that applies the rules. |
 | `applied.json` | The names the tree carries now, which `apply.ts` records. Don't edit it. |
-| `logo.svg`, `mark.svg`, `icons/` | The logo and the icon sizes the IDEs and the admin console use. |
-| `icon-font.py` | Builds `icons/icon-font.woff2`, the VS Code status bar icon, from `mark.svg`. |
+| `icons.py` | Draws the logo and the icons. |
+| `logo.svg`, `mark.svg`, `icons/` | The logo, the mark, and the sizes and formats the IDEs and the admin console use. `icons/svg.ts` holds them as markup for the sign-in pages the CLI and the organization server serve. |
 
 ## Run it
 
@@ -54,4 +54,12 @@ The values in `brand.json` are placeholders. Replace them with ones you control 
 - the container image
 - the repository
 
-Rebuild `icons/icon-font.woff2` with `icon-font.py` if you change `mark.svg`. It needs fontTools and brotli: `pip install fonttools brotli`.
+## Change the icons
+
+The mark is "tu" over a prompt, `>_`, in four pixel letters whose outlines are in `icons.py`. After changing them, draw the icons again and copy them into the packages:
+
+```sh
+pip install pillow fonttools brotli
+python3 brand/icons.py
+bun brand/apply.ts
+```

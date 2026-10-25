@@ -22,7 +22,7 @@ MIT covers the code, not names or logos. "Kilo" and "Kilo Code" identify Kilo's 
 
 [`brand/brand.json`](brand/README.md) holds every name: the product, the `tucode` command, the npm packages, the container image, the VS Code and JetBrains identities, the managed config folder and the repository. `bun brand/apply.ts` rewrites what users see across the tree from it, and `--check` lists what would still change. Run it after every merge from Kilo upstream, because each merge brings new text in Kilo's name.
 
-The values in `brand.json` are placeholders. Replace them with ones you control (npm scope, VS Code publisher, JetBrains plugin ID and vendor, container image, repository) before you publish anything, then run `apply.ts` again: it replaces each value that changed wherever the tree has it.
+The values in `brand.json` are placeholders. Replace them with ones you control (npm scope, VS Code publisher, JetBrains plugin ID and vendor, container image, repository) before you publish anything, then run `apply.ts` again: it replaces each value that changed wherever the tree has it. The logo and icons are drawn by `brand/icons.py`.
 
 What users see is renamed. Internal names stay, which keeps upstream merges small:
 

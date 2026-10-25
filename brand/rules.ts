@@ -301,7 +301,7 @@ export function rules(b: Brand): Rule[] {
         "packages/kilo-vscode/assets/icons/kilo-dark.png": "brand/icons/mark-white-256.png",
         "packages/kilo-vscode/assets/icons/kilo-light.svg": "brand/logo.svg",
         "packages/kilo-vscode/assets/icons/kilo-dark.svg": "brand/logo.svg",
-        // The status bar icon, $(kilo-logo); brand/icon-font.py builds it from the mark.
+        // The status bar icon, $(kilo-logo), which brand/icons.py draws from the mark.
         "packages/kilo-vscode/assets/icons/kilo-icon-font.woff2": "brand/icons/icon-font.woff2",
       },
     },

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import path from "path"
 import { KiloOauthCallbackPage } from "@opencode-ai/core/kilocode/oauth/page"
+import { mark } from "../../../../brand/icons/svg"
 
 const root = path.join(__dirname, "..", "..")
 
@@ -30,7 +31,8 @@ describe("tucode OAuth branding", () => {
     for (const page of pages) {
       expect(page).toContain("· tucode</title>")
       expect(page).toContain('aria-label="tucode"')
-      expect(page).toContain('viewBox="56 104 400 304"')
+      expect(page).toContain(`viewBox="${mark.viewBox}"`)
+      expect(page).toContain(mark.body)
       expect(page).not.toContain("Kilo")
       expect(page).not.toContain("OpenCode")
       expect(page).not.toContain('viewBox="0 0 234 42"')
