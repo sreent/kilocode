@@ -46,13 +46,21 @@ The command and the managed config folder are the exception: `tucode` also names
 
 ## Before publishing
 
-The values in `brand.json` are placeholders. Replace them with ones you control before you publish anything:
+tucode publishes under its own name everywhere. Claim these names before the first release:
 
-- the npm scope
-- the VS Code publisher
-- the JetBrains plugin ID and vendor
-- the container image
+- the npm organization `tucode`, for `@tucode/cli` and its platform packages
+- the VS Code Marketplace publisher `tucode`, which the extension's ID `tucode.tucode` starts with
+- the Open VSX namespace `tucode`
+- the JetBrains Marketplace vendor `tucode`
+
+Four values are placeholders until the repository moves to the company's GitHub organization:
+
 - the repository
+- the container image, `ghcr.io/<organization>/tucode`
+- the JetBrains plugin ID
+- the macOS managed-settings domain
+
+The last two are reverse-DNS names under a domain the company owns (`com.example.tucode`), and can't change after the first release. Set all four in `brand.json` and run `apply.ts`.
 
 ## Change the icons
 
